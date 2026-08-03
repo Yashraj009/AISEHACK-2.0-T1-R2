@@ -1,0 +1,105 @@
+"""Shared paths, run ledger, and guards for the R2 pipeline.
+
+Every stage imports from here so paths and logging are defined in exactly one place.
+See docs/MASTER_PLAN.md for what each stage does and why.
+"""
+import os
+
+# PROJ_LIB left over from another GDAL install silently breaks pyproj's CRS lookups.
+# Popping it must happen before rasterio/pyproj are imported anywhere. [PLAN.md guard]
+os.environ.pop("PROJ_LIB", None)
+
+import json
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+DATA = ROOT / "anrf-aise-hack-2-0-round-2-sar-crop-health-yield-estimation"
+FARMS = DATA / "Farm_boundaries_shp" / "Farm_boundaries_shp" / "Sokhda_Farms.shp"
+VILLAGE = DATA / "Village_Shp" / "Village_Shp" / "Sokhda_Village.shp"
+RESULTS = ROOT / "results"
+CACHE = RESULTS / "cache"
+FIGURES = RESULTS / "figures"
+SUBMISSIONS = RESULTS / "submissions"
+AUX = ROOT / "data_aux"
+LEDGER = RESULTS / "log.jsonl"
+
+for d in (RESULTS, CACHE, FIGURES, SUBMISSIONS, AUX):
+    d.mkdir(parents=True, exist_ok=True)
+
+# Acquisition dates in order. Jun06/Jun19 are pre-monsoon bare soil, Aug14 peak
+# vegetative, Oct13 post-monsoon. [RESEARCH_LOG B12]
+DATES = ["20250606", "20250619", "20250814", "20251013"]
+
+# Scene metadata read from *_extended.json at [A3]. Kept here so any stage can
+# reason about geometry without re-parsing, but prep_r2 re-reads the JSON as the
+# source of truth rather than trusting these.
+INCIDENCE_DEG = {"20250606": 35.244, "20250619": 28.768,
+                 "20250814": 28.692, "20251013": 31.528}
+REF_INCIDENCE_DEG = 31.528  # October anchor -- the date the deliverable is "as of". [B8]
+
+CROPS = ["Rice", "Cotton", "Maize", "Bajra", "Groundnut"]  # exact submission spellings [E1]
+
+
+def slc_path(date: str) -> Path:
+    """SLC tif for a date. Requires the date in BOTH the folder name and the basename.
+
+    Neither test alone is sufficient, and both failure modes are live in this dataset:
+      - folder only : the Jun-19 folder also contains a byte-identical copy of the
+                      Jun-06 SLC, so globbing that folder can return the Jun-06 scene
+      - basename only: that same duplicate means the Jun-06 basename matches in two
+                      different folders
+    Requiring agreement resolves each date to exactly one file. [RESEARCH_LOG A3, E7]
+    """
+    hits = [p for p in sorted(DATA.glob(f"CAPELLA_*/CAPELLA_*SLC_HH_{date}*.tif"))
+            if date in p.name and date in p.parent.name]
+    if len(hits) != 1:
+        raise FileNotFoundError(f"{date}: expected 1 SLC tif, found {len(hits)}: {hits}")
+    return hits[0]
+
+
+def log(stage: str, **fields) -> dict:
+    """Append one record to the run ledger and echo it.
+
+    Immutable by construction: the ledger is append-only, so a rerun adds a row
+    rather than overwriting the previous one. This is what makes a run
+    reconstructable after the fact -- R1's lesson. [PLAN.md]
+    """
+    rec = {"t": time.strftime("%Y-%m-%dT%H:%M:%S"), "stage": stage, **fields}
+    with LEDGER.open("a", encoding="utf8") as fh:
+        fh.write(json.dumps(rec, default=str) + "\n")
+    print(f"[{rec['t']}] {stage}: " + " ".join(f"{k}={v}" for k, v in fields.items()))
+    return rec
+
+
+def db(x):
+    """Linear power -> dB, with non-positive values mapped to nan rather than -inf.
+
+    Speckle in single-look data produces exact zeros; letting those become -inf
+    poisons every downstream mean.
+    """
+    import numpy as np
+    x = np.asarray(x, dtype="float64")
+    return np.where(x > 0, 10.0 * np.log10(np.where(x > 0, x, 1.0)), np.nan)
+
+
+def _selfcheck():
+    import numpy as np
+    assert np.isnan(db(0.0)), "db(0) must be nan, not -inf"
+    assert abs(db(1.0) - 0.0) < 1e-12
+    assert abs(db(10.0) - 10.0) < 1e-12
+    assert FARMS.exists(), f"farm shapefile missing: {FARMS}"
+    assert VILLAGE.exists(), f"village shapefile missing: {VILLAGE}"
+    for d in DATES:
+        p = slc_path(d)
+        assert d in p.name, f"{d} resolved to wrong scene {p.name}"
+    # the stray-file trap: Jun-19's folder holds a duplicate Jun-06 SLC as well as
+    # its own. Both dates must still resolve to the file in their OWN folder.
+    assert slc_path("20250619").parent.name.startswith("CAPELLA_C14_SM_SLC_HH_20250619")
+    assert slc_path("20250606").parent.name.startswith("CAPELLA_C14_SM_SLC_HH_20250606")
+    assert slc_path("20250619") != slc_path("20250606")
+    print("common.py self-check OK -- 4 scenes resolved by basename, shapefiles present")
+
+
+if __name__ == "__main__":
+    _selfcheck()

@@ -1,0 +1,242 @@
+{"t": "2026-08-01T19:30:41", "stage": "eda.start"}
+{"t": "2026-08-01T19:30:41", "stage": "eda.vectors", "n_farms": 966, "n_repaired": 9, "total_ha": 447.5, "median_ha": 0.274, "n_under_10m2": 10}
+{"t": "2026-08-01T19:30:41", "stage": "eda.metadata", "path": "scene_metadata.csv", "incidence_spread_deg": 6.552}
+{"t": "2026-08-01T19:30:51", "stage": "eda.fig", "name": "eda_01_alignment.png"}
+{"t": "2026-08-01T19:31:10", "stage": "eda.fig", "name": "eda_02_quicklooks.png"}
+{"t": "2026-08-01T19:31:12", "stage": "eda.fig", "name": "eda_03_geometry.png"}
+{"t": "2026-08-01T19:31:15", "stage": "eda.slc_amplitude", "date": "20250606", "n": 1572864, "zeros": 0, "p1": 6.08, "med": 52.89, "p99": 179.15, "mx": 5700.98}
+{"t": "2026-08-01T19:31:15", "stage": "eda.slc_amplitude", "date": "20250619", "n": 1572864, "zeros": 0, "p1": 6.71, "med": 59.36, "p99": 196.47, "mx": 5300.91}
+{"t": "2026-08-01T19:31:15", "stage": "eda.slc_amplitude", "date": "20250814", "n": 1572864, "zeros": 0, "p1": 7.07, "med": 61.52, "p99": 229.87, "mx": 4132.73}
+{"t": "2026-08-01T19:31:15", "stage": "eda.slc_amplitude", "date": "20251013", "n": 1572864, "zeros": 0, "p1": 9.49, "med": 82.38, "p99": 275.77, "mx": 4623.24}
+{"t": "2026-08-01T19:31:21", "stage": "eda.fig", "name": "eda_05_landcover_candidates.png", "dark_frac_pct": 1.0, "bright_frac_pct": 0.3}
+{"t": "2026-08-01T19:31:21", "stage": "eda.done", "figures": "D:\\Mtech\\sem 4\\other\\AISEHACK-2.0-T1-R2\\results\\figures"}
+{"t": "2026-08-01T19:44:39", "stage": "eda.start"}
+{"t": "2026-08-01T19:44:39", "stage": "eda.vectors", "n_farms": 966, "n_repaired": 9, "total_ha": 447.5, "median_ha": 0.274, "n_under_10m2": 10}
+{"t": "2026-08-01T19:44:39", "stage": "eda.metadata", "path": "scene_metadata.csv", "incidence_spread_deg": 6.552}
+{"t": "2026-08-01T19:44:47", "stage": "eda.fig", "name": "eda_01_alignment.png"}
+{"t": "2026-08-01T19:45:02", "stage": "eda.fig", "name": "eda_02_quicklooks.png"}
+{"t": "2026-08-01T19:45:03", "stage": "eda.fig", "name": "eda_03_geometry.png"}
+{"t": "2026-08-01T19:45:05", "stage": "eda.slc_amplitude", "date": "20250606", "n": 1572864, "zeros": 0, "p1": 6.08, "med": 52.89, "p99": 179.15, "mx": 5700.98}
+{"t": "2026-08-01T19:45:05", "stage": "eda.slc_amplitude", "date": "20250619", "n": 1572864, "zeros": 0, "p1": 6.71, "med": 59.36, "p99": 196.47, "mx": 5300.91}
+{"t": "2026-08-01T19:45:05", "stage": "eda.slc_amplitude", "date": "20250814", "n": 1572864, "zeros": 0, "p1": 7.07, "med": 61.52, "p99": 229.87, "mx": 4132.73}
+{"t": "2026-08-01T19:45:05", "stage": "eda.slc_amplitude", "date": "20251013", "n": 1572864, "zeros": 0, "p1": 9.49, "med": 82.38, "p99": 275.77, "mx": 4623.24}
+{"t": "2026-08-01T19:45:09", "stage": "eda.fig", "name": "eda_05_landcover_candidates.png", "dark_frac_pct": 1.0, "bright_frac_pct": 0.3}
+{"t": "2026-08-01T19:49:21", "stage": "eda.coverage", "all4": 892, "none": 42, "partial": 32, "per_date_unusable": {"20250606": 42, "20250619": 74, "20250814": 68, "20251013": 64}}
+{"t": "2026-08-01T19:49:22", "stage": "eda.done", "figures": "D:\\Mtech\\sem 4\\other\\AISEHACK-2.0-T1-R2\\results\\figures"}
+{"t": "2026-08-01T19:59:06", "stage": "prep.start", "dates": 1, "grids": ["base"]}
+{"t": "2026-08-01T19:59:14", "stage": "prep.slant", "date": "20251013", "win": "8944x4244", "scale": 0.0013644344497360744, "inc_mean": 31.5222, "inc_min": 31.309, "inc_max": 31.736, "beta_med": 10.06953}
+{"t": "2026-08-01T19:59:17", "stage": "prep.geocode", "date": "20251013", "grid": "base", "res": 5.0, "shape": "893x990", "valid_pct": 87.11, "gamma0_db_med": 9.25}
+{"t": "2026-08-01T19:59:17", "stage": "prep.done"}
+{"t": "2026-08-01T20:01:17", "stage": "prep.slant", "date": "20250606", "win": "8836x4682", "scale": 0.0021218646124560583, "inc_mean": 35.2402, "inc_min": 35.046, "inc_max": 35.436, "beta_med": 6.07065}
+{"t": "2026-08-01T20:01:20", "stage": "prep.geocode", "date": "20250606", "grid": "base", "res": 5.0, "shape": "893x990", "valid_pct": 87.74, "gamma0_db_med": 7.44}
+{"t": "2026-08-01T20:01:27", "stage": "prep.slant", "date": "20250619", "win": "9035x3910", "scale": 0.002362054213688219, "inc_mean": 28.7608, "inc_min": 28.542, "inc_max": 28.98, "beta_med": 9.101}
+{"t": "2026-08-01T20:01:29", "stage": "prep.geocode", "date": "20250619", "grid": "base", "res": 5.0, "shape": "893x990", "valid_pct": 86.69, "gamma0_db_med": 8.11}
+{"t": "2026-08-01T20:01:35", "stage": "prep.slant", "date": "20250814", "win": "8895x3897", "scale": 0.001989031607832504, "inc_mean": 28.6865, "inc_min": 28.466, "inc_max": 28.908, "beta_med": 7.59015}
+{"t": "2026-08-01T20:01:38", "stage": "prep.geocode", "date": "20250814", "grid": "base", "res": 5.0, "shape": "893x990", "valid_pct": 86.84, "gamma0_db_med": 7.22}
+{"t": "2026-08-01T20:01:43", "stage": "prep.slant", "date": "20251013", "win": "8944x4244", "scale": 0.0013644344497360744, "inc_mean": 31.5222, "inc_min": 31.309, "inc_max": 31.736, "beta_med": 10.06953}
+{"t": "2026-08-01T20:01:46", "stage": "prep.geocode", "date": "20251013", "grid": "base", "res": 5.0, "shape": "893x990", "valid_pct": 87.11, "gamma0_db_med": 9.25}
+{"t": "2026-08-01T20:04:05", "stage": "prep.slant", "date": "20250606", "win": "8836x4682", "scale": 0.0021218646124560583, "inc_mean": 35.2402, "inc_min": 35.046, "inc_max": 35.436, "beta_med": 6.07065}
+{"t": "2026-08-01T20:04:10", "stage": "prep.geocode", "date": "20250606", "grid": "fine", "res": 2.0, "shape": "2231x2475", "valid_pct": 87.73, "gamma0_db_med": 7.12}
+{"t": "2026-08-01T20:04:15", "stage": "prep.slant", "date": "20250619", "win": "9035x3910", "scale": 0.002362054213688219, "inc_mean": 28.7608, "inc_min": 28.542, "inc_max": 28.98, "beta_med": 9.101}
+{"t": "2026-08-01T20:04:20", "stage": "prep.geocode", "date": "20250619", "grid": "fine", "res": 2.0, "shape": "2231x2475", "valid_pct": 86.68, "gamma0_db_med": 7.65}
+{"t": "2026-08-01T20:04:24", "stage": "prep.slant", "date": "20250814", "win": "8895x3897", "scale": 0.001989031607832504, "inc_mean": 28.6865, "inc_min": 28.466, "inc_max": 28.908, "beta_med": 7.59015}
+{"t": "2026-08-01T20:04:31", "stage": "prep.geocode", "date": "20250814", "grid": "fine", "res": 2.0, "shape": "2231x2475", "valid_pct": 86.83, "gamma0_db_med": 6.84}
+{"t": "2026-08-01T20:04:37", "stage": "prep.slant", "date": "20251013", "win": "8944x4244", "scale": 0.0013644344497360744, "inc_mean": 31.5222, "inc_min": 31.309, "inc_max": 31.736, "beta_med": 10.06953}
+{"t": "2026-08-01T20:04:45", "stage": "prep.geocode", "date": "20251013", "grid": "fine", "res": 2.0, "shape": "2231x2475", "valid_pct": 87.1, "gamma0_db_med": 8.87}
+{"t": "2026-08-01T20:06:04", "stage": "i1.gate", "water_dB": ["4.86", "2.52", "3.15", "5.29"], "crop_dB": ["7.45", "8.12", "7.22", "9.26"], "built_dB": ["11.25", "13.52", "12.6", "14.15"], "crop_minus_water": ["2.59", "5.6", "4.07", "3.97"], "built_minus_crop": ["3.8", "5.4", "5.37", "4.89"]}
+{"t": "2026-08-01T20:06:04", "stage": "i1.fig", "name": "i1_01_verification.png"}
+{"t": "2026-08-01T20:16:18", "stage": "feat.labels", "grid": "base", "lvl_neg5": 951, "lvl_neg2": 5, "lvl_none": 10, "lvl_failed": 0}
+{"t": "2026-08-01T20:16:19", "stage": "feat.date", "date": "20250606", "n_with_pixels": 937, "db_med": 7.57, "cv_med": 0.431, "alpha_med": 18.18}
+{"t": "2026-08-01T20:16:21", "stage": "feat.date", "date": "20250619", "n_with_pixels": 913, "db_med": 8.47, "cv_med": 0.476, "alpha_med": 26.05}
+{"t": "2026-08-01T20:16:22", "stage": "feat.date", "date": "20250814", "n_with_pixels": 918, "db_med": 7.19, "cv_med": 0.488, "alpha_med": 18.67}
+{"t": "2026-08-01T20:16:22", "stage": "feat.date", "date": "20251013", "n_with_pixels": 925, "db_med": 9.64, "cv_med": 0.469, "alpha_med": 20.96}
+{"t": "2026-08-01T20:16:25", "stage": "feat.glcm", "date": "20250606", "n": 925, "med": 5.745}
+{"t": "2026-08-01T20:16:25", "stage": "feat.glcm", "date": "20250619", "n": 897, "med": 5.605}
+{"t": "2026-08-01T20:16:26", "stage": "feat.glcm", "date": "20250814", "n": 901, "med": 5.634}
+{"t": "2026-08-01T20:16:26", "stage": "feat.glcm", "date": "20251013", "n": 903, "med": 5.676}
+{"t": "2026-08-01T20:16:26", "stage": "feat.done", "path": "farm_features.csv", "rows": 966, "cols": 47, "ok": 913, "partial": 24, "no_data": 29}
+{"t": "2026-08-01T20:17:58", "stage": "feat.labels", "grid": "base", "lvl_neg5": 951, "lvl_neg2": 5, "lvl_none": 10, "lvl_failed": 0}
+{"t": "2026-08-01T20:17:58", "stage": "feat.date", "date": "20250606", "n_with_pixels": 937, "looks_est": 6.79, "db_med": 7.57, "cv_med": 0.431, "ktex_med": 0.0354, "ktex_nan": 78, "ktex_zero": 153}
+{"t": "2026-08-01T20:17:59", "stage": "feat.date", "date": "20250619", "n_with_pixels": 913, "looks_est": 5.42, "db_med": 8.47, "cv_med": 0.476, "ktex_med": 0.0381, "ktex_nan": 101, "ktex_zero": 151}
+{"t": "2026-08-01T20:18:00", "stage": "feat.date", "date": "20250814", "n_with_pixels": 918, "looks_est": 5.57, "db_med": 7.19, "cv_med": 0.488, "ktex_med": 0.0523, "ktex_nan": 94, "ktex_zero": 152}
+{"t": "2026-08-01T20:18:00", "stage": "feat.date", "date": "20251013", "n_with_pixels": 925, "looks_est": 5.92, "db_med": 9.64, "cv_med": 0.469, "ktex_med": 0.0438, "ktex_nan": 92, "ktex_zero": 145}
+{"t": "2026-08-01T20:18:02", "stage": "feat.glcm", "date": "20250606", "n": 925, "med": 5.745}
+{"t": "2026-08-01T20:18:02", "stage": "feat.glcm", "date": "20250619", "n": 897, "med": 5.605}
+{"t": "2026-08-01T20:18:03", "stage": "feat.glcm", "date": "20250814", "n": 901, "med": 5.634}
+{"t": "2026-08-01T20:18:03", "stage": "feat.glcm", "date": "20251013", "n": 903, "med": 5.676}
+{"t": "2026-08-01T20:18:03", "stage": "feat.done", "path": "farm_features.csv", "rows": 966, "cols": 43, "ok": 913, "partial": 24, "no_data": 29}
+{"t": "2026-08-01T20:18:24", "stage": "feat.labels", "grid": "base", "lvl_neg5": 951, "lvl_neg2": 5, "lvl_none": 10, "lvl_failed": 0}
+{"t": "2026-08-01T20:18:25", "stage": "feat.date", "date": "20250606", "n_with_pixels": 937, "looks_est": 6.79, "db_med": 7.57, "cv_med": 0.431, "ktex_med": 0.0354, "ktex_nan": 78, "ktex_zero": 153}
+{"t": "2026-08-01T20:18:26", "stage": "feat.date", "date": "20250619", "n_with_pixels": 913, "looks_est": 5.42, "db_med": 8.47, "cv_med": 0.476, "ktex_med": 0.0381, "ktex_nan": 101, "ktex_zero": 151}
+{"t": "2026-08-01T20:18:26", "stage": "feat.date", "date": "20250814", "n_with_pixels": 918, "looks_est": 5.57, "db_med": 7.19, "cv_med": 0.488, "ktex_med": 0.0523, "ktex_nan": 94, "ktex_zero": 152}
+{"t": "2026-08-01T20:18:27", "stage": "feat.date", "date": "20251013", "n_with_pixels": 925, "looks_est": 5.92, "db_med": 9.64, "cv_med": 0.469, "ktex_med": 0.0438, "ktex_nan": 92, "ktex_zero": 145}
+{"t": "2026-08-01T20:18:29", "stage": "feat.glcm", "date": "20250606", "n": 925, "med": 5.745}
+{"t": "2026-08-01T20:18:29", "stage": "feat.glcm", "date": "20250619", "n": 897, "med": 5.605}
+{"t": "2026-08-01T20:18:30", "stage": "feat.glcm", "date": "20250814", "n": 901, "med": 5.634}
+{"t": "2026-08-01T20:18:30", "stage": "feat.glcm", "date": "20251013", "n": 903, "med": 5.676}
+{"t": "2026-08-01T20:18:30", "stage": "feat.done", "path": "farm_features.csv", "rows": 966, "cols": 43, "ok": 913, "partial": 24, "no_data": 29}
+{"t": "2026-08-01T20:20:06", "stage": "i2.qa", "rows": 966, "redundant_pairs": [["ref_aug", "d_aug_jun19", 0.92], ["cv_20251013", "ktex_20251013", 1.0], ["glcm_ent_20251013", "area_ha", 0.95]], "morans": {"ref_oct": 1.893, "temporal_cv": 2.672, "ktex_20251013": 0.755, "glcm_ent_20251013": 3.445}}
+{"t": "2026-08-01T20:20:06", "stage": "i2.fig", "name": "i2_01_features.png"}
+{"t": "2026-08-01T20:20:59", "stage": "feat.labels", "grid": "base", "lvl_neg5": 951, "lvl_neg2": 5, "lvl_none": 10, "lvl_failed": 0}
+{"t": "2026-08-01T20:20:59", "stage": "feat.date", "date": "20250606", "n_with_pixels": 937, "looks_est": 6.79, "db_med": 7.57, "cv_med": 0.431, "ktex_med": 0.0354, "ktex_nan": 78, "ktex_zero": 153}
+{"t": "2026-08-01T20:21:00", "stage": "feat.date", "date": "20250619", "n_with_pixels": 913, "looks_est": 5.42, "db_med": 8.47, "cv_med": 0.476, "ktex_med": 0.0381, "ktex_nan": 101, "ktex_zero": 151}
+{"t": "2026-08-01T20:21:00", "stage": "feat.date", "date": "20250814", "n_with_pixels": 918, "looks_est": 5.57, "db_med": 7.19, "cv_med": 0.488, "ktex_med": 0.0523, "ktex_nan": 94, "ktex_zero": 152}
+{"t": "2026-08-01T20:21:01", "stage": "feat.date", "date": "20251013", "n_with_pixels": 925, "looks_est": 5.92, "db_med": 9.64, "cv_med": 0.469, "ktex_med": 0.0438, "ktex_nan": 92, "ktex_zero": 145}
+{"t": "2026-08-01T20:21:02", "stage": "feat.glcm", "date": "20250606", "n": 925, "med": 3.261}
+{"t": "2026-08-01T20:21:02", "stage": "feat.glcm", "date": "20250619", "n": 897, "med": 3.059}
+{"t": "2026-08-01T20:21:03", "stage": "feat.glcm", "date": "20250814", "n": 901, "med": 3.079}
+{"t": "2026-08-01T20:21:03", "stage": "feat.glcm", "date": "20251013", "n": 903, "med": 3.166}
+{"t": "2026-08-01T20:21:03", "stage": "feat.done", "path": "farm_features.csv", "rows": 966, "cols": 43, "ok": 913, "partial": 24, "no_data": 29}
+{"t": "2026-08-01T20:21:10", "stage": "i2.qa", "rows": 966, "redundant_pairs": [["ref_aug", "d_aug_jun19", 0.92], ["cv_20251013", "ktex_20251013", 1.0]], "morans": {"ref_oct": 0.237, "temporal_cv": 0.334, "ktex_20251013": 0.094, "glcm_ent_20251013": 0.179}}
+{"t": "2026-08-01T20:21:10", "stage": "i2.fig", "name": "i2_01_features.png"}
+{"t": "2026-08-01T20:21:53", "stage": "feat.labels", "grid": "base", "lvl_neg5": 951, "lvl_neg2": 5, "lvl_none": 10, "lvl_failed": 0}
+{"t": "2026-08-01T20:21:54", "stage": "feat.date", "date": "20250606", "n_with_pixels": 937, "looks_est": 6.79, "db_med": 7.57, "cv_med": 0.431, "ktex_med": 0.0354, "ktex_nan": 78, "ktex_zero": 153}
+{"t": "2026-08-01T20:21:54", "stage": "feat.date", "date": "20250619", "n_with_pixels": 913, "looks_est": 5.42, "db_med": 8.47, "cv_med": 0.476, "ktex_med": 0.0381, "ktex_nan": 101, "ktex_zero": 151}
+{"t": "2026-08-01T20:21:55", "stage": "feat.date", "date": "20250814", "n_with_pixels": 918, "looks_est": 5.57, "db_med": 7.19, "cv_med": 0.488, "ktex_med": 0.0523, "ktex_nan": 94, "ktex_zero": 152}
+{"t": "2026-08-01T20:21:56", "stage": "feat.date", "date": "20251013", "n_with_pixels": 925, "looks_est": 5.92, "db_med": 9.64, "cv_med": 0.469, "ktex_med": 0.0438, "ktex_nan": 92, "ktex_zero": 145}
+{"t": "2026-08-01T20:21:58", "stage": "feat.glcm", "date": "20250606", "n": 925, "med": 3.261, "resid_std": 0.1162}
+{"t": "2026-08-01T20:21:58", "stage": "feat.glcm", "date": "20250619", "n": 897, "med": 3.059, "resid_std": 0.2957}
+{"t": "2026-08-01T20:21:59", "stage": "feat.glcm", "date": "20250814", "n": 901, "med": 3.079, "resid_std": 0.1431}
+{"t": "2026-08-01T20:21:59", "stage": "feat.glcm", "date": "20251013", "n": 903, "med": 3.166, "resid_std": 0.1276}
+{"t": "2026-08-01T20:21:59", "stage": "feat.done", "path": "farm_features.csv", "rows": 966, "cols": 47, "ok": 913, "partial": 24, "no_data": 29}
+{"t": "2026-08-01T20:26:02", "stage": "sublook.start"}
+{"t": "2026-08-01T20:26:34", "stage": "sublook.date", "date": "20250606", "slant": "8836x4682", "med_slant": 0.2221, "med_geo": 0.2213}
+{"t": "2026-08-01T20:27:00", "stage": "sublook.date", "date": "20250619", "slant": "9035x3910", "med_slant": 0.1883, "med_geo": 0.1859}
+{"t": "2026-08-01T20:27:26", "stage": "sublook.date", "date": "20250814", "slant": "8895x3897", "med_slant": 0.2205, "med_geo": 0.2178}
+{"t": "2026-08-01T20:27:51", "stage": "sublook.date", "date": "20251013", "slant": "8944x4244", "med_slant": 0.1842, "med_geo": 0.1826}
+{"t": "2026-08-01T20:27:51", "stage": "sublook.farm", "date": "20250606", "n": 937, "med": 0.2306}
+{"t": "2026-08-01T20:27:51", "stage": "sublook.farm", "date": "20250619", "n": 913, "med": 0.1922}
+{"t": "2026-08-01T20:27:52", "stage": "sublook.farm", "date": "20250814", "n": 918, "med": 0.224}
+{"t": "2026-08-01T20:27:52", "stage": "sublook.farm", "date": "20251013", "n": 925, "med": 0.1886}
+{"t": "2026-08-01T20:27:52", "stage": "sublook.done", "cols": 52}
+{"t": "2026-08-01T20:29:56", "stage": "sublook.start"}
+{"t": "2026-08-01T20:30:28", "stage": "sublook.date", "date": "20250606", "slant": "8836x4682", "band_frac": 0.4768, "med_slant": 0.201, "med_geo": 0.1989}
+{"t": "2026-08-01T20:30:55", "stage": "sublook.date", "date": "20250619", "slant": "9035x3910", "band_frac": 0.6113, "med_slant": 0.185, "med_geo": 0.1828}
+{"t": "2026-08-01T20:31:23", "stage": "sublook.date", "date": "20250814", "slant": "8895x3897", "band_frac": 0.6079, "med_slant": 0.185, "med_geo": 0.1829}
+{"t": "2026-08-01T20:31:49", "stage": "sublook.date", "date": "20251013", "slant": "8944x4244", "band_frac": 0.6121, "med_slant": 0.1842, "med_geo": 0.1826}
+{"t": "2026-08-01T20:31:50", "stage": "sublook.farm", "date": "20250606", "n": 937, "med": 0.2057}
+{"t": "2026-08-01T20:31:50", "stage": "sublook.farm", "date": "20250619", "n": 913, "med": 0.19}
+{"t": "2026-08-01T20:31:50", "stage": "sublook.farm", "date": "20250814", "n": 918, "med": 0.1885}
+{"t": "2026-08-01T20:31:50", "stage": "sublook.farm", "date": "20251013", "n": 925, "med": 0.1888}
+{"t": "2026-08-01T20:31:50", "stage": "sublook.done", "cols": 52}
+{"t": "2026-08-02T09:35:23", "stage": "d4.start"}
+{"t": "2026-08-02T09:35:23", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T09:35:23", "stage": "d4.schema", "status": "PASS", "rows": 966}
+{"t": "2026-08-02T09:35:23", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-02T09:36:06", "stage": "d4.start"}
+{"t": "2026-08-02T09:36:06", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T09:36:06", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T09:36:06", "stage": "d4.schema", "status": "PASS", "rows": 966}
+{"t": "2026-08-02T09:36:06", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-02T09:43:33", "stage": "wcm.start"}
+{"t": "2026-08-02T09:43:37", "stage": "wcm.done", "cols": 61}
+{"t": "2026-08-02T09:55:46", "stage": "pb.start"}
+{"t": "2026-08-02T09:55:48", "stage": "pb.done", "agree_farm": 0.893, "agree_area": 0.892}
+{"t": "2026-08-02T10:01:14", "stage": "witness.start"}
+{"t": "2026-08-02T10:02:24", "stage": "witness.s2", "item": "S2B_MSIL2A_20251013T053659_R005_T43QCE_20251013T081845", "n": 956}
+{"t": "2026-08-02T10:02:47", "stage": "witness.s1", "item": "S1A_IW_GRDH_1SDV_20251010T010231_20251010T010256_061356_07A7FC_rtc", "n": 956}
+{"t": "2026-08-02T10:02:47", "stage": "witness.done", "s2": "S2B_MSIL2A_20251013T053659_R005_T43QCE_20251013T081845", "s1": "S1A_IW_GRDH_1SDV_20251010T010231_20251010T010256_061356_07A7FC_rtc"}
+{"t": "2026-08-02T10:04:32", "stage": "i5.start"}
+{"t": "2026-08-02T10:05:05", "stage": "i5.start"}
+{"t": "2026-08-02T10:06:45", "stage": "i5.start"}
+{"t": "2026-08-02T10:07:42", "stage": "i5.done"}
+{"t": "2026-08-02T10:17:14", "stage": "i8.start", "pair": "20250619-20250814"}
+{"t": "2026-08-02T10:17:39", "stage": "i8.self", "blocks": 119, "slant": "9035x3910", "med_coh": 1.0, "p90_coh": 1.0, "med_dr": 0.0, "med_dc": 0.0, "med_psr": 59.2}
+{"t": "2026-08-02T10:17:52", "stage": "i8.null", "blocks": 112, "slant": "8895x3897", "med_coh": 0.1161, "p90_coh": 0.211, "med_dr": 0.0, "med_dc": 0.0, "med_psr": NaN}
+{"t": "2026-08-02T10:18:17", "stage": "i8.real", "blocks": 119, "slant": "8895x3897", "med_coh": 0.1254, "p90_coh": 0.2326, "med_dr": -0.977, "med_dc": -21.449, "med_psr": 13.9}
+{"t": "2026-08-02T10:18:19", "stage": "i8.done", "self": 1.0, "null": 0.1161, "real": 0.1254, "stable": 0.1596, "farm": 0.1286, "verdict": "STABLE TARGETS ALSO AT THE FLOOR -- coregistration not demonstrated, result UNINFORMATIVE, do not claim a finding"}
+{"t": "2026-08-02T10:19:08", "stage": "i8.start", "pair": "20250619-20250814"}
+{"t": "2026-08-02T10:19:31", "stage": "i8.self", "blocks": 119, "slant": "9035x3910", "med_coh": 1.0, "p90_coh": 1.0, "med_dr": 0.0, "med_dc": 0.0, "med_psr": 59.2}
+{"t": "2026-08-02T10:19:43", "stage": "i8.null", "blocks": 112, "slant": "8895x3897", "med_coh": 0.1161, "p90_coh": 0.211, "med_dr": 0.0, "med_dc": 0.0, "med_psr": NaN}
+{"t": "2026-08-02T10:20:10", "stage": "i8.real", "blocks": 119, "slant": "8895x3897", "med_coh": 0.1254, "p90_coh": 0.2326, "med_dr": -0.977, "med_dc": -21.449, "med_psr": 13.9}
+{"t": "2026-08-02T10:20:12", "stage": "i8.done", "self": 1.0, "null": 0.1161, "real": 0.1254, "stable": 0.1596, "stable_null": 0.1217, "farm": 0.1286, "verdict": "STABLE TARGETS ALSO AT THE FLOOR -- coregistration not demonstrated, result UNINFORMATIVE, do not claim a finding"}
+{"t": "2026-08-02T10:30:26", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T10:30:54", "stage": "d4.schema", "status": "PASS", "rows": 966}
+{"t": "2026-08-02T10:36:02", "stage": "i10.start"}
+{"t": "2026-08-02T10:36:04", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-02T10:36:04", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-02T10:36:05", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-02T10:36:05", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-02T10:36:08", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-02T10:36:08", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-02T10:36:09", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-02T10:36:09", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-02T10:39:13", "stage": "i5.start"}
+{"t": "2026-08-02T10:39:17", "stage": "i5.done"}
+{"t": "2026-08-02T10:39:54", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T10:40:22", "stage": "d4.schema", "status": "PASS", "rows": 966}
+{"t": "2026-08-02T10:40:29", "stage": "i10.start"}
+{"t": "2026-08-02T10:40:30", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-02T10:40:31", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-02T10:40:31", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-02T10:40:32", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-02T10:40:34", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-02T10:40:35", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-02T10:40:35", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-02T10:40:35", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-02T10:41:50", "stage": "i10.start"}
+{"t": "2026-08-02T10:41:51", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-02T10:41:51", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-02T10:41:52", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-02T10:41:52", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-02T10:41:55", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-02T10:41:55", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-02T10:41:56", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-02T10:41:56", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-02T10:42:31", "stage": "i10.start"}
+{"t": "2026-08-02T10:42:32", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-02T10:42:32", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-02T10:42:33", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-02T10:42:34", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-02T10:42:36", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-02T10:42:36", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-02T10:42:37", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-02T10:42:37", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-02T10:43:18", "stage": "i10.start"}
+{"t": "2026-08-02T10:43:19", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-02T10:43:19", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-02T10:43:20", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-02T10:43:20", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-02T10:43:22", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-02T10:43:23", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-02T10:43:23", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-02T10:43:23", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-02T10:59:13", "stage": "d4.start"}
+{"t": "2026-08-02T10:59:13", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T10:59:13", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T10:59:24", "stage": "d4.start"}
+{"t": "2026-08-02T10:59:24", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T10:59:24", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T10:59:57", "stage": "d4.start"}
+{"t": "2026-08-02T10:59:57", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T10:59:57", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T10:59:57", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 4.125}
+{"t": "2026-08-02T10:59:57", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-02T11:00:15", "stage": "d4.start"}
+{"t": "2026-08-02T11:00:15", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T11:00:15", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T11:00:15", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 4.125}
+{"t": "2026-08-02T11:00:15", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-02T11:00:42", "stage": "d4.start"}
+{"t": "2026-08-02T11:00:42", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-02T11:00:42", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T11:00:42", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 4.125}
+{"t": "2026-08-02T11:00:42", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-02T11:02:01", "stage": "i5.start"}
+{"t": "2026-08-02T11:02:05", "stage": "i5.done"}
+{"t": "2026-08-02T11:02:15", "stage": "i5.start"}
+{"t": "2026-08-02T11:02:20", "stage": "i5.done"}
+{"t": "2026-08-02T11:02:40", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-02T11:03:07", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 4.125}
+{"t": "2026-08-02T11:03:15", "stage": "i10.start"}
+{"t": "2026-08-02T11:03:16", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-02T11:03:17", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-02T11:03:17", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-02T11:03:18", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-02T11:03:20", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-02T11:03:21", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-02T11:03:21", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-02T11:03:21", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-02T11:03:36", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 4.125}
+{"t": "2026-08-02T11:17:50", "stage": "d11.start"}
+{"t": "2026-08-02T11:17:51", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
