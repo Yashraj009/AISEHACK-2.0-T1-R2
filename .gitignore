@@ -1,2 +1,4 @@
 r1_repo/
 anrf-aise-hack-2-0-round-2-sar-crop-health-yield-estimation/
+# collected ground truth carries personal land-record data (7/12 owner names)
+data_aux/ground_truth_vf12.csv

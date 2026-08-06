@@ -339,3 +339,6 @@
 {"t": "2026-08-06T15:24:49", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
 {"t": "2026-08-06T15:25:21", "stage": "d11.start"}
 {"t": "2026-08-06T15:25:21", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-06T21:39:30", "stage": "gt.sample", "n": 100, "per_crop": 20, "seed": 20260806}
+{"t": "2026-08-06T21:40:39", "stage": "gt.accuracy", "label": "Capella X-band map (shipped)", "n": 100, "raw": 0.6, "weighted": 0.5999, "kappa": 0.5}
+{"t": "2026-08-06T21:40:39", "stage": "gt.accuracy", "label": "Independent S2+S1 map (validator)", "n": 100, "raw": 0.25, "weighted": 0.3919, "kappa": 0.0488}
