@@ -250,3 +250,7 @@
 {"t": "2026-08-06T14:30:41", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
 {"t": "2026-08-06T14:30:56", "stage": "panel", "tag": "AFTER-FIXES", "health_village_mean": 51.06, "rho_health_area": -0.0506, "rho_health_ndvi": 0.1323, "morans_I": 0.0912}
 {"t": "2026-08-06T14:31:14", "stage": "panel", "tag": "AFTER", "health_village_mean": 51.06, "rho_health_area": -0.0506, "rho_health_ndvi": 0.1323, "morans_I": 0.0912}
+{"t": "2026-08-06T14:32:49", "stage": "d4.prior_bias", "Rice": 422.158, "Cotton": 422.144, "Maize": 421.69, "Bajra": 422.634, "Groundnut": 422.53}
+{"t": "2026-08-06T14:32:49", "stage": "rice.independence", "leave_out_rice_rate": 1.2, "leave_out_base": 0.1, "agreement": 0.607, "vh_p": "5.21e-07"}
+{"t": "2026-08-06T14:33:47", "stage": "rice.independence", "margin_p": "3.78e-01", "margin_med_flooded": -15.494, "margin_med_other": -14.569, "vh_p": "5.21e-07"}
+{"t": "2026-08-06T14:34:14", "stage": "rice.independence", "margin_p": "3.78e-01", "margin_med_flooded": -0.557, "margin_med_other": -0.601, "vh_rice_med": -15.49, "vh_other_med": -14.57, "vh_p": "5.21e-07"}
