@@ -342,3 +342,10 @@
 {"t": "2026-08-06T21:39:30", "stage": "gt.sample", "n": 100, "per_crop": 20, "seed": 20260806}
 {"t": "2026-08-06T21:40:39", "stage": "gt.accuracy", "label": "Capella X-band map (shipped)", "n": 100, "raw": 0.6, "weighted": 0.5999, "kappa": 0.5}
 {"t": "2026-08-06T21:40:39", "stage": "gt.accuracy", "label": "Independent S2+S1 map (validator)", "n": 100, "raw": 0.25, "weighted": 0.3919, "kappa": 0.0488}
+{"t": "2026-08-06T21:49:42", "stage": "dcs.page", "start": 0, "got": 0, "total": 0}
+{"t": "2026-08-06T21:50:01", "stage": "dcs.page", "start": 0, "got": 1000, "total": 1000}
+{"t": "2026-08-06T21:50:02", "stage": "dcs.page", "start": 1000, "got": 1000, "total": 2000}
+{"t": "2026-08-06T21:50:02", "stage": "dcs.page", "start": 2000, "got": 54, "total": 2054}
+{"t": "2026-08-06T21:50:02", "stage": "dcs.fetched", "parcels": 2054, "with_survey": 2054}
+{"t": "2026-08-06T21:50:02", "stage": "dcs.join", "matched": 947, "good": 867, "parcels": 2054}
+{"t": "2026-08-06T21:50:29", "stage": "gt.sample", "n": 100, "per_crop": 20, "seed": 20260806}

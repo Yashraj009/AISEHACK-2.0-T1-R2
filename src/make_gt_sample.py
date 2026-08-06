@@ -51,6 +51,17 @@ def main():
         cent[:, 0], cent[:, 1])
     d["lon"], d["lat"] = np.round(lon, 6), np.round(lat, 6)
 
+    # survey numbers from the Gujarat parcel registry (src/fetch_dcs_parcels.py), so
+    # the collector can go straight to AnyROR instead of hunting the plot on a map.
+    sn = AUX / "farm_to_survey_number.csv"
+    if sn.exists():
+        d = d.merge(pd.read_csv(sn), on="farm_id", how="left")
+        # prefer plots whose registry match is unambiguous -- a 30% overlap means we
+        # are not confident WHICH survey number this farm is, and a wrong survey
+        # number produces a wrong "truth" label, which is worse than no label
+        d = d[d.overlap_frac.fillna(0) >= 0.5]
+        print(f"restricted to {len(d)} farms with a confident (>=50%) registry match")
+
     rng = np.random.default_rng(SEED)
     picks = []
     for c in CROPS:
@@ -61,12 +72,16 @@ def main():
 
     # the blank columns the collector fills in
     s["vf12_crop"] = ""          # crop from Village Form 12 (Rice/Cotton/Maize/Bajra/Groundnut/Other)
-    s["survey_no"] = ""          # BhuNaksha survey number, for traceability
+    if "fpr_survey_number" not in s:
+        s["fpr_survey_number"] = ""
+        s["fpr_sub_survey_number"] = ""
+        s["overlap_frac"] = np.nan
     s["vf12_season"] = "kharif2025"
     s["notes"] = ""
 
-    cols = ["farm_id", "lat", "lon", "area_ha", "crop_type", "independent_crop",
-            "crop_confidence", "survey_no", "vf12_crop", "vf12_season", "notes"]
+    cols = ["farm_id", "fpr_survey_number", "fpr_sub_survey_number", "overlap_frac",
+            "lat", "lon", "area_ha", "crop_type", "independent_crop",
+            "crop_confidence", "vf12_crop", "vf12_season", "notes"]
     out = AUX / "ground_truth_TEMPLATE.csv"
     s[cols].to_csv(out, index=False)
 
