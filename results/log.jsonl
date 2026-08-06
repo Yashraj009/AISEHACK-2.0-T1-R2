@@ -283,3 +283,42 @@
 {"t": "2026-08-06T14:51:45", "stage": "indep.fetch_done", "path": "independent_features.csv", "cols": 19}
 {"t": "2026-08-06T14:51:45", "stage": "indep.compare", "agree_farm": 0.366, "agree_area": 0.374}
 {"t": "2026-08-06T14:52:26", "stage": "indep.compare", "agree_farm": 0.366, "agree_area": 0.374, "kappa": 0.073, "agree_hiconf": 0.451, "agree_loconf": 0.282}
+{"t": "2026-08-06T14:54:08", "stage": "i5.start"}
+{"t": "2026-08-06T14:54:11", "stage": "i5.done"}
+{"t": "2026-08-06T14:54:31", "stage": "i5.start"}
+{"t": "2026-08-06T14:54:34", "stage": "i5.done"}
+{"t": "2026-08-06T14:54:47", "stage": "i5.start"}
+{"t": "2026-08-06T14:54:50", "stage": "i5.done"}
+{"t": "2026-08-06T14:56:22", "stage": "i10.start"}
+{"t": "2026-08-06T14:56:24", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-06T14:56:24", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-06T14:56:24", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-06T14:56:25", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-06T14:56:26", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-06T14:56:26", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-06T14:56:27", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-06T14:56:27", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-06T14:57:16", "stage": "i10.start"}
+{"t": "2026-08-06T14:57:17", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-06T14:57:17", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-06T14:57:17", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-06T14:57:18", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-06T14:57:19", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-06T14:57:19", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-06T14:57:19", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-06T14:57:19", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-06T14:57:45", "stage": "i10.start"}
+{"t": "2026-08-06T14:57:45", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-06T14:57:46", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-06T14:57:46", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-06T14:57:46", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-06T14:57:48", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-06T14:57:48", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-06T14:57:48", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-06T14:57:48", "stage": "i10.done", "figures": 7}
+{"t": "2026-08-06T14:58:50", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-06T14:59:00", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.508}
+{"t": "2026-08-06T14:59:15", "stage": "d11.start"}
+{"t": "2026-08-06T14:59:16", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-06T14:59:44", "stage": "d11.start"}
+{"t": "2026-08-06T14:59:44", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}

@@ -113,13 +113,19 @@ def fig_trajectory(f, sub):
     ax[0].set_ylabel("median gamma0 (dB, uncalibrated)")
     ax[0].set_title("Seasonal backscatter trajectory", loc="left")
     ax[0].legend(frameon=False, fontsize=9, loc="upper left")
-    # The rice signature is the AUGUST TROUGH, not a June drop: kharif paddy is
-    # transplanted into standing water from late June, so by 14 Aug the flooded
-    # field is a specular reflector that scatters energy away from the sensor.
-    # It recovers by October once the canopy closes and the field is drained.
-    ry = np.nanmedian(f.loc[sub.crop_type.values == "Rice", "g0_db_20250814"])
-    ax[0].annotate("flooded paddy on 14 Aug:\nspecular, scatters away\nfrom the sensor",
-                   xy=(2.03, ry), xytext=(2.28, ry - 0.30), fontsize=8.2,
+    # The rice signature is the 19 JUNE PEAK. At co-polarised X-band, paddy at the
+    # start of the season is dominated by DOUBLE BOUNCE off the stem-water
+    # interface, and that rise persists up to ~46 days after transplanting; HH is
+    # the favourable polarisation for inundated vegetation. Gujarat transplants
+    # mid-to-late June, so 19 Jun sits inside that window and rice is the brightest
+    # class on the date. By 14 Aug the canopy has closed and volume scattering plus
+    # two-way attenuation suppress the double-bounce path, so rice falls back into
+    # the pack -- it is NOT the darkest class then (bajra and groundnut are lower),
+    # which is why the earlier "specular in August" caption was wrong.
+    ry = np.nanmedian(f.loc[sub.crop_type.values == "Rice", "g0_db_20250619"])
+    ax[0].annotate("rice, 19 Jun: double bounce off\nstem + standing water "
+                   "(HH-favoured),\npeaks <=46 days after transplanting",
+                   xy=(1.0, ry), xytext=(1.15, ry - 0.55), fontsize=8.0,
                    color=CCOL["Rice"], ha="left", va="top",
                    arrowprops=dict(arrowstyle="->", color=CCOL["Rice"], lw=1.2))
 
@@ -134,7 +140,7 @@ def fig_trajectory(f, sub):
                    np.nanpercentile(f.d_aug_jun19, 99) + 1)
     ax[1].set_ylim(np.nanpercentile(f.d_oct_aug, 1) - 1,
                    np.nanpercentile(f.d_oct_aug, 99) + 1)
-    ax[1].set_xlabel("Aug - Jun  (canopy built, dB)")
+    ax[1].set_xlabel("Aug - Jun 19  (geometry-matched pair, dB)")
     ax[1].set_ylabel("Oct - Aug  (canopy retained, dB)")
     ax[1].set_title("The two differences that carry the crop signal", loc="left")
     fig.text(0.5, -0.04, "Differences, not absolute levels: a constant calibration "
