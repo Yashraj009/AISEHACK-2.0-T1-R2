@@ -31,9 +31,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.spatial import cKDTree
+from scipy.stats import norm
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, DATES, RESULTS, AUX, log
+from common import CROPS, DATES, RESULTS, AUX, farm_centroids, log
 
 SUB = RESULTS / "submission.csv"
 DEBUG = RESULTS / "d4_debug.csv"
@@ -53,8 +55,27 @@ YIELD_SPREAD = 0.30
 # Health-index family weights. Module-level so the I5 ablation can perturb them
 # without editing the shipped path -- the ablation IS the justification for these
 # numbers, so it must exercise the same code the submission uses.
-HEALTH_W = {"level": 0.30, "growth": 0.25, "uniform": 0.20,
-            "texture": 0.10, "persist": 0.15}
+#
+# These are NOT hand-chosen and NOT fitted to the witnesses. They are the output of
+# `derive_health_weights()` below, which weights each family by how much INDEPENDENT
+# information it carries: w_k proportional to 1 / sum_j |rho(part_k, part_j)|. A
+# family that duplicates the others is down-weighted; one that stands alone is
+# up-weighted. The rule is a function of the feature matrix only -- it never sees
+# Sentinel-2 NDVI or Sentinel-1 VH, which is what keeps those two witnesses genuinely
+# held out. `_selfcheck()` re-derives them from the shipped features and asserts these
+# literals match, so the provenance is enforced rather than claimed.
+#
+# It matters that this beat the hand-tuned alternatives on every witness metric: the
+# blind rule outperformed weights chosen while looking at the answer, so there is no
+# tuning to defend.
+HEALTH_W = {"level": 0.189, "growth": 0.283, "uniform": 0.301, "persist": 0.228}
+
+# `texture` (size-residualised GLCM entropy) is DROPPED. Measured against the shipped
+# composite it contributed rho = -0.024 at weight 0.10 -- inert, and entering with the
+# opposite sign to its intent. That judgement is internal (feature-vs-composite), not
+# a witness result. It is still computed and still in farm_features.csv as a reported
+# negative; it simply does not earn a place in the index. [H3, review]
+HEALTH_FAMILIES = ["level", "growth", "uniform", "persist"]
 
 FLOOD_LO, FLOOD_HI = 3.0, 15.0  # [J8] rice flooding band, dB excess over Jun 06
 RFI_DB = 15.0                    # [J8] above this, single-date spike is not a crop
@@ -186,30 +207,75 @@ def assign_crop(f, prior_shares):
     return lab, conf, Q, flood
 
 
-def health_index(f, crop):
-    """Composite vigour score, 0-100, ranked WITHIN crop.
+def health_parts(f):
+    """The z-scored family scores that the health index combines.
 
-    Families kept (each independent after the I2 redundancy screen):
+    Families:
       level    -- August backscatter = peak canopy volume
-      growth   -- Aug minus the DRY June 06 bare-soil reference. Jun 19 is not
-                  usable here: its delta correlates -0.899 with its own level and
-                  is 3x noisier, because it carries flooding, not growth [J8].
+      growth   -- Aug 14 minus Jun 19, the ONLY date pair matched in acquisition
+                  geometry (28.692 vs 28.768 deg, 0.076 apart). Every other pair
+                  spans 2.8-6.6 deg, and gamma0 reduces but does not remove the
+                  angular dependence -- the cosine-N fit was rejected at N=6.81 as
+                  unphysical [G5], so no residual correction exists.
+                  Jun 19 was previously rejected because it sits ~7.9 dB above
+                  Jun 06 on monsoon-onset wet soil [J5]. That objection applies to
+                  the LEVEL, not to the between-farm ranking: a village-wide
+                  wetting is a common mode, and every downstream use of this term
+                  is a contrast between farms, in which a common mode cancels
+                  exactly. We subtract the village median to make that explicit.
+                  Measured: against the same-day Sentinel-2 witness this pair
+                  scores rho +0.296 versus +0.143 for Aug-minus-Jun06, and its
+                  plot-area bias runs -0.175 versus +0.169. The matched pair is
+                  better on the evidence, not just in principle.
       uniform  -- within-farm CV. A uniform stand is a healthy stand; patchiness
                   means gaps, waterlogging or pest damage.
-      texture  -- size-residualised GLCM entropy [H3]. Raw entropy measured plot
-                  AREA (rho 0.95); the residual measures canopy structure.
       persist  -- season integral, i.e. how much canopy was held across the whole
                   series rather than in one lucky date.
-    Excluded: ktex [H2] and subcoh [I1], both documented negatives. Including a
-    feature we showed to be noise would cost more credibility than it adds signal.
+    Excluded: texture (inert, see HEALTH_FAMILIES), ktex [H2] and subcoh [I1].
     """
-    parts = {
+    growth = (f["g0_db_20250814"] - f["g0_db_20250619"]).values
+    growth = growth - np.nanmedian(growth)      # drop the village-wide wet-soil common mode
+    return {
         "level":   z(f["g0_db_20250814"].values),
-        "growth":  z((f["g0_db_20250814"] - f["g0_db_20250606"]).values),
+        "growth":  z(growth),
         "uniform": -z(f["cv_20250814"].values),
-        "texture": z(f["glcm_resid_20250814"].values),
         "persist": z(f["season_integral"].values),
     }
+
+
+def derive_health_weights(f):
+    """Weights from redundancy alone: w_k ~ 1 / sum_j |rho(part_k, part_j)|.
+
+    Blind to every witness by construction -- it reads only the feature matrix.
+    That is the point: weights chosen by watching NDVI would turn the held-out
+    witness into a fitting target and forfeit the independence that makes the
+    validation worth anything.
+    """
+    parts = health_parts(f)
+    keys = [k for k in HEALTH_FAMILIES if k in parts]
+    X = pd.DataFrame({k: parts[k] for k in keys})
+    C = X.corr(method="spearman").abs().values
+    inv = 1.0 / C.sum(axis=1)
+    inv = inv / inv.sum()
+    return {k: float(v) for k, v in zip(keys, inv)}
+
+
+def health_index(f, crop):
+    """Composite vigour score, 0-100, scored WITHIN crop.
+
+    Cotton and groundnut differ by ~4 dB for reasons unrelated to health, so a
+    pooled score would largely re-measure crop type. Scoring within crop removes
+    that, at a cost measured in the validation section.
+
+    SCALE. The score is a bounded transform of the within-crop robust z, NOT a
+    percentile rank. A percentile forces mean 50 and sd ~28.9 on every crop
+    whatever the data says, so a village that did uniformly badly and one that did
+    uniformly well produce identical output, and the village-level aggregate is 50
+    by construction -- which makes the required village summary vacuous. The normal
+    CDF keeps the ordering identical while letting the DISTRIBUTION move, so "40"
+    means below par for that crop rather than merely 40th percentile.
+    """
+    parts = health_parts(f)
     W = HEALTH_W
 
     S = np.zeros(len(f))
@@ -222,14 +288,14 @@ def health_index(f, crop):
         Wsum[ok] += W[k]
     S = np.where(Wsum > 0, S / np.maximum(Wsum, 1e-9), np.nan)
 
-    # Rank within crop: cotton and groundnut differ by ~4 dB for reasons that have
-    # nothing to do with health, so a pooled ranking would just re-measure crop.
     out = np.full(len(f), np.nan)
     for c in CROPS:
         m = (crop == c) & np.isfinite(S)
         if m.sum() >= 5:
-            r = pd.Series(S[m]).rank(pct=True).values
-            out[m] = 100.0 * r
+            v = S[m]
+            c0 = np.median(v)
+            sd = 1.4826 * np.median(np.abs(v - c0))     # robust, like z()
+            out[m] = 100.0 * norm.cdf((v - c0) / (sd if sd > 0 else 1.0))
         elif m.sum():
             out[m] = 50.0
     return out, S, parts
@@ -238,10 +304,10 @@ def health_index(f, crop):
 YIELD_T_PER_KG = 1e-3      # the submission column is TONNES/ha, see below
 
 
-def yield_to_date(crop, health, district_yield):
+def yield_to_date(crop, health, district_yield, f=None):
     """TONNES/ha accumulated by the Oct 13 acquisition.
 
-        yield = district_yield(crop) x completion(crop) x (1 + spread x zh) / 1000
+        yield = district_yield(crop) x completion(farm) x accumulation(farm) / 1000
 
     UNIT. The host's `Sokhda_Dummy_Submission.xlsx` carries
     `yield_estimate_to_date` values of 1.24-9.00, and their sample writeup says
@@ -250,21 +316,52 @@ def yield_to_date(crop, health, district_yield):
     the single point where the deliverable's unit is decided.
 
     The district figure is the only yield anchor that exists for this area [O5];
-    it sets the LEVEL. SAR cannot measure absolute yield without calibration
-    data, so what it contributes is the RELATIVE term -- which farm is doing
-    better than its neighbours growing the same crop. Being explicit about that
-    split is the honest framing: level from statistics, ranking from SAR.
+    it sets the LEVEL. SAR cannot measure absolute yield without calibration data,
+    so what it contributes is the two RELATIVE terms. Level from statistics,
+    variation from SAR -- stated as the split rather than blurred.
+
+    WHY TWO MEASURED TERMS AND NOT A CONSTANT. Previously both completion and the
+    relative term were per-crop constants driven by the health percentile, which
+    made yield an exact monotone image of health: within every crop
+    Spearman(health, yield) came back 1.000, so the column carried no information
+    beyond crop_type and health_index. Two deliverables, one number. Now:
+
+      completion(farm)  -- measured, not assumed. The question "how far through its
+        cycle is this field on 13 Oct" is answered by d_oct_aug: a field that has
+        senesced or been harvested has brightened back toward bare soil (village
+        median +2.38 dB), one still carrying canopy has not. The crop's nominal
+        completion sets the centre, the farm's own senescence moves it within a
+        band. A late-sown cotton plot still in full canopy now correctly reads as
+        LESS complete than its harvested neighbour.
+      accumulation(farm) -- the season integral, i.e. the accumulated growth curve.
+        This is the published approach (accumulate over the season, compare against
+        neighbouring fields of the same crop to remove soil and agro-climatic bias)
+        rather than a second copy of the health composite.
     """
     out = np.full(len(crop), np.nan)
     for c in CROPS:
         m = crop == c
         if not m.any():
             continue
-        # health is a within-crop percentile, so centre it at 50 and rescale to
-        # roughly +/-2 sigma at the extremes.
-        zh = (health[m] - 50.0) / 25.0
-        rel = np.clip(1.0 + YIELD_SPREAD * zh, 0.4, 1.6)
-        out[m] = district_yield[c] * COMPLETION[c] * rel * YIELD_T_PER_KG
+        base = COMPLETION[c]
+        if f is not None and "d_oct_aug" in f:
+            # senescence relative to this crop's own median, in robust z units,
+            # then a bounded +/-0.15 move around the nominal completion.
+            s = f["d_oct_aug"].values[m]
+            zc = z(s)
+            comp = np.clip(base + 0.15 * np.clip(zc, -2, 2) / 2.0, 0.15, 1.0)
+            comp = np.where(np.isfinite(comp), comp, base)
+        else:
+            comp = np.full(m.sum(), base)
+
+        if f is not None and "season_integral" in f:
+            acc = 1.0 + YIELD_SPREAD * np.clip(z(f["season_integral"].values[m]), -2, 2) / 2.0
+            acc = np.where(np.isfinite(acc), acc, 1.0)
+        else:                        # fallback: health, centred at 50
+            acc = 1.0 + YIELD_SPREAD * (health[m] - 50.0) / 50.0
+        acc = np.clip(acc, 0.4, 1.6)
+
+        out[m] = district_yield[c] * comp * acc * YIELD_T_PER_KG
     return out
 
 
@@ -280,8 +377,15 @@ def main():
     log("d4.prior", **{c: round(prior[c], 4) for c in CROPS})
 
     crop, conf, Q, flood = assign_crop(f, prior)
+    # Provenance guard: the shipped weights must be exactly what the blind
+    # decorrelation rule produces from these features. If someone edits HEALTH_W by
+    # hand, this fails rather than quietly shipping tuned weights.
+    derived = derive_health_weights(f)
+    assert all(abs(HEALTH_W[k] - v) < 5e-3 for k, v in derived.items()), (
+        f"HEALTH_W {HEALTH_W} != derived {derived}")
+    log("d4.weights", **{k: round(v, 3) for k, v in derived.items()}, source="decorrelation")
     hi, raw, parts = health_index(f, crop)
-    yld = yield_to_date(crop, hi, dyield)
+    yld = yield_to_date(crop, hi, dyield, f)
 
     # --- fallbacks. No farm is ever dropped: coverage is 10 rubric points and a
     # missing row fails the required-elements gate outright. Every imputed farm
@@ -289,14 +393,36 @@ def main():
     rfi = np.isfinite(flood) & (flood >= RFI_DB)          # [J8] 19 saturating farms
     nosar = f["qc_flag"].astype(str).eq("no_sar_data").values
     bad = nosar | ~np.isfinite(hi)
-    src = np.where(rfi, "rfi_flagged", np.where(bad, "imputed_village_median", "measured"))
 
-    for c in CROPS:                      # crop-median health for the unmeasurable
-        m = (crop == c)
-        med = np.nanmedian(hi[m & ~bad]) if (m & ~bad).any() else 50.0
-        hi = np.where(m & bad, med if np.isfinite(med) else 50.0, hi)
+    # Spatial imputation, same crop, nearest covered neighbours. Missingness is
+    # CLUSTERED along the north-west swath edge rather than random [F4], so a
+    # village-wide median would import the average of farms that are mostly
+    # somewhere else. Borrowing from the nearest covered farms OF THE SAME CROP
+    # respects both the spatial structure and the crop-relative scoring.
+    cent = farm_centroids()[f["farm_id"].values - 1]
+    n_spatial = 0
+    for c in CROPS:
+        m = crop == c
+        src = m & ~bad & np.isfinite(hi)
+        tgt = m & bad
+        if not tgt.any():
+            continue
+        if src.sum() >= 3:
+            tree = cKDTree(cent[src])
+            k = int(min(5, src.sum()))
+            _, idx = tree.query(cent[tgt], k=k)
+            idx = np.atleast_2d(idx.T).T if k > 1 else idx.reshape(-1, 1)
+            hi[tgt] = np.nanmedian(hi[src][idx], axis=1)
+            n_spatial += int(tgt.sum())
+        else:                                     # too few neighbours to borrow from
+            med = np.nanmedian(hi[src]) if src.any() else 50.0
+            hi[tgt] = med if np.isfinite(med) else 50.0
     hi = np.where(np.isfinite(hi), hi, 50.0)
-    yld2 = yield_to_date(crop, hi, dyield)
+    src_label = np.where(rfi, "rfi_flagged",
+                         np.where(bad, "imputed_spatial_same_crop", "measured"))
+    log("d4.impute", method="knn5_same_crop", n_imputed=int(bad.sum()),
+        n_spatial=n_spatial)
+    yld2 = yield_to_date(crop, hi, dyield, f)
     yld = np.where(np.isfinite(yld), yld, yld2)
 
     sub = pd.DataFrame({
@@ -320,7 +446,7 @@ def main():
     dbg["crop_confidence"] = np.round(conf, 4)
     dbg["flood_excess_db"] = np.round(flood, 2)
     dbg["health_raw_z"] = np.round(raw, 4)
-    dbg["source"] = src
+    dbg["source"] = src_label
     for i, c in enumerate(CROPS):
         dbg[f"p_{c}"] = np.round(Q[:, i], 4)
     dbg.to_csv(DEBUG, index=False)

@@ -83,6 +83,46 @@ def db(x):
     return np.where(x > 0, 10.0 * np.log10(np.where(x > 0, x, 1.0)), np.nan)
 
 
+def farm_centroids():
+    """Farm centroids in UTM 43N (EPSG:32643), row i = FID i+1.
+
+    pyshp + pyproj only, deliberately no geopandas: this is used by the submission
+    path and by the validation harness, and a dependency that is missing in one
+    environment silently disables spatial imputation in the other.
+
+    Area-weighted shoelace centroid summed over parts, so the 13 multipart farms
+    land in the right place; degenerate rings fall back to the vertex mean.
+    """
+    import numpy as np
+    import shapefile
+    from pyproj import Transformer
+
+    sf = shapefile.Reader(str(FARMS))
+    tf = Transformer.from_crs(4326, 32643, always_xy=True)
+    recs = sf.records()
+    out = np.full((len(recs), 2), np.nan)
+    for shp, rec in zip(sf.shapes(), recs):
+        pts = np.asarray(shp.points, "float64")
+        x, y = tf.transform(pts[:, 0], pts[:, 1])
+        parts = list(shp.parts) + [len(x)]
+        cx = cy = wsum = 0.0
+        for a, b in zip(parts[:-1], parts[1:]):
+            px, py = x[a:b], y[a:b]
+            if len(px) < 3:
+                continue
+            cr = px * np.roll(py, -1) - np.roll(px, -1) * py
+            A = cr.sum() / 2.0
+            if abs(A) < 1e-9:
+                continue
+            cx += ((px + np.roll(px, -1)) * cr).sum() / (6 * A) * abs(A)
+            cy += ((py + np.roll(py, -1)) * cr).sum() / (6 * A) * abs(A)
+            wsum += abs(A)
+        i = int(rec["FID"]) - 1
+        out[i] = (cx / wsum, cy / wsum) if wsum > 0 else (x.mean(), y.mean())
+    assert np.isfinite(out).all(), "every farm needs a centroid"
+    return out
+
+
 def _selfcheck():
     import numpy as np
     assert np.isnan(db(0.0)), "db(0) must be nan, not -inf"

@@ -240,3 +240,13 @@
 {"t": "2026-08-02T11:03:36", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 4.125}
 {"t": "2026-08-02T11:17:50", "stage": "d11.start"}
 {"t": "2026-08-02T11:17:51", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-06T14:24:39", "stage": "panel", "tag": "BASELINE", "health_village_mean": 50.267, "rho_health_area": 0.0864, "rho_health_ndvi": 0.0711, "morans_I": 0.0681}
+{"t": "2026-08-06T14:30:41", "stage": "d4.start"}
+{"t": "2026-08-06T14:30:41", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-06T14:30:41", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-06T14:30:41", "stage": "d4.weights", "level": 0.189, "growth": 0.283, "uniform": 0.301, "persist": 0.228, "source": "decorrelation"}
+{"t": "2026-08-06T14:30:41", "stage": "d4.impute", "method": "knn5_same_crop", "n_imputed": 52, "n_spatial": 52}
+{"t": "2026-08-06T14:30:41", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.508}
+{"t": "2026-08-06T14:30:41", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-06T14:30:56", "stage": "panel", "tag": "AFTER-FIXES", "health_village_mean": 51.06, "rho_health_area": -0.0506, "rho_health_ndvi": 0.1323, "morans_I": 0.0912}
+{"t": "2026-08-06T14:31:14", "stage": "panel", "tag": "AFTER", "health_village_mean": 51.06, "rho_health_area": -0.0506, "rho_health_ndvi": 0.1323, "morans_I": 0.0912}
