@@ -322,3 +322,20 @@
 {"t": "2026-08-06T14:59:16", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
 {"t": "2026-08-06T14:59:44", "stage": "d11.start"}
 {"t": "2026-08-06T14:59:44", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-06T15:22:09", "stage": "ext.start", "lon": 73.1577, "lat": 22.4257}
+{"t": "2026-08-06T15:22:16", "stage": "ext.lulc", "year": "2017", "mean_crop_frac": 0.973}
+{"t": "2026-08-06T15:22:17", "stage": "ext.lulc", "year": "2018", "mean_crop_frac": 0.969}
+{"t": "2026-08-06T15:22:18", "stage": "ext.lulc", "year": "2019", "mean_crop_frac": 0.97}
+{"t": "2026-08-06T15:22:19", "stage": "ext.lulc", "year": "2020", "mean_crop_frac": 0.959}
+{"t": "2026-08-06T15:22:20", "stage": "ext.lulc", "year": "2021", "mean_crop_frac": 0.964}
+{"t": "2026-08-06T15:22:22", "stage": "ext.lulc", "year": "2022", "mean_crop_frac": 0.96}
+{"t": "2026-08-06T15:22:24", "stage": "ext.lulc", "year": "2023", "mean_crop_frac": 0.946}
+{"t": "2026-08-06T15:22:24", "stage": "ext.done", "never_cropland": 17, "rho_health_cropfrac": 0.04}
+{"t": "2026-08-06T15:23:34", "stage": "d11.start"}
+{"t": "2026-08-06T15:23:34", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-06T15:24:12", "stage": "d11.start"}
+{"t": "2026-08-06T15:24:12", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-06T15:24:49", "stage": "d11.start"}
+{"t": "2026-08-06T15:24:49", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-06T15:25:21", "stage": "d11.start"}
+{"t": "2026-08-06T15:25:21", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
