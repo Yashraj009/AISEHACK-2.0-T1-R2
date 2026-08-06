@@ -254,3 +254,32 @@
 {"t": "2026-08-06T14:32:49", "stage": "rice.independence", "leave_out_rice_rate": 1.2, "leave_out_base": 0.1, "agreement": 0.607, "vh_p": "5.21e-07"}
 {"t": "2026-08-06T14:33:47", "stage": "rice.independence", "margin_p": "3.78e-01", "margin_med_flooded": -15.494, "margin_med_other": -14.569, "vh_p": "5.21e-07"}
 {"t": "2026-08-06T14:34:14", "stage": "rice.independence", "margin_p": "3.78e-01", "margin_med_flooded": -0.557, "margin_med_other": -0.601, "vh_rice_med": -15.49, "vh_other_med": -14.57, "vh_p": "5.21e-07"}
+{"t": "2026-08-06T14:36:26", "stage": "indep.s2", "month": "jun", "item": "S2C_MSIL2A_20250610T053701_R005_T43QBE_20250610T091905", "n": 966, "n_items": 2}
+{"t": "2026-08-06T14:37:19", "stage": "indep.s1", "month": "jun", "n_scenes": 2, "vh_med": -14.25}
+{"t": "2026-08-06T14:37:20", "stage": "indep.s2", "month": "jul", "item": null, "n": 0, "n_items": 0}
+{"t": "2026-08-06T14:38:45", "stage": "indep.s1", "month": "jul", "n_scenes": 3, "vh_med": -13.34}
+{"t": "2026-08-06T14:38:45", "stage": "indep.s2", "month": "aug", "item": null, "n": 0, "n_items": 0}
+{"t": "2026-08-06T14:39:10", "stage": "indep.s1", "month": "aug", "n_scenes": 1, "vh_med": -13.81}
+{"t": "2026-08-06T14:39:11", "stage": "indep.s2", "month": "sep", "item": null, "n": 0, "n_items": 0}
+{"t": "2026-08-06T14:40:28", "stage": "indep.s1", "month": "sep", "n_scenes": 3, "vh_med": -14.91}
+{"t": "2026-08-06T14:40:34", "stage": "indep.s2", "month": "oct", "item": "S2C_MSIL2A_20251018T053841_R005_T43QBE_20251018T085916", "n": 966, "n_items": 9}
+{"t": "2026-08-06T14:41:26", "stage": "indep.s1", "month": "oct", "n_scenes": 2, "vh_med": -14.88}
+{"t": "2026-08-06T14:41:31", "stage": "indep.s2", "month": "nov", "item": "S2A_MSIL2A_20251109T054251_R005_T43QBE_20251109T090809", "n": 966, "n_items": 14}
+{"t": "2026-08-06T14:43:02", "stage": "indep.s1", "month": "nov", "n_scenes": 3, "vh_med": -14.68}
+{"t": "2026-08-06T14:43:02", "stage": "indep.fetch_done", "path": "independent_features.csv", "cols": 19}
+{"t": "2026-08-06T14:43:02", "stage": "indep.compare", "agree_farm": 0.371, "agree_area": 0.372}
+{"t": "2026-08-06T14:44:01", "stage": "indep.s2", "month": "jun", "item": "S2C_MSIL2A_20250610T053701_R005_T43QBE_20250610T091905", "n_clear": 966, "n_items": 8, "cloud": 21.3}
+{"t": "2026-08-06T14:44:53", "stage": "indep.s1", "month": "jun", "n_scenes": 2, "vh_med": -14.25}
+{"t": "2026-08-06T14:45:00", "stage": "indep.s2", "month": "jul", "item": null, "n_clear": 0, "n_items": 1, "cloud": 92.6}
+{"t": "2026-08-06T14:46:05", "stage": "indep.s1", "month": "jul", "n_scenes": 3, "vh_med": -13.34}
+{"t": "2026-08-06T14:46:43", "stage": "indep.s2", "month": "aug", "item": "S2B_MSIL2A_20250804T053639_R005_T43QBE_20250804T074009", "n_clear": 893, "n_items": 6, "cloud": 84.9}
+{"t": "2026-08-06T14:46:56", "stage": "indep.s1", "month": "aug", "n_scenes": 1, "vh_med": -13.81}
+{"t": "2026-08-06T14:47:58", "stage": "indep.s2", "month": "sep", "item": "S2B_MSIL2A_20250913T053639_R005_T43QBE_20250913T074825", "n_clear": 830, "n_items": 12, "cloud": 35.5}
+{"t": "2026-08-06T14:49:15", "stage": "indep.s1", "month": "sep", "n_scenes": 3, "vh_med": -14.91}
+{"t": "2026-08-06T14:49:22", "stage": "indep.s2", "month": "oct", "item": "S2C_MSIL2A_20251018T053841_R005_T43QBE_20251018T085916", "n_clear": 966, "n_items": 14, "cloud": 0.0}
+{"t": "2026-08-06T14:50:12", "stage": "indep.s1", "month": "oct", "n_scenes": 2, "vh_med": -14.88}
+{"t": "2026-08-06T14:50:24", "stage": "indep.s2", "month": "nov", "item": "S2B_MSIL2A_20251112T053959_R005_T43QCE_20251112T074332", "n_clear": 954, "n_items": 16, "cloud": 0.0}
+{"t": "2026-08-06T14:51:45", "stage": "indep.s1", "month": "nov", "n_scenes": 3, "vh_med": -14.68}
+{"t": "2026-08-06T14:51:45", "stage": "indep.fetch_done", "path": "independent_features.csv", "cols": 19}
+{"t": "2026-08-06T14:51:45", "stage": "indep.compare", "agree_farm": 0.366, "agree_area": 0.374}
+{"t": "2026-08-06T14:52:26", "stage": "indep.compare", "agree_farm": 0.366, "agree_area": 0.374, "kappa": 0.073, "agree_hiconf": 0.451, "agree_loconf": 0.282}
