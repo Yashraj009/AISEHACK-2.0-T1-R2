@@ -534,3 +534,8 @@
 {"t": "2026-08-11T20:02:11", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
 {"t": "2026-08-11T20:03:09", "stage": "upload.package", "size_mb": 173.8, "figures": 8}
 {"t": "2026-08-11T20:03:45", "stage": "upload.package", "size_mb": 173.8, "figures": 8}
+{"t": "2026-08-11T21:24:27", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T21:24:28", "stage": "d11.start"}
+{"t": "2026-08-11T21:24:28", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-11T22:04:57", "stage": "d11.start"}
+{"t": "2026-08-11T22:04:57", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}

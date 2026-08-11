@@ -534,6 +534,39 @@ Logged as Phase S [S1]–[S4].
 
 ---
 
+### Session — 2026-08-11: external yield witness, closed negative
+
+Chased the last open lead (an external check on `yield_estimate_to_date`, the one
+deliverable with no witness). Two negative results, both measured, both worth recording
+so nobody re-runs them.
+
+**1. PMFBY crop-cutting-experiment yield is officially gated.**
+Extracted the two React bundles behind `pmfby.gov.in` (15 MB) and recovered the API
+surface: `/cce/iu_wise_yield_acceptance`, `/yield/yieldIUMapping`, `/common/historicalYield`,
+`/reports/ccereport`. The Insurance Unit in Gujarat *is* the village, so the granularity
+would have been exactly right. But `GET /common/historicalYield` returns
+
+    401 {"status":false,"error":"unauthorized","data":{"login":false}}
+
+and every other path returns the SPA catch-all shell. An earlier note in this project
+recorded `reportPortal` / `cceAdmin` as "HTTP 200"; that was **the shell, not data** —
+on this site a 200 carries no information. The public `Reports` menu resolves to a single
+PDF compendium and the Graphical Dashboard issues no data requests at all. CCE yield needs
+a state-officer or insurer login. Closed.
+
+**2. Comparing our medians to published APY is not an independent check.**
+Official Gujarat kharif 2024-25 First Advance Estimates (DES, DA&FW) are: rice 2537.97,
+bajra 1786.66, maize 2022.15, groundnut 3026.31 kg/ha, cotton 634.83 kg/ha lint. Tempting
+as a benchmark — but the *Vadodara district* APY figure is already the model's LEVEL input
+(`data_aux/vadodara_apy.csv`), so the ratio just returns the season-completion constant:
+bajra 2.572 / 2.714 = 0.95 = `COMPLETION["Bajra"]`, exactly. `check_yield.py` already
+states this. Publishing it as external validation would have been circular. Rejected.
+
+**Conclusion.** The yield column has no obtainable external witness, and that is now a
+measured statement rather than an assumption. The two per-farm terms remain falsifiable
+and are tested in `check_yield.py`; the level term is an acknowledged input. No change to
+any shipped number.
+
 ## Upload checklist — the only work left, and it is manual
 
 | # | artefact | where it is |
