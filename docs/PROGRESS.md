@@ -567,6 +567,44 @@ measured statement rather than an assumption. The two per-farm terms remain fals
 and are tested in `check_yield.py`; the level term is an acknowledged input. No change to
 any shipped number.
 
+### Session — 2026-08-11b: a witness of the right SHAPE for the yield term
+
+The remaining weak point was Validity on `yield_estimate_to_date`. Found the flaw by
+reading our own test rather than hunting for more data: `check_yield.py` tested
+`season_integral` — a 12 Jun–13 Oct integral — against **single-date** witnesses
+(`s2_ndvi_20251013`, `s1_vh_db`). Integral vs instant is the wrong comparison, which is
+exactly why that test read "mixed": for a crop harvested before October the witness is
+looking at soil and cannot testify about July.
+
+**Cumulative NDVI, the textbook fix, is impossible here.** Re-read our own
+`why_xband_optical.csv`: Sentinel-2 scenes under 20% cloud number **0 in June, 0 in July,
+0 in August, 0 in September** (best July scene 92.6% cloud). The whole accumulation period
+has no optical record. Recorded as a rejected approach, not skipped silently.
+
+**So the witness was built from the sensor that did see it.** `src/witness_season.py`:
+**10 Sentinel-1 RTC scenes, 12 Jun – 10 Oct, every one relative orbit 34 descending**, so
+one geometry all season and no incidence-angle confound. Integrated with the *same*
+trapezoid over day-of-year in linear power that `farm_stats.py` uses — integral against
+integral. 956/966 farms carry a complete series.
+
+**Verdict, shipped as measured:**
+
+| crop | ρ(season_integral, ∫C-VH) | p |
+|---|--:|--:|
+| Cotton (n=399) | **+0.305** | 5×10⁻¹⁰ |
+| Rice | **+0.290** | 0.007 |
+| Maize | +0.058 | 0.68 |
+| Groundnut | −0.087 | 0.20 |
+| Bajra | **−0.219** | 0.008 |
+
+Corroborated for the two crops covering most of the village, null for two, and
+**contradicted for bajra**. Reported as-is; nothing was retuned on one witness.
+
+Also: `check_writeup.py` now recomputes all three quoted correlations *including sign*
+(13/13 PASS), and `gallery_8_season_witness.png` shows the per-crop C-band phenology
+beside the empty optical record. Executing the notebook caught a real bug in the new cell
+(`m` has no `season_integral`) — fixed before commit.
+
 ## Upload checklist — the only work left, and it is manual
 
 | # | artefact | where it is |

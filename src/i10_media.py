@@ -381,6 +381,62 @@ def fig_yield(g, sub, dbg):
     plt.close(fig)
 
 
+def fig_season_witness(sub):
+    """The season C-band saw and optical did not, split by crop.
+
+    Two things at once: the per-crop phenology that justifies the matched witness, and
+    the reason it had to be radar. Optical usable-scene counts come from the same
+    measurement `why_xband.py` makes, so the two figures cannot drift apart.
+    """
+    sp = RESULTS / "witness_season.csv"
+    if not sp.exists():
+        return None
+    w = pd.read_csv(sp)
+    cols = [c for c in w.columns if c.startswith("s1_vh_db_2025")]
+    dates = pd.to_datetime([c.split("_")[-1] for c in cols])
+    m = sub.merge(w, on="farm_id")
+
+    fig, ax = plt.subplots(1, 2, figsize=(12, 4.3),
+                           gridspec_kw={"width_ratios": [1.35, 1]})
+    colours = {"Cotton": "#0ea5e9", "Rice": "#16a34a", "Maize": "#f59e0b",
+               "Bajra": "#a855f7", "Groundnut": "#ef4444"}
+    for c in CROPS:
+        s = m[m.crop_type == c]
+        if len(s) < 20:
+            continue
+        ax[0].plot(dates, [s[col].median() for col in cols], "-o", ms=3.5, lw=1.6,
+                   color=colours.get(c, "#666"), label=f"{c} (n={len(s)})")
+    ax[0].set_ylabel("Sentinel-1 C-band VH (dB), farm median")
+    ax[0].set_title("The season C-band observed — 10 scenes, one orbit", loc="left")
+    ax[0].legend(frameon=False, fontsize=8.5, ncol=2)
+    ax[0].tick_params(axis="x", rotation=30)
+
+    # The optical record over the same window, as counted by why_xband.py
+    opt = RESULTS / "why_xband_optical.csv"
+    if opt.exists():
+        o = pd.read_csv(opt)
+        x = np.arange(len(o))
+        ax[1].bar(x - 0.2, o.scenes, 0.4, label="S2 revisits", color="#cbd5e1")
+        ax[1].bar(x + 0.2, o.usable, 0.4, label="usable (<20% cloud)", color="#0ea5e9")
+        ax[1].set_xticks(x); ax[1].set_xticklabels([mm[-2:] for mm in o.month])
+        ax[1].set_xlabel("month of 2025")
+        ax[1].set_ylabel("scenes")
+        ax[1].set_ylim(0, max(o.scenes) * 1.45)
+        ax[1].legend(frameon=False, fontsize=9, loc="upper left")
+        ax[1].set_title("The same season, optically: nothing until October", loc="left")
+        ax[1].text(0.5, 0.62, "0 usable scenes\nJun–Sep", transform=ax[1].transAxes,
+                   ha="center", fontsize=11, color="#b91c1c", fontweight="bold")
+
+    # The rotated date labels on the left panel occupy the strip just under the axes,
+    # so the caption has to clear them rather than sit at the usual -0.04.
+    fig.text(0.5, -0.16, "Why the yield accumulation term is witnessed in C-band and not "
+             "in cumulative NDVI: the optical record for the accumulation period is empty.",
+             ha="center", fontsize=9, color="#555")
+    p = FIGURES / "gallery_8_season_witness.png"
+    fig.savefig(p); plt.close(fig)
+    return p
+
+
 def main():
     log("i10.start")
     g, sub, dbg, f, wit = load()
@@ -391,6 +447,7 @@ def main():
     fig_robust(f, sub, dbg);        log("i10.fig", name="4_robustness")
     fig_negatives(f);               log("i10.fig", name="5_negatives")
     fig_yield(g, sub, dbg);         log("i10.fig", name="6_yield")
+    if fig_season_witness(sub):     log("i10.fig", name="8_season_witness")
     out = sorted(p.name for p in FIGURES.glob("cover.png")) + \
         sorted(p.name for p in FIGURES.glob("gallery_*.png"))
     log("i10.done", figures=len(out))

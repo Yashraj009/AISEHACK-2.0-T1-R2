@@ -79,6 +79,22 @@ def main():
 
     check("crop vocabulary", not (set(sub.crop_type) - set(CROPS)))
 
+    # The matched season-integrated witness. The writeup quotes three signed numbers and
+    # calls one of them a contradiction; recompute all three, including the sign, so a
+    # later change to the witness or the feature cannot leave the prose asserting the
+    # opposite of the data.
+    sp = RESULTS / "witness_season.csv"
+    if sp.exists():
+        ms = m.merge(pd.read_csv(sp), on="farm_id")
+        for c, want in [("Cotton", 0.305), ("Rice", 0.290), ("Bajra", -0.219)]:
+            g = ms[ms.crop_type == c]
+            ok = np.isfinite(g.season_integral) & np.isfinite(g.s1_vh_season_integral)
+            got = float(spearmanr(g.season_integral[ok], g.s1_vh_season_integral[ok]).statistic)
+            check(f"matched witness {c}",
+                  abs(got - want) < 0.01 and np.sign(got) == np.sign(want)
+                  and f"{abs(want):.3f}" in w,
+                  f"{got:+.3f} (writeup {want:+.3f})")
+
     print()
     if FAILED:
         print(f"{len(FAILED)} MISMATCH(ES): " + "; ".join(FAILED))

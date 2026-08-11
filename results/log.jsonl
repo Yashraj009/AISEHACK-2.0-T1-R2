@@ -539,3 +539,71 @@
 {"t": "2026-08-11T21:24:28", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
 {"t": "2026-08-11T22:04:57", "stage": "d11.start"}
 {"t": "2026-08-11T22:04:57", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-11T23:25:40", "stage": "witness_season.start"}
+{"t": "2026-08-11T23:25:43", "stage": "witness_season.scenes", "relative_orbit": 34, "n": 10, "first": "2025-06-12", "last": "2025-10-10"}
+{"t": "2026-08-11T23:26:47", "stage": "witness_season.done", "dates": 10, "farms_with_integral": 956, "span_days": 120.0, "used": "2025-06-12,2025-06-24,2025-07-06,2025-07-18,2025-07-30,2025-08-23,2025-09-04,2025-09-16,2025-09-28,2025-10-10"}
+{"t": "2026-08-11T23:27:06", "stage": "check_yield.matched_witness", "positive": 3, "significant": 2, "Rice": 0.29, "Cotton": 0.305, "Maize": 0.058, "Bajra": -0.219, "Groundnut": -0.087}
+{"t": "2026-08-11T23:27:06", "stage": "check_yield", "completion_all_positive": true, "rho_health_yield_cotton": 0.541, "rho_yield_area": 0.115}
+{"t": "2026-08-11T23:28:38", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T23:28:49", "stage": "d11.start"}
+{"t": "2026-08-11T23:28:51", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:29:31", "stage": "d11.start"}
+{"t": "2026-08-11T23:29:32", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:30:46", "stage": "d11.start"}
+{"t": "2026-08-11T23:30:47", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:31:50", "stage": "d11.start"}
+{"t": "2026-08-11T23:31:50", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:32:47", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T23:32:50", "stage": "d11.start"}
+{"t": "2026-08-11T23:32:50", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:33:19", "stage": "d11.start"}
+{"t": "2026-08-11T23:33:20", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:34:19", "stage": "d11.start"}
+{"t": "2026-08-11T23:34:20", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:34:41", "stage": "d11.start"}
+{"t": "2026-08-11T23:34:42", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:35:08", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T23:35:10", "stage": "d11.start"}
+{"t": "2026-08-11T23:35:12", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:35:29", "stage": "d11.start"}
+{"t": "2026-08-11T23:35:30", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:35:50", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T23:35:52", "stage": "d11.start"}
+{"t": "2026-08-11T23:35:53", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T23:36:16", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T23:36:18", "stage": "d11.start"}
+{"t": "2026-08-11T23:36:19", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-11T23:38:11", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-11T23:38:47", "stage": "witness_season.start"}
+{"t": "2026-08-11T23:38:48", "stage": "witness_season.scenes", "relative_orbit": 34, "n": 10, "first": "2025-06-12", "last": "2025-10-10"}
+{"t": "2026-08-11T23:39:32", "stage": "witness_season.done", "dates": 10, "farms_with_integral": 956, "span_days": 120.0, "used": "2025-06-12,2025-06-24,2025-07-06,2025-07-18,2025-07-30,2025-08-23,2025-09-04,2025-09-16,2025-09-28,2025-10-10"}
+{"t": "2026-08-11T23:39:33", "stage": "check_yield.matched_witness", "positive": 3, "significant": 2, "Rice": 0.29, "Cotton": 0.305, "Maize": 0.058, "Bajra": -0.219, "Groundnut": -0.087}
+{"t": "2026-08-11T23:39:33", "stage": "check_yield", "completion_all_positive": true, "rho_health_yield_cotton": 0.541, "rho_yield_area": 0.115}
+{"t": "2026-08-11T23:40:26", "stage": "i10.start"}
+{"t": "2026-08-11T23:40:28", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-11T23:40:28", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-11T23:40:28", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-11T23:40:29", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-11T23:40:30", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-11T23:40:30", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-11T23:40:31", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-11T23:40:31", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-11T23:40:31", "stage": "i10.done", "figures": 9}
+{"t": "2026-08-11T23:41:06", "stage": "i10.start"}
+{"t": "2026-08-11T23:41:07", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-11T23:41:07", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-11T23:41:08", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-11T23:41:08", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-11T23:41:09", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-11T23:41:10", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-11T23:41:10", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-11T23:41:10", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-11T23:41:10", "stage": "i10.done", "figures": 9}
+{"t": "2026-08-11T23:41:29", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-11T23:41:41", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T23:41:59", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T23:42:00", "stage": "check_yield.matched_witness", "positive": 3, "significant": 2, "Rice": 0.29, "Cotton": 0.305, "Maize": 0.058, "Bajra": -0.219, "Groundnut": -0.087}
+{"t": "2026-08-11T23:42:00", "stage": "check_yield", "completion_all_positive": true, "rho_health_yield_cotton": 0.541, "rho_yield_area": 0.115}
+{"t": "2026-08-11T23:42:01", "stage": "d11.start"}
+{"t": "2026-08-11T23:42:01", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-11T23:42:10", "stage": "upload.package", "size_mb": 174.0, "figures": 9}

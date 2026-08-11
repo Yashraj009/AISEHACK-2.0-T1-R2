@@ -88,14 +88,42 @@ def main():
     print("=" * 74)
     print("2. DOES THE ACCUMULATION TERM TRACK BIOMASS?")
     print("=" * 74)
+    # The two single-date witnesses are the WRONG SHAPE for this term: season_integral
+    # runs 12 Jun - 13 Oct and they are instants. The matched witness is a season
+    # integral built the same way from a sensor that is not ours -- see witness_season.py.
+    # Cumulative NDVI, the textbook choice, is impossible here: Sokhda had ZERO
+    # Sentinel-2 scenes under 20% cloud in June, July, August or September, so the whole
+    # accumulation period has no optical record. C-band saw it; optical did not.
+    sp = RESULTS / "witness_season.csv"
+    matched = pd.read_csv(sp) if sp.exists() else None
+    if matched is not None:
+        m = m.merge(matched, on="farm_id", how="left")
+    print("  single-date witnesses (wrong shape for an integral), then the matched one:\n")
+    hdr = f"    {'crop':11s} {'vs NDVI':>9} {'vs C-VH':>9}"
+    print(hdr + (f" {'vs INT C-VH':>12} {'p':>9}" if matched is not None else ""))
+    rows = []
     for c in CROPS:
         g = m[m.crop_type == c]
         r1, p1, n = rho(g.season_integral, g.s2_ndvi_20251013)
         r2, _, _ = rho(g.season_integral, g.s1_vh_db)
-        print(f"    {c:11s} vs NDVI {r1:+.3f}   vs C-VH {r2:+.3f}   n {n:4d}")
-    print("  Mixed, and honestly so: it is strongest for crops still carrying canopy in")
-    print("  October and weak-to-negative for harvested ones, where both witnesses are")
-    print("  measuring soil rather than plants.")
+        line = f"    {c:11s} {r1:+9.3f} {r2:+9.3f}"
+        if matched is not None:
+            r3, p3, n3 = rho(g.season_integral, g.s1_vh_season_integral)
+            line += f" {r3:+12.3f} {p3:9.1e}"
+            rows.append((c, r3, p3, n3))
+        print(line + f"   n {n:4d}")
+    print("\n  Against the single-date witnesses this reads mixed, and honestly so: for a")
+    print("  crop harvested before October both are looking at soil, so they cannot")
+    print("  testify about what accumulated in July. The season-integrated C-band column")
+    print("  is the like-for-like test -- integral against integral, same trapezoid, a")
+    print("  different satellite, band, polarisation and geometry.")
+    if rows:
+        pos = sum(1 for _, r, _, _ in rows if np.isfinite(r) and r > 0)
+        sig = sum(1 for _, r, p, _ in rows if np.isfinite(r) and r > 0 and p < 0.05)
+        print(f"\n  Matched witness: positive in {pos}/{len(rows)} crops, "
+              f"significant at p<0.05 in {sig}/{len(rows)}.")
+        log("check_yield.matched_witness", positive=pos, significant=sig,
+            **{c: round(float(r), 3) for c, r, _, _ in rows})
 
     print()
     print("=" * 74)
