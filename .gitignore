@@ -7,3 +7,6 @@ data_aux/ground_truth_vf12.csv
 data_aux/.kdss_token
 data_aux/*token*
 .env
+
+# staged upload artefacts are regenerable from src/make_upload_package.py
+upload/
