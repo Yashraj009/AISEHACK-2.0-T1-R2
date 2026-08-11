@@ -73,7 +73,13 @@ def cover(g):
 
     g.plot(ax=ax[1], column="health_index", cmap="RdYlGn", vmin=0, vmax=100,
            edgecolor="white", linewidth=0.15)
+    # Say "within crop" on the figure. The diverging ramp centres at 50, so without
+    # this a reader sees half the village in red and infers half the village is failing.
+    # The score is relative to each crop's own median -- 40 means below par FOR THAT CROP,
+    # not failing. A caption is cheaper than a misread map.
     ax[1].set_title("Crop health, 13 October 2025", loc="left", pad=8)
+    ax[1].text(0, 1.005, "scored within crop: 50 = that crop's median",
+               transform=ax[1].transAxes, fontsize=8.5, color="#666", va="bottom")
 
     cax = make_axes_locatable(ax[1]).append_axes("right", size="3.5%", pad=0.12)
     cb = fig.colorbar(mpl.cm.ScalarMappable(mpl.colors.Normalize(0, 100), "RdYlGn"),

@@ -100,11 +100,17 @@ def figure(mix, monthly, w, A):
     ax[1].set_xlabel("month of 2025 (Jun - Oct)")
     ax[1].set_ylabel("scenes")
     ax[1].set_title("Optical revisits vs USABLE revisits", loc="left")
-    ax[1].legend(frameon=False, fontsize=9)
-    ax[1].annotate(f"crop-forming window\nJul 1 - Sep 15:\n{len(w)} revisits, "
-                   f"{int((w.cloud < CLEAR_PCT).sum())} usable",
-                   xy=(1.6, max(monthly.scenes) * 0.62), fontsize=9, color="#b91c1c",
-                   fontweight="bold")
+    # Headroom above the tallest bar, so the callout sits in empty space instead of
+    # across the September bar and the legend.
+    ax[1].set_ylim(0, max(monthly.scenes) * 1.5)
+    ax[1].legend(frameon=False, fontsize=9, loc="upper right")
+    # Bars top out around 0.67 of the axes and the legend owns the upper right, so the
+    # band on the left just above the bars is the only genuinely clear space.
+    ax[1].text(0.02, 0.80,
+               f"crop-forming window\nJul 1 - Sep 15:\n"
+               f"{len(w)} revisits, {int((w.cloud < CLEAR_PCT).sum())} usable",
+               transform=ax[1].transAxes, ha="left", va="top",
+               fontsize=9.5, color="#b91c1c", fontweight="bold")
 
     fig.text(0.5, -0.04, "Every Capella acquisition is usable regardless of cloud. "
              "This is what the X-band buys.", ha="center", fontsize=9, color="#555")
