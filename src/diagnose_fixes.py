@@ -18,6 +18,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import CROPS, RESULTS
 from d4_submission import HEALTH_W, z
 
+# The incumbent this bake-off compares against is the weighting that was SHIPPED BEFORE
+# this pass, pinned as a literal. Importing the live HEALTH_W would make variant "A
+# shipped" silently become whatever the current code does -- and once texture was
+# dropped, A/D and E/F/I collapsed into duplicates of each other, so the comparison that
+# justifies the new weights could no longer be reproduced by the script that produced it.
+BASELINE_W = {"level": 0.30, "growth": 0.25, "uniform": 0.20,
+              "texture": 0.10, "persist": 0.15}
+
 
 def rho(a, b):
     a, b = np.asarray(a, "float64"), np.asarray(b, "float64")
@@ -25,7 +33,7 @@ def rho(a, b):
     return float(spearmanr(a[m], b[m]).statistic) if m.sum() > 10 else np.nan
 
 
-def build_health(f, crop, parts, weights=HEALTH_W, rank=True):
+def build_health(f, crop, parts, weights=BASELINE_W, rank=True):
     """Same combination logic as d4.health_index, but with injectable parts."""
     S = np.zeros(len(f)); W = np.zeros(len(f))
     for k, v in parts.items():
@@ -99,18 +107,18 @@ def main():
         "texture": z(f.glcm_resid_20250814.values),
         "persist": z(f.season_integral.values),
     }
-    variants = {"A shipped (rank, jun06 growth)": (dict(base_parts), HEALTH_W, True)}
+    variants = {"A pre-pass incumbent (rank, jun06)": (dict(base_parts), BASELINE_W, True)}
 
     p = dict(base_parts); p["growth"] = z(g19c)
-    variants["B growth on matched pair"] = (p, HEALTH_W, True)
+    variants["B growth on matched pair"] = (p, BASELINE_W, True)
 
     p2 = dict(p); p2["uniform"] = -z(np.sqrt(np.maximum(cv ** 2 - 1 / 6.5, 0)))
-    variants["C B + ENL-corrected uniform"] = (p2, HEALTH_W, True)
+    variants["C B + ENL-corrected uniform"] = (p2, BASELINE_W, True)
 
-    W3 = {k: v for k, v in HEALTH_W.items() if k != "texture"}
+    W3 = {k: v for k, v in BASELINE_W.items() if k != "texture"}
     variants["D B minus inert texture"] = (p, W3, True)
 
-    variants["E B, bounded z (not rank)"] = (p, HEALTH_W, False)
+    variants["E B, bounded z (not rank)"] = (p, BASELINE_W, False)
     variants["F B + no texture + bounded z"] = (p, W3, False)
 
     # level and persist correlate at 0.74 -- 0.45 of the weight on one axis.
@@ -133,7 +141,7 @@ def main():
     C = np.abs(pd.DataFrame(Xc).corr(method="spearman").values)
     inv = 1.0 / C.sum(axis=1)                 # redundancy-weighted
     W6 = {k: float(v) for k, v in zip(keys, inv / inv.sum())}
-    variants["I decorrelation weights (blind)"] = (p, W6, False)
+    variants["I decorrelation weights (blind) = SHIPPED"] = (p, W6, False)
     print(f"  [decorrelation weights, derived without witnesses: "
           f"{ {k: round(v, 3) for k, v in W6.items()} }]")
 

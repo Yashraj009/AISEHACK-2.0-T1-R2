@@ -39,7 +39,7 @@ PAGE = 1000
 
 def fetch_parcels(bbox):
     """All registry parcels intersecting the bbox, paged."""
-    feats, start = [], 0
+    feats, start, seen = [], 0, set()
     while True:
         # WFS 1.0.0 deliberately: on this server 2.0.0 returns zero features for the
         # same bbox (axis-order handling differs between versions), while 1.0.0 with
@@ -52,9 +52,15 @@ def fetch_parcels(bbox):
         with urllib.request.urlopen(url, timeout=180) as r:
             d = json.load(r)
         got = d.get("features", [])
-        feats += got
-        log("dcs.page", start=start, got=len(got), total=len(feats))
-        if len(got) < PAGE:
+        # `startIndex` is a GeoServer vendor extension, not WFS 1.0.0. If a proxy or a
+        # different server ignored it, every page would return the same PAGE features,
+        # `len(got) < PAGE` would never fire, and this would loop forever appending
+        # duplicates at 180 s a request. Stop as soon as a page adds no NEW feature ids.
+        new = [g for g in got if g.get("id") not in seen]
+        seen.update(g.get("id") for g in got)
+        feats += new
+        log("dcs.page", start=start, got=len(got), new=len(new), total=len(feats))
+        if len(got) < PAGE or not new:
             break
         start += PAGE
     return feats
@@ -73,8 +79,12 @@ def main():
     parc = gpd.GeoDataFrame(
         [f["properties"] for f in feats],
         geometry=[shape(f["geometry"]) for f in feats], crs=4326)
-    parc = parc[parc.geometry.notna() & parc.geometry.is_valid | parc.geometry.notna()]
+    # make_valid first, then drop anything still unusable. The previous expression
+    # `notna & is_valid | notna` parses as `(notna & is_valid) | notna` == `notna`,
+    # so it filtered nothing and only the make_valid() below saved the overlay.
+    parc = parc[parc.geometry.notna()].copy()
     parc["geometry"] = parc.geometry.make_valid()
+    parc = parc[~parc.geometry.is_empty]
     log("dcs.fetched", parcels=len(parc),
         with_survey=int(parc["fpr_survey_number"].notna().sum()))
 

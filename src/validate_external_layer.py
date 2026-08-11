@@ -111,8 +111,20 @@ def compare(df, kind):
     print("\n  rows = theirs, cols = ours:")
     print(pd.crosstab(theirs, ours).to_string())
 
-    strength = ("negligible" if kappa < 0.2 else "fair" if kappa < 0.4
-                else "moderate" if kappa < 0.6 else "substantial")
+    # NaN must not fall through to "substantial": when both maps are entirely one class
+    # every comparison below is False, and the chain would have reported an undefined
+    # kappa as the strongest possible agreement -- the exact overclaim this module exists
+    # to prevent.
+    if not np.isfinite(kappa):
+        strength = "UNDEFINED (degenerate: one class dominates entirely)"
+    else:
+        strength = ("negligible" if kappa < 0.2 else "fair" if kappa < 0.4
+                    else "moderate" if kappa < 0.6 else "substantial")
+    if not np.isfinite(kappa):
+        print("
+  VERDICT: NO CONCLUSION -- kappa is undefined on this comparison.")
+        return dict(n=len(df), raw=round(po, 4), kappa=None,
+                    chance=round(pe, 4), baseline=round(base, 4), kind=kind)
     if kind == "survey":
         print(f"\n  VERDICT: measured ACCURACY against surveyed ground observation — "
               f"kappa {kappa:+.3f} ({strength}).")

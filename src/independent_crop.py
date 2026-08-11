@@ -75,13 +75,22 @@ def zonal_fast(href, labels_for_grid, bounds4326, n):
         tf = src.window_transform(win)
         lab = labels_for_grid(src.crs, tf, arr.shape)
     arr[arr == 0] = np.nan
-    out = np.full(n, np.nan)
     ok = np.isfinite(arr)
     lv = np.where(ok, lab, 0)
     idx = np.arange(1, n + 1)
-    med = ndi.median(np.where(ok, arr, np.nan), labels=lv, index=idx)
-    out[:] = np.asarray(med, dtype="float64")
-    return out
+    med = np.asarray(ndi.median(np.where(ok, arr, np.nan), labels=lv, index=idx),
+                     dtype="float64")
+
+    # ndi.median FABRICATES a value for any label with no pixels: out-of-farm pixels
+    # that are finite land in the label-0 group, so that group is not all-NaN and the
+    # estimator returns a leaked value from it rather than NaN. Verified:
+    # ndi.median returns 5.0 for an empty label where ndi.mean correctly returns NaN.
+    # The leaked value then passes np.isfinite, so a farm outside the scene footprint
+    # would silently receive an invented reading and feed the classifier. Count the
+    # valid pixels per label explicitly and blank any label that has none.
+    cnt = np.bincount(lv.ravel(), minlength=n + 1)[1:]
+    med[cnt == 0] = np.nan
+    return med
 
 
 def make_label_factory(farms):

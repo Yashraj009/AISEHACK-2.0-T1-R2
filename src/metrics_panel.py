@@ -17,7 +17,7 @@ import pandas as pd
 from scipy.stats import kruskal, spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, RESULTS, log
+from common import CROPS, RESULTS, farm_centroids, log
 
 
 def _rho(a, b):
@@ -27,44 +27,6 @@ def _rho(a, b):
     if m.sum() < 10:
         return np.nan
     return float(spearmanr(a[m], b[m]).statistic)
-
-
-def farm_centroids():
-    """Farm centroids in UTM 43N, indexed by FID-1, using pyshp only.
-
-    Deliberately avoids geopandas: this panel has to run in whatever environment
-    is to hand, and a validation harness that cannot be run is worthless. Centroid
-    is the area-weighted shoelace centroid over all parts, which handles the 13
-    multipart farms correctly; degenerate rings fall back to the vertex mean.
-    """
-    import shapefile
-    from pyproj import Transformer
-    from common import FARMS
-
-    sf = shapefile.Reader(str(FARMS))
-    tf = Transformer.from_crs(4326, 32643, always_xy=True)
-    recs = sf.records()
-    out = np.full((len(recs), 2), np.nan)
-    for shp, rec in zip(sf.shapes(), recs):
-        pts = np.asarray(shp.points, "float64")
-        x, y = tf.transform(pts[:, 0], pts[:, 1])
-        parts = list(shp.parts) + [len(x)]
-        cx = cy = wsum = 0.0
-        for a, b in zip(parts[:-1], parts[1:]):
-            px, py = x[a:b], y[a:b]
-            if len(px) < 3:
-                continue
-            cr = px * np.roll(py, -1) - np.roll(px, -1) * py
-            A = cr.sum() / 2.0
-            if abs(A) < 1e-9:
-                continue
-            cx += ((px + np.roll(px, -1)) * cr).sum() / (6 * A) * abs(A)
-            cy += ((py + np.roll(py, -1)) * cr).sum() / (6 * A) * abs(A)
-            wsum += abs(A)
-        i = int(rec["FID"]) - 1
-        out[i] = (cx / wsum, cy / wsum) if wsum > 0 else (x.mean(), y.mean())
-    assert np.isfinite(out).all(), "every farm needs a centroid"
-    return out
 
 
 def morans_i(values, xy, k=8, seed=0, nperm=199):
@@ -90,16 +52,34 @@ def morans_i(values, xy, k=8, seed=0, nperm=199):
     for i in range(nperm):
         zp = rng.permutation(z)
         null[i] = (zp[:, None] * zp[idx]).mean(axis=1).sum() / (zp ** 2).sum()
-    p = float((null >= I).mean())
+    # (1 + hits) / (nperm + 1): a permutation p can never be 0 -- the observed value is
+    # itself one of the possible arrangements. Reporting p=0.000 for Moran's I is an
+    # impossible claim; the floor here is 1/200 = 0.005.
+    p = float((1 + int((null >= I).sum())) / (nperm + 1))
     return float(I), p
 
 
 def panel(sub_path=RESULTS / "submission.csv"):
+    """Metric panel for one submission.
+
+    A submission is only interpretable against the features it was BUILT from, so when
+    scoring a snapshot in results/baseline/ we load that snapshot's features and debug
+    table too. Mixing a baseline submission with current features would attribute a
+    feature-stage change to whatever fix is being tested -- exactly the comparison this
+    panel exists to make trustworthy.
+    """
     sub = pd.read_csv(sub_path)
-    feat = pd.read_csv(RESULTS / "farm_features.csv")
-    dbg_path = RESULTS / "d4_debug.csv"
+    snap = sub_path.parent if sub_path.parent.name == "baseline" else RESULTS
+    suffix = "_BASELINE" if snap.name == "baseline" else ""
+
+    def load(stem):
+        cand = snap / f"{stem}{suffix}.csv"
+        return cand if cand.exists() else RESULTS / f"{stem}.csv"
+
+    feat = pd.read_csv(load("farm_features"))
+    dbg_path = load("d4_debug")
     dbg = pd.read_csv(dbg_path) if dbg_path.exists() else None
-    wit_path = RESULTS / "witness.csv"
+    wit_path = RESULTS / "witness.csv"      # witnesses are external, never versioned
     wit = pd.read_csv(wit_path) if wit_path.exists() else None
 
     d = sub.merge(feat, on="farm_id", how="left")

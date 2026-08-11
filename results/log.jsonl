@@ -396,3 +396,54 @@
 {"t": "2026-08-11T17:25:16", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
 {"t": "2026-08-11T17:26:22", "stage": "external_validate", "n": 966, "raw": 0.3665, "kappa": 0.0729, "chance": 0.3166, "baseline": 0.471, "kind": "model"}
 {"t": "2026-08-11T17:28:02", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T17:33:27", "stage": "panel", "tag": "current", "health_village_mean": 51.06, "rho_health_area": -0.0506, "rho_health_ndvi": 0.1323, "morans_I": 0.0912}
+{"t": "2026-08-11T17:36:35", "stage": "gt.accuracy", "label": "Capella X-band map (shipped)", "n": 100, "raw": 0.59, "weighted": 0.5985, "kappa": 0.4875}
+{"t": "2026-08-11T17:36:35", "stage": "gt.accuracy", "label": "Independent S2+S1 map (validator)", "n": 100, "raw": 0.26, "weighted": 0.3234, "kappa": 0.0537}
+{"t": "2026-08-11T17:37:10", "stage": "panel", "tag": "POSTFIX", "health_village_mean": 51.06, "rho_health_area": -0.0506, "rho_health_ndvi": 0.1323, "morans_I": 0.0912}
+{"t": "2026-08-11T17:38:04", "stage": "d4.start"}
+{"t": "2026-08-11T17:38:04", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-11T17:38:04", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-11T17:38:04", "stage": "d4.weights", "level": 0.189, "growth": 0.283, "uniform": 0.301, "persist": 0.228, "source": "decorrelation", "drift": false}
+{"t": "2026-08-11T17:38:04", "stage": "d4.impute", "method": "knn5_same_crop", "n_imputed": 52, "n_spatial": 52}
+{"t": "2026-08-11T17:38:04", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T17:38:04", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-11T17:38:32", "stage": "d4.start"}
+{"t": "2026-08-11T17:38:32", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-11T17:38:32", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-11T17:38:32", "stage": "d4.weights", "level": 0.189, "growth": 0.283, "uniform": 0.301, "persist": 0.228, "source": "decorrelation", "drift": false}
+{"t": "2026-08-11T17:38:32", "stage": "d4.impute", "method": "knn5_same_crop", "n_imputed": 52, "n_spatial": 52}
+{"t": "2026-08-11T17:38:32", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T17:38:32", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-11T17:38:35", "stage": "indep.compare", "agree_farm": 0.366, "agree_area": 0.374, "kappa": 0.073, "agree_hiconf": 0.451, "agree_loconf": 0.282}
+{"t": "2026-08-11T17:39:19", "stage": "indep.s2", "month": "jun", "item": "S2C_MSIL2A_20250610T053701_R005_T43QCE_20250610T091905", "n_clear": 954, "n_items": 8, "cloud": 21.3}
+{"t": "2026-08-11T17:39:32", "stage": "indep.s1", "month": "jun", "n_scenes": 2, "vh_med": -14.24}
+{"t": "2026-08-11T17:39:35", "stage": "indep.s2", "month": "jul", "item": null, "n_clear": 0, "n_items": 1, "cloud": 92.6}
+{"t": "2026-08-11T17:39:50", "stage": "indep.s1", "month": "jul", "n_scenes": 3, "vh_med": -13.34}
+{"t": "2026-08-11T17:40:10", "stage": "indep.s2", "month": "aug", "item": "S2B_MSIL2A_20250804T053639_R005_T43QCE_20250804T074009", "n_clear": 685, "n_items": 6, "cloud": 84.9}
+{"t": "2026-08-11T17:40:14", "stage": "indep.s1", "month": "aug", "n_scenes": 1, "vh_med": -13.8}
+{"t": "2026-08-11T17:40:38", "stage": "indep.s2", "month": "sep", "item": "S2A_MSIL2A_20250910T054241_R005_T43QCE_20250910T090804", "n_clear": 703, "n_items": 12, "cloud": 35.5}
+{"t": "2026-08-11T17:41:04", "stage": "indep.s1", "month": "sep", "n_scenes": 3, "vh_med": -14.89}
+{"t": "2026-08-11T17:41:18", "stage": "indep.s2", "month": "oct", "item": "S2B_MSIL2A_20251013T053659_R005_T43QCE_20251013T081845", "n_clear": 954, "n_items": 14, "cloud": 0.0}
+{"t": "2026-08-11T17:41:32", "stage": "indep.s1", "month": "oct", "n_scenes": 2, "vh_med": -14.87}
+{"t": "2026-08-11T17:41:39", "stage": "indep.s2", "month": "nov", "item": "S2B_MSIL2A_20251112T053959_R005_T43QCE_20251112T074332", "n_clear": 954, "n_items": 16, "cloud": 0.0}
+{"t": "2026-08-11T17:41:57", "stage": "indep.s1", "month": "nov", "n_scenes": 3, "vh_med": -14.67}
+{"t": "2026-08-11T17:41:57", "stage": "indep.fetch_done", "path": "independent_features.csv", "cols": 19}
+{"t": "2026-08-11T17:41:57", "stage": "indep.compare", "agree_farm": 0.395, "agree_area": 0.372, "kappa": 0.103, "agree_hiconf": 0.484, "agree_loconf": 0.306}
+{"t": "2026-08-11T17:42:10", "stage": "indep.compare", "agree_farm": 0.395, "agree_area": 0.372, "kappa": 0.103, "agree_hiconf": 0.484, "agree_loconf": 0.306}
+{"t": "2026-08-11T17:42:36", "stage": "i5.start"}
+{"t": "2026-08-11T17:42:39", "stage": "i5.done"}
+{"t": "2026-08-11T17:42:40", "stage": "check_yield", "completion_all_positive": true, "rho_health_yield_cotton": 0.543, "rho_yield_area": 0.129}
+{"t": "2026-08-11T17:42:41", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-11T17:42:55", "stage": "i10.start"}
+{"t": "2026-08-11T17:42:55", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-11T17:42:56", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-11T17:42:56", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-11T17:42:56", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-11T17:42:58", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-11T17:42:58", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-11T17:42:58", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-11T17:42:58", "stage": "i10.done", "figures": 8}
+{"t": "2026-08-11T17:43:03", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-11T17:43:14", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T17:43:15", "stage": "d11.start"}
+{"t": "2026-08-11T17:43:16", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}

@@ -7,11 +7,17 @@ Input:  data_aux/ground_truth_vf12.csv  -- the template from make_gt_sample.py w
 Handles the two things that would otherwise make the number wrong:
 
 1. STRATIFIED RE-WEIGHTING. The sample is 20 per predicted class, but the village is
-   47% cotton and 6% maize. Unweighted accuracy over that sample would answer "how
+   ~43% cotton and 6% maize. Unweighted accuracy over that sample would answer "how
    accurate are we on a village that is one-fifth each crop", which is not our
-   village. Per-class accuracy is therefore re-weighted by the true predicted-class
-   shares. Both weighted and raw numbers are printed, because the gap between them
-   is itself informative.
+   village.
+
+   The weights must come from the TRUE class shares, not our predicted ones. Per-class
+   recall is conditioned on the true class, so weighting it by predicted-class area
+   would bias the headline toward whatever the map already over-predicts: if we
+   over-call Cotton, Cotton would carry 43% of the weight while true Cotton is a
+   smaller share of the village. The true shares are unknown a priori, so they are
+   ESTIMATED FROM THE SAMPLE ITSELF (which is what a stratified sample is for), with
+   the predicted shares reported alongside for comparison.
 
 2. A CHANCE BASELINE. Accuracy alone is uninterpretable when one class is 47% of the
    area -- always predicting cotton scores 47%. Cohen's kappa and a
@@ -104,16 +110,35 @@ def main():
     m = filled.merge(sub[["farm_id", "crop_type"]], on="farm_id",
                      suffixes=("_sheet", ""))
 
-    # weights = the village's actual predicted-class shares, by AREA
+    # Weights for the headline accuracy: the TRUE class shares.
+    # Per-class recall is conditioned on the true class, so it must be weighted by
+    # true-class prevalence. We do not know that a priori, so estimate it from the
+    # stratified sample: within each predicted class the sampled farms are a random
+    # draw, so P(true=c) = sum over predicted classes p of P(pred=p) * P(true=c|pred=p),
+    # with the second factor measured in the sample and the first from the map's area
+    # shares. This is the standard stratified estimator.
     dbg = pd.read_csv(RESULTS / "d4_debug.csv")
     ar = dbg.groupby("crop_type")["area_ha"].sum()
-    weights = {c: float(ar.get(c, 0)) / float(ar.sum()) for c in CROPS}
+    pred_share = {c: float(ar.get(c, 0)) / float(ar.sum()) for c in CROPS}
+    weights = {c: 0.0 for c in CROPS}
+    for pcls in CROPS:
+        stratum = m[m.crop_type == pcls]
+        if not len(stratum):
+            continue
+        for c in CROPS:
+            weights[c] += pred_share[pcls] * float((stratum.truth == c).mean())
+    tot = sum(weights.values()) or 1.0
+    weights = {c: v / tot for c, v in weights.items()}
 
     print("\n" + "=" * 66)
     print("MEASURED ACCURACY AGAINST COLLECTED GROUND TRUTH")
     print("=" * 66)
-    print(f"  village class weights (area): "
+    print(f"  TRUE class weights, stratified estimate: "
           f"{ {c: round(100*w, 1) for c, w in weights.items()} }")
+    print(f"  (our map's predicted area shares:        "
+          f"{ {c: round(100*w, 1) for c, w in pred_share.items()} })")
+    print("  The headline is weighted by the TRUE shares; weighting by our own")
+    print("  predicted shares would bias it toward whatever the map over-predicts.")
 
     res = [evaluate(m.truth, m.crop_type, "Capella X-band map (shipped)", weights)]
 

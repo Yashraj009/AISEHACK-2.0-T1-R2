@@ -101,7 +101,16 @@ def cropland_years():
         # class 5 = Crops in the 9-class Impact Observatory scheme
         iscrop = (arr == 5).astype("float32")
         idx = np.arange(1, n + 1)
-        frac[yr] = np.asarray(ndi.mean(iscrop, labels=lab, index=idx), dtype="float64")
+        v = np.asarray(ndi.mean(iscrop, labels=lab, index=idx), dtype="float64")
+        # A year can return more than one tile if the village straddles a tile boundary.
+        # Assigning frac[yr] outright would keep only the last tile, and every farm in
+        # the other one would score "never cropland" off fill_value=0 padding. Merge
+        # instead, preferring whichever tile actually covered each farm.
+        if yr in frac:
+            prev = frac[yr]
+            v = np.where(np.isfinite(v) & (v > 0), v,
+                         np.where(np.isfinite(prev), prev, v))
+        frac[yr] = v
         log("ext.lulc", year=yr, mean_crop_frac=round(float(np.nanmean(frac[yr])), 3))
 
     out = pd.DataFrame({"farm_id": farms["FID"].astype(int).values})

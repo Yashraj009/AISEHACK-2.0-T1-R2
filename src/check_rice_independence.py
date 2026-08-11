@@ -110,8 +110,11 @@ def main():
     print("EXTERNAL TEST: rice labels vs Sentinel-1 C-VH (never an input)")
     print("=" * 74)
     w = pd.read_csv(RESULTS / "witness.csv")
-    m = f[["farm_id"]].merge(w, on="farm_id")
-    vh = m.s1_vh_db.values
+    # reindex onto f's row order rather than relying on an inner join to preserve
+    # length: `shipped` and `hit` are in f's order, so a witness fetch that ever drops
+    # a farm would silently pair the wrong rows (or raise on the boolean mask)
+    vh = (w.set_index("farm_id")["s1_vh_db"]
+            .reindex(f.farm_id.values).values)
     isrice = shipped == "Rice"
     a, b = vh[isrice & np.isfinite(vh)], vh[~isrice & np.isfinite(vh)]
     U, p = mannwhitneyu(a, b)
