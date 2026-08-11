@@ -345,11 +345,27 @@ def yield_to_date(crop, health, district_yield, f=None):
             continue
         base = COMPLETION[c]
         if f is not None and "d_oct_aug" in f:
-            # senescence relative to this crop's own median, in robust z units,
-            # then a bounded +/-0.15 move around the nominal completion.
+            # SIGN. The first version of this term assumed a field that had senesced or
+            # been harvested would have brightened back toward bare soil, so it read
+            # HIGH d_oct_aug as MORE complete. The witness says the opposite, and says
+            # it consistently: within every one of the five crops, d_oct_aug correlates
+            # POSITIVELY with same-day Sentinel-2 NDVI (Rice +0.58, Maize +0.51,
+            # Bajra +0.37, Cotton +0.33, Groundnut +0.27). A farm that got brighter
+            # between August and October has MORE green biomass standing on 13 October,
+            # not less.
+            #
+            # That is physically the right way round for X-band here: an August canopy
+            # is dense and wet, attenuating the soil return, while a harvested October
+            # field is smooth dry soil and reads DARK. Standing structure in October
+            # scatters strongly. So d_oct_aug measures STANDING CROP, and standing crop
+            # means the season is LESS far along -- hence the minus sign.
+            #
+            # The within-crop correlation is the one that matters, because completion is
+            # applied within crop; the between-crop ordering is confounded by everything
+            # that differs between crops.
             s = f["d_oct_aug"].values[m]
             zc = z(s)
-            comp = np.clip(base + 0.15 * np.clip(zc, -2, 2) / 2.0, 0.15, 1.0)
+            comp = np.clip(base - 0.15 * np.clip(zc, -2, 2) / 2.0, 0.15, 1.0)
             comp = np.where(np.isfinite(comp), comp, base)
         else:
             comp = np.full(m.sum(), base)

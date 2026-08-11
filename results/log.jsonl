@@ -349,3 +349,49 @@
 {"t": "2026-08-06T21:50:02", "stage": "dcs.fetched", "parcels": 2054, "with_survey": 2054}
 {"t": "2026-08-06T21:50:02", "stage": "dcs.join", "matched": 947, "good": 867, "parcels": 2054}
 {"t": "2026-08-06T21:50:29", "stage": "gt.sample", "n": 100, "per_crop": 20, "seed": 20260806}
+{"t": "2026-08-11T17:15:40", "stage": "why_xband", "pure_10m": 63.3, "pure_capella": 95.2, "form_revisits": 19, "form_usable": 0}
+{"t": "2026-08-11T17:16:07", "stage": "why_xband", "pure_10m": 63.3, "pure_capella": 95.2, "form_revisits": 19, "form_usable": 0}
+{"t": "2026-08-11T17:18:29", "stage": "d4.start"}
+{"t": "2026-08-11T17:18:29", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-11T17:18:29", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-11T17:18:29", "stage": "d4.weights", "level": 0.189, "growth": 0.283, "uniform": 0.301, "persist": 0.228, "source": "decorrelation"}
+{"t": "2026-08-11T17:18:29", "stage": "d4.impute", "method": "knn5_same_crop", "n_imputed": 52, "n_spatial": 52}
+{"t": "2026-08-11T17:18:29", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T17:18:29", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-11T17:18:45", "stage": "check_yield", "completion_all_positive": true, "rho_health_yield_cotton": 0.508, "rho_yield_area": 0.128}
+{"t": "2026-08-11T17:19:26", "stage": "i5.start"}
+{"t": "2026-08-11T17:19:30", "stage": "i5.done"}
+{"t": "2026-08-11T17:20:21", "stage": "d11.start"}
+{"t": "2026-08-11T17:20:22", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:20:53", "stage": "d11.start"}
+{"t": "2026-08-11T17:20:54", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:21:32", "stage": "d11.start"}
+{"t": "2026-08-11T17:21:32", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:22:16", "stage": "d11.start"}
+{"t": "2026-08-11T17:22:17", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:22:51", "stage": "d11.start"}
+{"t": "2026-08-11T17:22:51", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:23:11", "stage": "d11.start"}
+{"t": "2026-08-11T17:23:11", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:23:31", "stage": "d11.start"}
+{"t": "2026-08-11T17:23:31", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:23:46", "stage": "d11.start"}
+{"t": "2026-08-11T17:23:46", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:24:03", "stage": "d11.start"}
+{"t": "2026-08-11T17:24:03", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:24:24", "stage": "d11.start"}
+{"t": "2026-08-11T17:24:24", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-11T17:24:40", "stage": "d11.start"}
+{"t": "2026-08-11T17:24:41", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-11T17:24:54", "stage": "i10.start"}
+{"t": "2026-08-11T17:24:55", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-11T17:24:56", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-11T17:24:56", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-11T17:24:56", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-11T17:24:58", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-11T17:24:58", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-11T17:24:58", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-11T17:24:58", "stage": "i10.done", "figures": 8}
+{"t": "2026-08-11T17:25:05", "stage": "d4.prior_bias", "Rice": -0.26, "Cotton": 0.211, "Maize": -0.404, "Bajra": -0.274, "Groundnut": 0.194}
+{"t": "2026-08-11T17:25:16", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T17:26:22", "stage": "external_validate", "n": 966, "raw": 0.3665, "kappa": 0.0729, "chance": 0.3166, "baseline": 0.471, "kind": "model"}
