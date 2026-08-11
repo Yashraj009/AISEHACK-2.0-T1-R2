@@ -512,3 +512,8 @@
 {"t": "2026-08-11T19:48:19", "stage": "check_writeup", "status": "PASS"}
 {"t": "2026-08-11T19:48:20", "stage": "d11.start"}
 {"t": "2026-08-11T19:48:20", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-11T19:55:29", "stage": "portability.test", "ok": true}
+{"t": "2026-08-11T19:56:41", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-11T19:56:52", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-11T19:58:58", "stage": "d11.start"}
+{"t": "2026-08-11T19:58:58", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
