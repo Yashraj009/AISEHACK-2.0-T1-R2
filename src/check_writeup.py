@@ -79,6 +79,22 @@ def main():
 
     check("crop vocabulary", not (set(sub.crop_type) - set(CROPS)))
 
+    # The writeup now states how we READ the spec -- "yield to date, not a final harvest
+    # forecast" -- and quotes the completion constants that implement that reading. If a
+    # constant changes, the prose becomes a false description of the shipped column, so
+    # assert the quoted numbers against COMPLETION itself.
+    quoted_comp = all(f"{v:.2f}" in w for v in set(D4.COMPLETION.values()))
+    check("writeup quotes the completion constants", quoted_comp,
+          str(D4.COMPLETION))
+    # ...and that the column really is scaled by them: the per-crop median must sit at or
+    # below the anchor, never above it, or we would be forecasting the harvest.
+    apy = pd.read_csv(D4.AUX / "vadodara_apy.csv").set_index("crop")
+    never_over = all(
+        float(sub.loc[sub.crop_type == c, "yield_estimate_to_date"].median())
+        <= float(apy.loc[c, "yield_kg_ha_2022_23"]) / 1000.0 for c in CROPS)
+    check("yield is to-date, never above the anchor", never_over,
+          "no crop median exceeds its full-season anchor")
+
     # The matched season-integrated witness. The writeup quotes three signed numbers and
     # calls one of them a contradiction; recompute all three, including the sign, so a
     # later change to the witness or the feature cannot leave the prose asserting the
