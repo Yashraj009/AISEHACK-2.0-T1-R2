@@ -83,9 +83,11 @@ was tried and **rejected** — it degraded both witnesses.
 **The weights are derived, not hand-chosen.** Each is inversely proportional to that family's total
 absolute correlation with the others:
 
-**w(k) ∝ 1 / Σ |ρ(k, j)|**
+| w(k) ∝ 1 / Σ &#124;ρ(k, j)&#124; |
+|:---:|
+| *summed over the other families j — the more a family duplicates the rest, the less it weighs* |
 
-*summed over the other families j — the more a family duplicates the rest, the less it weighs*
+<br>
 
 giving `growth` 0.283, `uniform` 0.301, `persist` 0.228, `level` 0.189. The rule reads only the
 feature matrix and is **blind to every witness by construction**; weights chosen by watching NDVI
@@ -103,9 +105,11 @@ Which component actually carries the ranking, and does any single weight hold it
 
 ## 3. Yield-to-date estimation
 
-**`yield_to_date` [t/ha] = anchor(district) × completion(farm) × accumulation(farm)**
+| `yield_to_date` [t/ha] = anchor(district) × completion(farm) × accumulation(farm) |
+|:---:|
+| *anchor(district) is the level, from statistics; the two per-farm terms are the variation, measured from SAR* |
 
-*anchor(district) is the level, from statistics; the two per-farm terms are the variation, measured from SAR*
+<br>
 
 We read the column exactly as the brief defines it — *"estimated yield potential up to the final
 acquisition date using all available temporal observations"*, and explicitly **not a final harvest
