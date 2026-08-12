@@ -1,0 +1,150 @@
+<mxfile host="app.diagrams.net" version="24.0.0" type="device">
+  <diagram name="Method overview" id="method-overview">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============================ titles and section labels ============================ -->
+        <mxCell id="title" value="Method — what feeds what, and what deliberately does not" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="27" y="-46" width="900" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lbl_primary" value="PRIMARY SOURCE — Capella X-band HH SLC" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#0369a1;" vertex="1" parent="1">
+          <mxGeometry x="27" y="16" width="600" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_primary_sub" value="the only source of any shipped number" style="text;html=1;align=left;verticalAlign=middle;fontSize=12.5;fontColor=#0369a1;" vertex="1" parent="1">
+          <mxGeometry x="27" y="42" width="600" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lbl_aux" value="DECLARED INPUTS" style="text;html=1;align=right;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#b45309;" vertex="1" parent="1">
+          <mxGeometry x="833" y="16" width="500" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_aux_sub" value="used, and labelled as inputs" style="text;html=1;align=right;verticalAlign=middle;fontSize=12.5;fontColor=#b45309;" vertex="1" parent="1">
+          <mxGeometry x="833" y="42" width="500" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lbl_deliv" value="THREE DELIVERABLES  ·  submission.csv, one row per farm" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#15803d;labelBackgroundColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="380" y="399" width="600" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lbl_claim" value="No arrow runs from a witness into a deliverable — that is the design." style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#b91c1c;" vertex="1" parent="1">
+          <mxGeometry x="380" y="776" width="600" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ primary inputs: the four Capella scenes ============================ -->
+        <mxCell id="d1" value="6 Jun" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#e0f2fe;strokeColor=#0284c7;strokeWidth=1.5;fontSize=14.5;fontColor=#1e293b;" vertex="1" parent="1">
+          <mxGeometry x="27" y="72" width="197" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="19 Jun" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#e0f2fe;strokeColor=#0284c7;strokeWidth=1.5;fontSize=14.5;fontColor=#1e293b;" vertex="1" parent="1">
+          <mxGeometry x="242" y="72" width="197" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" value="14 Aug" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#e0f2fe;strokeColor=#0284c7;strokeWidth=1.5;fontSize=14.5;fontColor=#1e293b;" vertex="1" parent="1">
+          <mxGeometry x="457" y="72" width="197" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="d4" value="13 Oct" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#e0f2fe;strokeColor=#0284c7;strokeWidth=1.5;fontSize=14.5;fontColor=#1e293b;" vertex="1" parent="1">
+          <mxGeometry x="672" y="72" width="197" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ declared auxiliary inputs ============================ -->
+        <mxCell id="aux_r1" value="Round 1 crop-area shares&lt;br&gt;exact truth, MSE 0.000" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;" vertex="1" parent="1">
+          <mxGeometry x="925" y="72" width="408" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="aux_apy" value="Vadodara APY district yield&lt;br&gt;published statistics" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;" vertex="1" parent="1">
+          <mxGeometry x="925" y="152" width="408" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ processing chain ============================ -->
+        <mxCell id="preproc" value="&lt;b&gt;PREPROCESSING&lt;/b&gt;&lt;br&gt;β⁰ = scale·|z|²  →  γ⁰ = β⁰·tanθ  with PER-PIXEL θ from orbit state vectors&lt;br&gt;geocode to EPSG:32643 with 225 GCPs · averaging = multi-look · 5 m + 2 m grids" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#e0f2fe;strokeColor=#0284c7;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="27" y="176" width="857" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="feat" value="&lt;b&gt;PER-FARM FEATURES&lt;/b&gt;&lt;br&gt;parcel eroded before sampling so boundary pixels never mix two fields&lt;br&gt;per-date γ⁰ · inter-date differences · within-farm CV · season integral · texture&lt;br&gt;coverage 966/966 — 895 measured, 52 imputed, 19 RFI-flagged, provenance per row" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#e0f2fe;strokeColor=#0284c7;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="27" y="288" width="857" height="96" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ the three deliverables ============================ -->
+        <mxCell id="out_crop" value="&lt;b&gt;crop_type&lt;/b&gt;&lt;br&gt;&lt;br&gt;soft per-farm evidence, then&lt;br&gt;biased until AREA-weighted&lt;br&gt;shares match Round 1&lt;br&gt;— argmax only at the end" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#16a34a;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="27" y="432" width="408" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="out_health" value="&lt;b&gt;health_index&lt;/b&gt;&lt;br&gt;&lt;br&gt;four families, weights from&lt;br&gt;redundancy  w ∝ 1/Σ|ρ|&lt;br&gt;(blind to every witness)&lt;br&gt;scored WITHIN crop" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#16a34a;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="476" y="432" width="408" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="out_yield" value="&lt;b&gt;yield_estimate_to_date&lt;/b&gt;&lt;br&gt;&lt;br&gt;anchor × completion(farm)&lt;br&gt;× accumulation(farm)&lt;br&gt;observed to 13 Oct —&lt;br&gt;NOT a harvest forecast" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#16a34a;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="925" y="432" width="408" height="128" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ witnesses and validation ============================ -->
+        <mxCell id="wit" value="&lt;b&gt;WITNESSES — never inputs&lt;/b&gt;&lt;br&gt;&lt;br&gt;Sentinel-2 L2A · Sentinel-1 RTC · NASA POWER&lt;br&gt;&lt;br&gt;same-day NDVI, 13 Oct, 0.003% cloud · C-band VH&lt;br&gt;10-scene season integral, 12 Jun – 10 Oct, one orbit" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#94a3b8;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="27" y="616" width="598" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="val" value="&lt;b&gt;VALIDATION — tests that can fail&lt;/b&gt;&lt;br&gt;&lt;br&gt;crop separation p = 1.8×10⁻³⁴ · Moran's I = 0.105&lt;br&gt;&lt;br&gt;and the failures, reported: κ = 0.103 ·&lt;br&gt;coherence at the noise floor ·&lt;br&gt;a witness caught an inverted completion sign" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#94a3b8;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="734" y="616" width="598" height="136" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ arrows: the four scenes into preprocessing ============================ -->
+        <mxCell id="e_d1" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.49;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d1" target="preproc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_d2" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.49;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d2" target="preproc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_d3" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.49;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d3" target="preproc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_d4" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.49;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d4" target="preproc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pre_feat" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.49;exitY=1;exitDx=0;exitDy=0;entryX=0.49;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="preproc" target="feat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- features into each deliverable -->
+        <mxCell id="e_f_crop" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.49;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="feat" target="out_crop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_f_health" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.49;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="feat" target="out_health">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_f_yield" style="edgeStyle=none;html=1;rounded=0;strokeColor=#475569;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.49;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="feat" target="out_yield">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- declared inputs, routed as elbows through the clear band at y=395 so they do not
+             cut diagonally across the feature box (same routing as the matplotlib figure) -->
+        <mxCell id="e_r1_crop" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;strokeColor=#d97706;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="aux_r1" target="out_crop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1129" y="395" />
+              <mxPoint x="231" y="395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_apy_yield" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;strokeColor=#d97706;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="aux_apy" target="out_yield">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1129" y="395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- deliverables are TESTED by validation: dashed, and pointing INTO validation only -->
+        <mxCell id="e_crop_val" style="edgeStyle=none;html=1;rounded=0;strokeColor=#94a3b8;strokeWidth=1.1;dashed=1;dashPattern=4 3;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="out_crop" target="val">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_health_val" style="edgeStyle=none;html=1;rounded=0;strokeColor=#94a3b8;strokeWidth=1.1;dashed=1;dashPattern=4 3;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="out_health" target="val">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_yield_val" style="edgeStyle=none;html=1;rounded=0;strokeColor=#94a3b8;strokeWidth=1.1;dashed=1;dashPattern=4 3;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="out_yield" target="val">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_wit_val" style="edgeStyle=none;html=1;rounded=0;strokeColor=#64748b;strokeWidth=1.6;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="wit" target="val">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
