@@ -28,7 +28,9 @@ DELIVERABLES = {
     "writeup (<=4 pages)": ROOT / "docs" / "WRITEUP.md",
     "public notebook": ROOT / "notebooks" / "I9_pipeline.ipynb",
     "cover image": RESULTS / "figures" / "cover.png",
-    "media gallery": RESULTS / "figures" / "gallery_6_yield.png",
+    # the two maps the Round 2 guidelines require BY NAME, not just "some gallery figure"
+    "required health map": RESULTS / "figures" / "gallery_01_health_index_map.png",
+    "required yield map": RESULTS / "figures" / "gallery_02_yield_to_date_map.png",
 }
 
 CHECKS = []

@@ -114,7 +114,7 @@ def figure(mix, monthly, w, A):
 
     fig.text(0.5, -0.04, "Every Capella acquisition is usable regardless of cloud. "
              "This is what the X-band buys.", ha="center", fontsize=9, color="#555")
-    p = FIGURES / "gallery_7_why_xband.png"
+    p = FIGURES / "gallery_11_why_xband.png"
     fig.savefig(p); plt.close(fig)
     return p
 

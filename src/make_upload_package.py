@@ -56,12 +56,30 @@ def main():
         shutil.rmtree(UP)
     UP.mkdir(parents=True)
 
-    # ---- the four things a judge actually opens -------------------------------
+    # ---- what a judge and the organisers actually open ------------------------
     shutil.copy2(RESULTS / "submission.csv", UP / "submission.csv")
     shutil.copy2(ROOT / "docs" / "WRITEUP.md", UP / "WRITEUP.md")
     shutil.copy2(ROOT / "notebooks" / "I9_pipeline.ipynb", UP / "I9_pipeline.ipynb")
+    # The guidelines name three further artefacts explicitly: the 4-page report that goes
+    # to Insights@galaxeye.space, the Kaggle Project Description, and a STANDALONE
+    # spreadsheet of the farm-level results. Staging them here keeps the email and the
+    # Kaggle upload reading from one folder instead of from scattered paths.
+    for name in ("REPORT.md", "KAGGLE_WRITEUP.md", "EMAIL_SUBMISSION.md"):
+        src = ROOT / "docs" / name
+        if src.exists():
+            shutil.copy2(src, UP / name)
+    import pandas as pd
+    sheet = pd.read_csv(RESULTS / "submission.csv")
+    stem = "GDHTM_Sokhda_farm_level_results"
+    sheet.to_csv(UP / f"{stem}.csv", index=False)
+    try:
+        with pd.ExcelWriter(UP / f"{stem}.xlsx", engine="openpyxl") as xl:
+            sheet.to_excel(xl, index=False, sheet_name="farm_level_results")
+    except Exception as exc:                      # openpyxl absent -> CSV still satisfies it
+        print(f"  note: xlsx not written ({exc}); the CSV satisfies the requirement")
     nfig = copy_tree(FIGURES, UP / "figures", "cover.png")
     nfig += copy_tree(FIGURES, UP / "figures", "gallery_*.png")
+    nfig += copy_tree(FIGURES, UP / "figures", "thumbnail_560x280.png")
 
     # ---- the dataset the notebook needs to run on Kaggle ----------------------
     # layout must keep `src/` at the top so _find_root() resolves it

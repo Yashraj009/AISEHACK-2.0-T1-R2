@@ -635,3 +635,199 @@
 {"t": "2026-08-11T23:57:51", "stage": "upload.package", "size_mb": 174.0, "figures": 9}
 {"t": "2026-08-11T23:57:56", "stage": "d11.start"}
 {"t": "2026-08-11T23:57:56", "stage": "d11.done", "checks": 18, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T13:13:00", "stage": "i10.start"}
+{"t": "2026-08-12T13:13:02", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:13:02", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:13:02", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:13:03", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:13:03", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:13:03", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:13:06", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:13:06", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:13:07", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:13:07", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:13:07", "stage": "i10.done", "figures": 11}
+{"t": "2026-08-12T13:37:15", "stage": "i10.start"}
+{"t": "2026-08-12T13:37:17", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:37:17", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:37:18", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:37:18", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:37:18", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:37:19", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:37:19", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:37:21", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:37:22", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:37:22", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:37:22", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:37:22", "stage": "i10.done", "figures": 19}
+{"t": "2026-08-12T13:37:27", "stage": "why_xband", "pure_10m": 63.3, "pure_capella": 95.2, "form_revisits": 19, "form_usable": 0}
+{"t": "2026-08-12T13:40:30", "stage": "i10.start"}
+{"t": "2026-08-12T13:40:31", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:40:31", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:40:31", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:40:32", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:40:32", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:40:32", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:40:33", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:40:34", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:40:35", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:40:35", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:40:35", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:40:35", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:41:35", "stage": "i10.start"}
+{"t": "2026-08-12T13:41:36", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:41:36", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:41:37", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:41:37", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:41:38", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:41:38", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:41:38", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:41:40", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:41:40", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:41:41", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:41:41", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:41:41", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:42:53", "stage": "i10.start"}
+{"t": "2026-08-12T13:42:54", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:42:54", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:42:54", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:42:55", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:42:55", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:42:55", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:42:56", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:42:57", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:42:57", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:42:58", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:42:58", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:42:58", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:44:37", "stage": "i10.start"}
+{"t": "2026-08-12T13:44:38", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:44:38", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:44:38", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:44:39", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:44:39", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:44:39", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:44:39", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:44:41", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:44:41", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:44:41", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:44:42", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:44:42", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:45:29", "stage": "i10.start"}
+{"t": "2026-08-12T13:45:31", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:45:31", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:45:32", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:45:32", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:45:32", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:45:33", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:45:33", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:45:34", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:45:35", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:45:35", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:45:35", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:45:35", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:46:43", "stage": "i10.start"}
+{"t": "2026-08-12T13:46:43", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:46:44", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:46:44", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:46:44", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:46:45", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:46:45", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:46:45", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:46:47", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:46:47", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:46:47", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:46:47", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:46:47", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:49:53", "stage": "i10.start"}
+{"t": "2026-08-12T13:49:54", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:49:54", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:49:55", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:49:56", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:49:56", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:49:57", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:49:57", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:50:00", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:50:00", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:50:01", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:50:02", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:50:02", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:52:40", "stage": "i10.start"}
+{"t": "2026-08-12T13:52:40", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:52:41", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:52:41", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:52:41", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:52:42", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:52:42", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:52:42", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:52:44", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:52:44", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:52:44", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:52:45", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:52:45", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:54:05", "stage": "i10.start"}
+{"t": "2026-08-12T13:54:05", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:54:06", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:54:06", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:54:06", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:54:07", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:54:07", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:54:07", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:54:09", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:54:09", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:54:09", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:54:10", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:54:10", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:56:27", "stage": "i10.start"}
+{"t": "2026-08-12T13:56:27", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:56:28", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:56:28", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:56:28", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:56:29", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-12T13:56:29", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:56:29", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:56:30", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:56:31", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:56:31", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:56:32", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:56:32", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:56:32", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:57:13", "stage": "i10.start"}
+{"t": "2026-08-12T13:57:14", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:57:14", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:57:15", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:57:15", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:57:15", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-12T13:57:16", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:57:16", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:57:16", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:57:18", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:57:18", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:57:18", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:57:19", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:57:19", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T13:58:13", "stage": "i10.start"}
+{"t": "2026-08-12T13:58:13", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T13:58:14", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T13:58:14", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T13:58:14", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T13:58:15", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-12T13:58:15", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T13:58:15", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T13:58:16", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T13:58:17", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T13:58:17", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T13:58:18", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T13:58:18", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T13:58:18", "stage": "i10.done", "figures": 12}
+{"t": "2026-08-12T14:05:12", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T14:06:25", "stage": "upload.package", "size_mb": 174.0, "figures": 13}
+{"t": "2026-08-12T14:06:50", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T14:06:51", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T14:06:52", "stage": "d11.start"}
+{"t": "2026-08-12T14:06:52", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-12T14:07:17", "stage": "d11.start"}
+{"t": "2026-08-12T14:07:17", "stage": "d11.done", "checks": 18, "failed": 1, "status": "BLOCKED"}
+{"t": "2026-08-12T14:08:21", "stage": "d11.start"}
+{"t": "2026-08-12T14:08:21", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T14:08:55", "stage": "upload.package", "size_mb": 174.0, "figures": 13}
