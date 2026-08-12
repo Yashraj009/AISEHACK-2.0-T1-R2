@@ -8,23 +8,10 @@ So both deliverables are built the same way: **hold the aggregate, and let the S
 variation inside it.** Distributing a known total across finer units using an ancillary variable
 correlated with the true distribution is *dasymetric mapping*, and we apply it twice.
 
-<div align="center" style="text-align:center">
-<center>
-<table>
-<th align="center" style="text-align:center; font-weight:bold"><tr>
-<th align="center" style="text-align:center; font-weight:bold">known in aggregate</th>
-<th align="center" style="text-align:center; font-weight:bold">disaggregated to</th>
-<th align="center" style="text-align:center; font-weight:bold">ancillary variable from Capella</th>
-</tr></thead>
-<tbody>
-<tr><td align="left" style="text-align:left">Round 1 village crop-area shares (MSE 11.071)</td><td align="left" style="text-align:left">966 parcel labels</td><td align="left" style="text-align:left">per-farm soft evidence, area-constrained</td></tr>
-<tr><td align="left" style="text-align:left">Vadodara district yield (APY)</td><td align="left" style="text-align:left">966 parcel t/ha</td><td align="left" style="text-align:left">completion × accumulation</td></tr>
-</tbody>
-</table>
-</center>
-</div>
-
-<br>
+| known in aggregate | disaggregated to | ancillary variable from Capella |
+|:---|:---|:---|
+| Round 1 village crop-area shares (MSE 11.071) | 966 parcel labels | per-farm soft evidence, area-constrained |
+| Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
 Neither aggregate is error-free and we do not pretend otherwise — the Round 1 shares are our own
 best estimate of the village mix, not ground truth. The case for holding them is comparative: the
@@ -47,8 +34,6 @@ It is a claim about **arrows**, so the method diagram states it directly: no arr
 witness into a deliverable, while the two aggregates above are drawn in amber and labelled as inputs.
 
 ![method_overview](https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F18936911%2F7bb06f4b2fffb2acb74265100694ad97%2Fgallery_00_method_overview.png?generation=1786544861048297&alt=media)
-
-<br>
 
 ## 1. Applying the Round 1 crop classification to the new boundaries
 
@@ -80,39 +65,21 @@ leaderboard noise. Only the rice August-minus-June signature passed all four tra
 it moved rice from **not corroborated (p = 0.38) to p = 2.65×10⁻¹³**. The equivalent maize signature
 was tried and **rejected** — it degraded both witnesses.
 
-<br>
-
 ## 2. Health index methodology
 
-<div align="center" style="text-align:center">
-<center>
-<table>
-<th align="center" style="text-align:center; font-weight:bold"><tr>
-<th align="center" style="text-align:center; font-weight:bold">family</th>
-<th align="center" style="text-align:center; font-weight:bold">measurement</th>
-<th align="center" style="text-align:center; font-weight:bold">why it belongs</th>
-</tr></thead>
-<tbody>
-<tr><td align="left" style="text-align:left"><code>level</code></td><td align="left" style="text-align:left">August γ⁰</td><td align="left" style="text-align:left">peak canopy volume</td></tr>
-<tr><td align="left" style="text-align:left"><code>growth</code></td><td align="left" style="text-align:left">14 Aug − 19 Jun</td><td align="left" style="text-align:left">the <b>only geometry-matched</b> date pair (0.076° apart)</td></tr>
-<tr><td align="left" style="text-align:left"><code>uniform</code></td><td align="left" style="text-align:left">−(within-farm CV)</td><td align="left" style="text-align:left">patchiness means gaps, waterlogging or pest damage</td></tr>
-<tr><td align="left" style="text-align:left"><code>persist</code></td><td align="left" style="text-align:left">season integral</td><td align="left" style="text-align:left">canopy held all season, not on one lucky date</td></tr>
-</tbody>
-</table>
-</center>
-</div>
-
-<br>
+| family | measurement | why it belongs |
+|:---|:---|:---|
+| `level` | August γ⁰ | peak canopy volume |
+| `growth` | 14 Aug − 19 Jun | the **only geometry-matched** date pair (0.076° apart) |
+| `uniform` | −(within-farm CV) | patchiness means gaps, waterlogging or pest damage |
+| `persist` | season integral | canopy held all season, not on one lucky date |
 
 **The weights are derived, not hand-chosen.** Each is inversely proportional to that family's total
 absolute correlation with the others:
 
-<div align="center" style="text-align:center; margin: 1.4em 0">
-<center>
-<h3 style="margin: 0 0 0.35em 0">w(k) &nbsp;∝&nbsp; 1 / Σ |ρ(k, j)|</h3>
-<i>summed over the other families j — the more a family duplicates the rest, the less it weighs</i>
-</center>
-</div>
+**w(k) ∝ 1 / Σ |ρ(k, j)|**
+
+*summed over the other families j — the more a family duplicates the rest, the less it weighs*
 
 giving `growth` 0.283, `uniform` 0.301, `persist` 0.228, `level` 0.189. The rule reads only the
 feature matrix and is **blind to every witness by construction**; weights chosen by watching NDVI
@@ -128,16 +95,11 @@ Which component actually carries the ranking, and does any single weight hold it
 
 *Component importance by ablation: drop each family and re-rank. `uniform` matters most (ρ 0.686), no single weight is load-bearing, and randomising all weights ±50% still leaves ρ ≥ 0.943. Right: health clusters spatially far beyond a 199-permutation null (Moran's I = 0.105) — neighbouring fields share soil and management, and modelling noise would not cluster.*
 
-<br>
-
 ## 3. Yield-to-date estimation
 
-<div align="center" style="text-align:center; margin: 1.4em 0">
-<center>
-<h3 style="margin: 0 0 0.35em 0"><code>yield_to_date</code> [t/ha] &nbsp;=&nbsp; anchor(district) &nbsp;×&nbsp; completion(farm) &nbsp;×&nbsp; accumulation(farm)</h3>
-<i>anchor(district) is the level, from statistics; the two per-farm terms are the variation, measured from SAR</i>
-</center>
-</div>
+**`yield_to_date` [t/ha] = anchor(district) × completion(farm) × accumulation(farm)**
+
+*anchor(district) is the level, from statistics; the two per-farm terms are the variation, measured from SAR*
 
 We read the column exactly as the brief defines it — *"estimated yield potential up to the final
 acquisition date using all available temporal observations"*, and explicitly **not a final harvest
@@ -161,8 +123,6 @@ The accumulation term was then tested with a witness of the **right shape**:
 
 *`season_integral` spans 12 Jun–13 Oct, but our original witnesses were single instants. Cumulative NDVI is impossible here — Sokhda had **zero** Sentinel-2 scenes under 20% cloud in June, July, August or September. So the matched witness is 10 Sentinel-1 scenes on one orbit, same trapezoid. It corroborates cotton (ρ +0.305) and rice (+0.290), is null for maize and groundnut, and **contradicts bajra** (−0.219, p = 0.008). We report that rather than tune it away.*
 
-<br>
-
 ## 4. Key findings
 
 **The crop classes separate on two sensors they never saw.** Kruskal–Wallis p = 1.8×10⁻³⁴ on
@@ -172,47 +132,26 @@ That is the crop calendar, recovered independently.
 
 **Village-level aggregation — all 966 farms, none dropped.** The rule is area-weighted:
 
-<div align="center" style="text-align:center; margin: 1.4em 0">
-<center>
-<h3 style="margin: 0 0 0.35em 0">village production [t] &nbsp;=&nbsp; Σ ( yield(farm) [t/ha] &nbsp;×&nbsp; area(farm) [ha] )</h3>
-<i>summed over all 966 farms</i>
-</center>
-</div>
+**village production [t] = Σ ( yield(farm) [t/ha] × area(farm) [ha] )**
+
+*summed over all 966 farms*
 
 never a mean of per-hectare rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
-<div align="center" style="text-align:center">
-<center>
-<table>
-<th align="center" style="text-align:center; font-weight:bold"><tr>
-<th align="center" style="text-align:center; font-weight:bold">crop</th>
-<th align="center" style="text-align:center; font-weight:bold">farms</th>
-<th align="center" style="text-align:center; font-weight:bold">area ha</th>
-<th align="center" style="text-align:center; font-weight:bold">median health</th>
-<th align="center" style="text-align:center; font-weight:bold">median t/ha to date</th>
-<th align="center" style="text-align:center; font-weight:bold">production t</th>
-</tr></thead>
-<tbody>
-<tr><td align="left" style="text-align:left">Rice</td><td align="center" style="text-align:center">86</td><td align="center" style="text-align:center">47.4</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.64</td><td align="center" style="text-align:center">77</td></tr>
-<tr><td align="left" style="text-align:left">Cotton</td><td align="center" style="text-align:center">455</td><td align="center" style="text-align:center">193.4</td><td align="center" style="text-align:center">51.9</td><td align="center" style="text-align:center">0.34</td><td align="center" style="text-align:center">77</td></tr>
-<tr><td align="left" style="text-align:left">Maize</td><td align="center" style="text-align:center">55</td><td align="center" style="text-align:center">26.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.18</td><td align="center" style="text-align:center">62</td></tr>
-<tr><td align="left" style="text-align:left">Bajra</td><td align="center" style="text-align:center">149</td><td align="center" style="text-align:center">42.3</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.57</td><td align="center" style="text-align:center">113</td></tr>
-<tr><td align="left" style="text-align:left">Groundnut</td><td align="center" style="text-align:center">221</td><td align="center" style="text-align:center">137.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.86</td><td align="center" style="text-align:center">266</td></tr>
-<tr><td align="left" style="text-align:left"><b>Village 1</b></td><td align="center" style="text-align:center"><b>966</b></td><td align="center" style="text-align:center"><b>447.5</b></td><td align="center" style="text-align:center"><b>50.7</b></td><td align="center" style="text-align:center"><b>1.41</b></td><td align="center" style="text-align:center"><b>595</b></td></tr>
-</tbody>
-</table>
-</center>
-</div>
-
-<br>
+| crop | farms | area ha | median health | median t/ha to date | production t |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Rice | 86 | 47.4 | 50.0 | 1.64 | 77 |
+| Cotton | 455 | 193.4 | 51.9 | 0.34 | 77 |
+| Maize | 55 | 26.7 | 50.0 | 2.18 | 62 |
+| Bajra | 149 | 42.3 | 50.0 | 2.57 | 113 |
+| Groundnut | 221 | 137.7 | 50.0 | 1.86 | 266 |
+| **Village 1** | **966** | **447.5** | **50.7** | **1.41** | **595** |
 
 **Coverage is complete, and every row declares its provenance.**
 
 ![gallery_04_coverage_and_confidence](https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F18936911%2Fb2337ebce4c5d9f79fb694eace066a36%2Fgallery_04_coverage_and_confidence.png?generation=1786545477102861&alt=media)
 
 *895 measured, 52 imputed, 19 RFI-flagged — 966 total. Missing coverage is spatially clustered in the north-west rather than random, which is why imputation borrows from adjacent farms of the same crop instead of a village mean. Per-farm crop confidence is low **by design**.*
-
-<br>
 
 ### What failed
 
@@ -227,8 +166,6 @@ never a mean of per-hectare rates, which would let a 0.05 ha plot count as much 
   absolute accuracy is not declared while relative accuracy is good — exactly what we observe. Every
   downstream quantity is a difference or a within-crop rank, so the product survives it, and that is
   verified rather than asserted.
-
-<br>
 
 ## 5. Why X-band was worth it, measured
 
