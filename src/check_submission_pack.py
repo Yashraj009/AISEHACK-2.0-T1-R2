@@ -143,14 +143,27 @@ def main():
     else:
         check("Kaggle writeup exists and is within the page limit", False, "missing")
 
+    # The Round 1 score is 11.071, not 0.000 -- the 0.000 run came after the deadline and
+    # is not our official result. Every claim that the village shares are EXACT was built on
+    # the wrong number, and the dasymetric framing leans on it, so no document may say it.
+    for name, path in (("report", rep), ("writeup", wr),
+                       ("description", docs / "KAGGLE_DESCRIPTION_PASTE.md")):
+        if path.exists():
+            t = path.read_text(encoding="utf8")
+            bad = [s for s in ("MSE 0.000", "exact ground truth", "exact truth",
+                               "shares are exact", "Exact Crop Statistics") if s in t]
+            check(f"{name} does not claim the Round 1 shares are exact", not bad,
+                  "; ".join(bad) if bad else "MSE 11.071 throughout")
+
     # A title that names a technique the body never explains is worse than a plain one:
     # the judges meet the term in the title and nowhere else. Both documents must define it.
     for name, path in (("report", rep), ("writeup", wr)):
         if path.exists():
-            t = path.read_text(encoding="utf8").lower()
-            titled = "dasymetric" in t.split("\n")[0].lower() or "dasymetric" in t[:600]
+            # collapse the source wrapping: the definition sentence spans a line break
+            t = " ".join(path.read_text(encoding="utf8").lower().split())
+            titled = "dasymetric" in t[:600]
             check(f"{name} defines 'dasymetric' where it uses it",
-                  not titled or ("distributing a known" in t or "exact aggregate" in t),
+                  not titled or "distributing a known total across finer units" in t,
                   f"{t.count('dasymetric')} mentions")
 
     # --- rendered deliverables ----------------------------------------------------

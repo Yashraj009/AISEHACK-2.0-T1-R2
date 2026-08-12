@@ -47,7 +47,7 @@
         </mxCell>
 
         <!-- ============================ declared auxiliary inputs ============================ -->
-        <mxCell id="aux_r1" value="Round 1 crop-area shares&lt;br&gt;exact truth, MSE 0.000" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;" vertex="1" parent="1">
+        <mxCell id="aux_r1" value="Round 1 crop-area shares&lt;br&gt;village mix, MSE 11.071" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;" vertex="1" parent="1">
           <mxGeometry x="925" y="72" width="408" height="56" as="geometry" />
         </mxCell>
         <mxCell id="aux_apy" value="Vadodara APY district yield&lt;br&gt;published statistics" style="rounded=1;arcSize=12;html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=1.5;fontSize=12.5;fontColor=#1e293b;" vertex="1" parent="1">

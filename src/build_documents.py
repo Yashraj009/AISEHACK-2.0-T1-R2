@@ -67,7 +67,7 @@ MAX_PAGES = 4
 # pages, then step back one. build() asserts the result is still within MAX_PAGES.
 SCALE = {
     "REPORT":         dict(font=9.2, lh=1.38, h1=16, h2=11.8, h3=10.3, hgap=11,
-                           pgap=3.5, imgh=58, tbl=8.0),
+                           pgap=3.5, imgh=55, tbl=8.0),
     "KAGGLE_WRITEUP": dict(font=8.9, lh=1.34, h1=15, h2=11, h3=9.6, hgap=9,
                            pgap=3, imgh=55, tbl=8.0),
 }

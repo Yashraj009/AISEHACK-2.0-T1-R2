@@ -84,7 +84,7 @@ HEALTH_FAMILIES = ["level", "growth", "uniform", "persist"]
 # restructured to avoid. It sits well below the flood term's 2.2, so it supplements the
 # rice channel rather than replacing it.
 #
-# RICE ONLY. The same exact truth also gives Maize +0.444 (p 0.018) on this feature, and
+# RICE ONLY. The same R1 reconstruction also gives Maize +0.444 (p 0.018) on this feature, and
 # adding that term was tried and REJECTED: it degraded crop separation on both held-out
 # witnesses (Kruskal H 164.3 -> 157.5 on NDVI, 95.8 -> 89.3 on C-VH) while the rice-only
 # form improved both (165.6, 98.0). Rice's evidence is also the stronger of the two by an
@@ -128,14 +128,14 @@ def crop_evidence(f):
     growth = f["d_aug_jun06"].values if "d_aug_jun06" in f else (
         f["g0_db_20250814"] - f["g0_db_20250606"]).values
 
-    # X-band Aug-minus-June. This is the ONE X-band feature that Round 1's exact
+    # X-band Aug-minus-June. This is the ONE X-band feature that Round 1's
     # village truth shows to be crop-discriminating, and it is validated on the 28
     # villages OTHER than Sokhda -- our target village is held out of the derivation
     # entirely, so nothing here is fitted to the village we are predicting.
     #
     #   Rice   rho -0.555 (p 0.002)   Maize  rho +0.444 (p 0.018)
     #
-    # against crop share, using Round 1's leaderboard-exact reconstruction (MSE 0.000)
+    # against crop share, using Round 1's leaderboard reconstruction (MSE 11.071)
     # as the reference. The mechanism is the same one the rice channel rests on, seen
     # from the other end: paddy is bright in June from stem-water double bounce and
     # falls back as the canopy closes by August, so its Aug-minus-June change is the
@@ -158,7 +158,7 @@ def crop_evidence(f):
 
     zf, zg, za, zo = z(flood), z(growth), z(aug), z(octl)
     zs, zt, zc = z(senes), z(struct), z(cvv)
-    zx = z(x_augjun)          # the R1 exact-truth-validated X-band discriminator
+    zx = z(x_augjun)          # the R1-validated X-band discriminator
 
     # Flooding is the one signature we independently validated [J8], so it gets
     # the largest single weight anywhere in this function. It is also the only

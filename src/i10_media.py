@@ -556,7 +556,7 @@ across the feature box and through the deliverable headings.
     ax.text(98, 96.5, "DECLARED INPUTS", fontsize=11, fontweight="bold",
             color="#b45309", ha="right")
     ax.text(98, 93.4, "used, and labelled as inputs", fontsize=9, color="#b45309", ha="right")
-    box(68, 84, 30, 7, None, "Round 1 crop-area shares\nexact truth, MSE 0.000", AUX, EA)
+    box(68, 84, 30, 7, None, "Round 1 crop-area shares\nvillage mix, MSE 11.071", AUX, EA)
     box(68, 74, 30, 7, None, "Vadodara APY district yield\npublished statistics", AUX, EA)
 
     # ---- processing chain ------------------------------------------------------

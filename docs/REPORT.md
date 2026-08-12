@@ -1,4 +1,4 @@
-# Dasymetric Mapping of Exact Crop Statistics to Parcel Level from X-band SAR
+# Dasymetric Mapping of Village Crop Statistics to Parcel Level from X-band SAR
 ### Crop type, health index and yield-to-date for 966 farms — ANRF AISEHack 2.0, Round 2
 
 **Team GDHTM** — Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya\
@@ -15,21 +15,26 @@ product after it is built, and no optical or C-band measurement enters any shipp
 separation is deliberate: it keeps the Capella imagery the primary source as the guidelines require,
 and it means our validation is genuinely independent rather than self-confirming.
 
-**One technique, applied twice.** Everything known *exactly* about Sokhda is an aggregate: Round 1's
-crop-area shares are exact at village level, the yield anchor at district level. Nothing is known
-exactly per farm — which is what the brief asks for. Both quantities are therefore built the same
-way: take the exact aggregate, and let the SAR supply only the variation inside it. Distributing a
+**One technique, applied twice.** Everything we know about this village's crops, we know only *in
+aggregate*: the crop-area shares at village level, the yield anchor at district level. Nothing is
+known per farm — which is exactly what the brief asks for. Both quantities are therefore built the
+same way: hold the aggregate, and let the SAR supply only the variation inside it. Distributing a
 known total across finer units using an ancillary variable correlated with the true distribution is
 **dasymetric mapping**, and it is the spine of this pipeline.
 
-| known exactly | disaggregated to | ancillary variable from Capella |
+| known in aggregate | disaggregated to | ancillary variable from Capella |
 |---|---|---|
-| Round 1 village crop-area shares (MSE 0.000) | 966 parcel crop labels | per-farm soft evidence, area-constrained |
+| Round 1 village crop-area shares (MSE 11.071) | 966 parcel crop labels | per-farm soft evidence, area-constrained |
 | Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
-The health index is the one deliverable with no exact aggregate to anchor to, so it is scored as a
-**rank within crop** rather than an absolute level — the same discipline applied to a quantity that
-has no total to honour.
+Neither aggregate is error-free, and we do not treat them as such — the Round 1 shares are our own
+best estimate of the village mix, not ground truth. The argument for holding them is comparative,
+not absolute: the aggregate is estimated from a whole village of evidence, the per-farm label from
+one parcel of it, so the aggregate is by far the better-constrained of the two. §6 reports what that
+costs at farm level.
+
+The health index has no aggregate to anchor to at all, so it is scored as a **rank within crop**
+rather than an absolute level — the same discipline applied to a quantity with no total to honour.
 
 ![Figure 1](figures/gallery_00_method_overview.png)
 
@@ -83,15 +88,14 @@ August-minus-June difference. These give per-farm class probabilities, which are
 the **area-weighted argmax shares match the Round 1 shares exactly**. Area weighting is used because
 the Round 1 quantity is an area share; weighting by farm count would satisfy the wrong constraint.
 
-This is a deliberate design choice with a measured justification. In Round 1, free per-pixel
-assignment scored 5× *worse* than assigning nothing at all, so the village mix is treated as a
-constraint to be honoured rather than a quantity to be re-inferred. The consequence is stated plainly
-in §6: the village composition is well constrained, the individual farm label is not.
+The justification is measured, not stylistic: in Round 1, free per-pixel assignment scored 5× *worse*
+than assigning nothing at all, so the village mix is honoured as a constraint rather than re-inferred.
 
-One Round 1 signature was re-validated and imported. Testing all Round 1 feature signs against its
-exact truth, 13 of 15 agree, but Groundnut × NDVI-entropy significantly contradicts it (ρ −0.531,
-p = 0.003) — evidence that the tail of the Round 1 ladder partly fitted leaderboard noise. Only the
-rice August-minus-June signature cleared all four of our transfer tests and was shipped.
+One Round 1 signature was re-validated and imported. Testing all Round 1 feature signs against the
+Round 1 reconstruction, 13 of 15 agree, but Groundnut × NDVI-entropy significantly contradicts it
+(ρ −0.531, p = 0.003) — evidence that the tail of the Round 1 ladder partly fitted leaderboard noise.
+Only the rice August-minus-June signature cleared all four of our transfer tests and was shipped.
+That a Round 1 feature can be contradicted at all is the reason we treat the shares as an estimate.
 
 ## 4. Crop health index
 
@@ -210,8 +214,8 @@ it — but it does close off change detection as a route we could have claimed. 
 contradiction is the one that would change a decision: bajra is 15% of the parcels and its
 season-integral term runs against the witness, so its yield column carries the weakest support of
 the five crops. We leave the value in rather than tune it, and flag it here, because the constraint
-that produced it — the Round 1 area shares — is exact truth we are not entitled to overwrite with a
-correction fitted to one witness.
+that produced it — the Round 1 area shares — is estimated from far more evidence than a single
+witness correction would be, so we do not overwrite it on one contradicting signal.
 
 ## 8. Reproducibility
 
