@@ -129,6 +129,17 @@ def main():
         check("writeup covers all four required topics", not missing,
               "missing: " + ", ".join(missing) if missing else "all present")
         check("writeup names the team", TEAM in t, TEAM)
+        # Kaggle silently truncates both fields, and the quoted character counts in the
+        # writeup drift whenever the wording is edited. Measure them.
+        for field, cap in (("Title", 80), ("Subtitle", 140)):
+            m = re.search(rf"\*\*{field} \((\d+) char field, (\d+) used\):\*\*\s*\n>\s*`([^`]+)`", t)
+            n = len(m.group(3)) if m else -1
+            check(f"{field.lower()} fits the {cap}-char Kaggle field", 0 < n <= cap,
+                  f"{n} chars" + ("" if not m or n == int(m.group(2))
+                                  else f" but the text claims {m.group(2)}"))
+            if m:
+                check(f"{field.lower()} states its own length correctly",
+                      int(m.group(2)) == n and int(m.group(1)) == cap, f"claims {m.group(2)}")
     else:
         check("Kaggle writeup exists and is within the page limit", False, "missing")
 

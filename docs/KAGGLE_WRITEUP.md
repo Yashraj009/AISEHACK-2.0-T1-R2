@@ -3,8 +3,8 @@
 > **Title (80 char field, 79 used):**
 > `Farm-Level Crop Health and Yield-to-Date Estimation from X-band SAR Time Series`
 >
-> **Subtitle (140 char field, 138 used):**
-> `966 parcels from four Capella acquisitions, kharif 2025; Sentinel-1 and Sentinel-2 withheld as independent validation. Negatives reported.`
+> **Subtitle (140 char field, 136 used):**
+> `966 parcels, four Capella scenes: crop constrained to exact Round 1 shares, health weights derived not tuned, Sentinel withheld to test.`
 >
 > **Card / thumbnail (560×280):** `media_gallery/thumbnail_560x280.png`
 > **Cover image:** `media_gallery/cover.png`
