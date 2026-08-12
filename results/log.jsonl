@@ -831,3 +831,53 @@
 {"t": "2026-08-12T14:08:21", "stage": "d11.start"}
 {"t": "2026-08-12T14:08:21", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
 {"t": "2026-08-12T14:08:55", "stage": "upload.package", "size_mb": 174.0, "figures": 13}
+{"t": "2026-08-12T15:10:18", "stage": "i10.start"}
+{"t": "2026-08-12T15:10:20", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T15:10:20", "stage": "i10.fig", "name": "00_method_overview"}
+{"t": "2026-08-12T15:10:21", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T15:10:21", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T15:10:21", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T15:10:22", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-12T15:10:22", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T15:10:22", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T15:10:23", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T15:10:25", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T15:10:26", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T15:10:26", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T15:10:27", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T15:10:27", "stage": "i10.done", "figures": 13}
+{"t": "2026-08-12T15:16:37", "stage": "i10.start"}
+{"t": "2026-08-12T15:16:38", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T15:16:38", "stage": "i10.fig", "name": "00_method_overview"}
+{"t": "2026-08-12T15:16:38", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T15:16:39", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T15:16:39", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T15:16:39", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-12T15:16:40", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T15:16:40", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T15:16:40", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T15:16:42", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T15:16:43", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T15:16:43", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T15:16:44", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T15:16:44", "stage": "i10.done", "figures": 13}
+{"t": "2026-08-12T15:18:00", "stage": "i10.start"}
+{"t": "2026-08-12T15:18:01", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-12T15:18:02", "stage": "i10.fig", "name": "00_method_overview"}
+{"t": "2026-08-12T15:18:02", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-12T15:18:03", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-12T15:18:03", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-12T15:18:03", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-12T15:18:03", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-12T15:18:04", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-12T15:18:04", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-12T15:18:06", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-12T15:18:06", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-12T15:18:06", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-12T15:18:07", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-12T15:18:07", "stage": "i10.done", "figures": 13}
+{"t": "2026-08-12T15:21:51", "stage": "upload.package", "size_mb": 174.0, "figures": 14}
+{"t": "2026-08-12T15:21:53", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T15:21:55", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T15:21:55", "stage": "d11.start"}
+{"t": "2026-08-12T15:21:56", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}

@@ -505,6 +505,118 @@ def _required_map(g, column, cmap, vmin, vmax, title, sub_note, cbar_label,
     return p
 
 
+def fig_method(_g=None):
+    """One diagram of the whole method, including what is deliberately NOT connected.
+
+A judge reading a gallery cannot reconstruct a dataflow from prose. The single most
+load-bearing claim in this project -- that Sentinel-1 and Sentinel-2 never touch the
+product -- is a statement about ARROWS, so it belongs in a diagram: the witness box
+has no arrow into any deliverable, only into validation.
+
+Layout note: the declared-input arrows are ELBOWS routed through the clear band at
+y=52, between the feature box and the deliverables. Drawn straight they cut diagonally
+across the feature box and through the deliverable headings.
+"""
+    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
+
+    fig, ax = plt.subplots(figsize=(13.6, 8.0))
+    ax.set_xlim(0, 100); ax.set_ylim(0, 100); ax.set_axis_off()
+
+    def box(x, y, w, h, head, body, fc, ec, hs=10, bs=8.8):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.5,rounding_size=1.2",
+                                    facecolor=fc, edgecolor=ec, linewidth=1.5))
+        if head:
+            ax.text(x + w / 2, y + h - 2.2, head, ha="center", va="center",
+                    fontsize=hs, fontweight="bold", color="#0f172a")
+        if body:
+            ax.text(x + w / 2, y + (h - 4.4) / 2 if head else y + h / 2, body,
+                    ha="center", va="center", fontsize=bs, color="#1e293b", linespacing=1.5)
+
+    def arrow(x1, y1, x2, y2, color="#475569", lw=1.6, style="-"):
+        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>", mutation_scale=12,
+                                     color=color, linewidth=lw, linestyle=style,
+                                     shrinkA=1, shrinkB=1))
+
+    def elbow(x1, y1, x2, y2, ymid, color, lw=1.6):
+        ax.plot([x1, x1], [y1, ymid], color=color, lw=lw, solid_capstyle="round", zorder=1)
+        ax.plot([x1, x2], [ymid, ymid], color=color, lw=lw, solid_capstyle="round", zorder=1)
+        arrow(x2, ymid, x2, y2, color=color, lw=lw)
+
+    PRIMARY, AUX, OUT, WIT = "#e0f2fe", "#fef3c7", "#dcfce7", "#f1f5f9"
+    EP, EA, EO, EW = "#0284c7", "#d97706", "#16a34a", "#94a3b8"
+
+    # ---- primary inputs --------------------------------------------------------
+    ax.text(2, 96.5, "PRIMARY SOURCE — Capella X-band HH SLC", fontsize=11,
+            fontweight="bold", color="#0369a1")
+    ax.text(2, 93.4, "the only source of any shipped number", fontsize=9, color="#0369a1")
+    for i, d in enumerate(DATES):
+        box(2 + i * 15.8, 84, 14.5, 7, None, NICE[d], PRIMARY, EP, bs=10.5)
+        arrow(9.2 + i * 15.8, 84, 33, 78.5)
+
+    ax.text(98, 96.5, "DECLARED INPUTS", fontsize=11, fontweight="bold",
+            color="#b45309", ha="right")
+    ax.text(98, 93.4, "used, and labelled as inputs", fontsize=9, color="#b45309", ha="right")
+    box(68, 84, 30, 7, None, "Round 1 crop-area shares\nexact truth, MSE 0.000", AUX, EA)
+    box(68, 74, 30, 7, None, "Vadodara APY district yield\npublished statistics", AUX, EA)
+
+    # ---- processing chain ------------------------------------------------------
+    box(2, 68, 63, 10, "PREPROCESSING",
+        "β⁰ = scale·|z|²  →  γ⁰ = β⁰·tanθ  with PER-PIXEL θ from orbit state vectors\n"
+        "geocode to EPSG:32643 with 225 GCPs · averaging = multi-look · 5 m + 2 m grids",
+        PRIMARY, EP)
+    arrow(33, 68, 33, 64)
+
+    box(2, 52, 63, 12, "PER-FARM FEATURES",
+        "parcel eroded before sampling so boundary pixels never mix two fields\n"
+        "per-date γ⁰ · inter-date differences · within-farm CV · season integral · texture\n"
+        "coverage 966/966 — 895 measured, 52 imputed, 19 RFI-flagged, provenance per row",
+        PRIMARY, EP)
+
+    # ---- deliverables ----------------------------------------------------------
+    # opaque background: this label sits in the band the feed arrows cross, and without
+    # it the text and the arrowheads overprint each other
+    ax.text(50, 48.6, "THREE DELIVERABLES  ·  submission.csv, one row per farm",
+            fontsize=11, fontweight="bold", color="#15803d", ha="center", zorder=5,
+            bbox=dict(facecolor="white", edgecolor="none", pad=3.0))
+    for x in (17, 50, 83):
+        arrow(33, 52, x, 46.4)
+    # declared inputs routed through the clear band, not diagonally across the figure
+    elbow(83, 84, 17, 46.4, 50.6, EA)
+    elbow(83, 74, 83, 46.4, 50.6, EA)
+
+    box(2, 30, 30, 16, "crop_type",
+        "soft per-farm evidence, then\nbiased until AREA-weighted\nshares match Round 1\n"
+        "— argmax only at the end", OUT, EO)
+    box(35, 30, 30, 16, "health_index",
+        "four families, weights from\nredundancy  w ∝ 1/Σ|ρ|\n(blind to every witness)\n"
+        "scored WITHIN crop", OUT, EO)
+    box(68, 30, 30, 16, "yield_estimate_to_date",
+        "anchor × completion(farm)\n× accumulation(farm)\nobserved to 13 Oct —\n"
+        "NOT a harvest forecast", OUT, EO)
+
+    # ---- witnesses: the point is the missing arrow ------------------------------
+    box(2, 6, 44, 17, "WITNESSES — never inputs",
+        "Sentinel-2 L2A · Sentinel-1 RTC · NASA POWER\n\n"
+        "same-day NDVI, 13 Oct, 0.003% cloud · C-band VH\n"
+        "10-scene season integral, 12 Jun – 10 Oct, one orbit", WIT, EW)
+    box(54, 6, 44, 17, "VALIDATION — tests that can fail",
+        "crop separation p = 1.8×10⁻³⁴ · Moran's I = 0.105\n\n"
+        "and the failures, reported: κ = 0.103 ·\ncoherence at the noise floor ·\n"
+        "a witness caught an inverted completion sign", WIT, EW)
+    arrow(46, 14.5, 54, 14.5, color="#64748b")
+    for x in (17, 50, 83):
+        arrow(x, 30, 76, 23, color="#94a3b8", lw=1.1, style=(0, (4, 3)))
+
+    ax.text(50, 1.6, "No arrow runs from a witness into a deliverable — that is the design.",
+            fontsize=11, fontweight="bold", color="#b91c1c", ha="center")
+
+    fig.suptitle("Method — what feeds what, and what deliberately does not",
+                 fontsize=14.5, fontweight="bold", y=1.02, x=0.02, ha="left")
+    p = FIGURES / "gallery_00_method_overview.png"
+    fig.savefig(p, bbox_inches="tight"); plt.close(fig)
+    return p
+
+
 def thumbnail(g):
     """The Kaggle card image, at EXACTLY 560x280 px.
 
@@ -682,6 +794,7 @@ def main():
     log("i10.start")
     g, sub, dbg, f, wit = load()
     cover(g);                       log("i10.fig", name="cover")
+    fig_method();                   log("i10.fig", name="00_method_overview")
     # the two maps the brief requires by name, before the supporting ones
     fig_map_health(g);              log("i10.fig", name="01_health_index_map")
     fig_map_yield(g);               log("i10.fig", name="02_yield_to_date_map")

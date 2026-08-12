@@ -19,6 +19,11 @@ The three deliverables are produced by one pipeline: crop type by carrying the R
 the new boundaries under an area constraint; health as a four-family composite scored within crop;
 and yield-to-date as a district anchor scaled by two per-farm SAR-measured terms.
 
+![Figure 1](figures/gallery_00_method_overview.png)
+
+*Figure 1. What feeds what. No arrow runs from a witness into a deliverable; auxiliary inputs that do feed the product are drawn in amber and labelled as inputs.*
+
+
 We report the checks that failed as prominently as those that passed. Three findings in §6 are
 negative, and one of them forced a sign correction in the shipped yield column.
 
@@ -95,6 +100,11 @@ median, so 50 means "typical for this crop", and the score is a bounded transfor
 z-score rather than a percentile rank, which preserves the size of a difference instead of flattening
 it to a rank.
 
+![Figure 2](figures/gallery_01_health_index_map.png)
+
+*Figure 2. Farm-level Crop Health Index, 13 October 2025. Within-crop scoring centres every crop at 50 by construction; the histogram states this rather than letting it read as a result.*
+
+
 ## 5. Yield to date
 
     yield_to_date (t/ha) = district anchor × season completion(farm) × accumulation(farm)
@@ -111,6 +121,11 @@ SAR. We state that split rather than blur it: SAR cannot measure absolute yield 
 data, and pretending otherwise would be the least defensible claim in this project. Both per-farm
 terms are measured, not assumed — completion from each farm's own August→October change, and
 accumulation from the season integral, which uses all four acquisitions as the brief requires.
+
+![Figure 3](figures/gallery_02_yield_to_date_map.png)
+
+*Figure 3. Farm-level Yield Estimate to Date. Cotton reads pale because on 13 October it is only ~45% through picking; the level is set by crop and the SAR contributes the within-crop spread.*
+
 
 ## 6. External datasets, and what they were used for
 
@@ -156,6 +171,11 @@ village production = Σ(farm yield t/ha × farm area ha), never a mean of per-he
 3. **A sign error in the completion term, caught by a witness.** We had assumed a harvested field
    brightens toward bare soil. Sentinel-2 disagreed in all five crops, so the term was reading
    standing crop as senescence. The sign was corrected and the shipped column changed.
+
+![Figure 4](figures/gallery_10_negatives.png)
+
+*Figure 4. Two results we report as failures: repeat-pass coherence does not clear its own control floor, and the uniformity-health relationship holds on the date that feeds the index but fails on an independent date.*
+
 
 ## 8. Reproducibility
 
