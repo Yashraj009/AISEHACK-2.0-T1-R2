@@ -30,21 +30,25 @@ CSS = """
 /* The 4-page cap is a hard requirement and the figures are what push against it, so the
    image height is capped rather than the prose cut. Verified by counting pages in the
    rendered PDF, not by a words-per-page estimate -- the estimate said 2.9 pages while the
-   real render came out at 5. */
+   real render came out at 5.
+
+   SCALE is per document (see SCALE below) because the two have different densities: one
+   shared value has to satisfy the tighter document, which left the other one's last page
+   two-thirds empty. Each is tuned to fill its fourth page without spilling onto a fifth. */
 @page { size: A4; margin: 12mm 13mm 12mm 13mm; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 8.9pt;
-       line-height: 1.34; color: #111; max-width: none; margin: 0; }
-h1 { font-size: 15pt; margin: 0 0 2pt 0; line-height: 1.18; }
-h2 { font-size: 11pt; margin: 9pt 0 3pt 0; border-bottom: 1px solid #d8dee4;
+body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: %(font)spt;
+       line-height: %(lh)s; color: #111; max-width: none; margin: 0; }
+h1 { font-size: %(h1)spt; margin: 0 0 2pt 0; line-height: 1.18; }
+h2 { font-size: %(h2)spt; margin: %(hgap)spt 0 4pt 0; border-bottom: 1px solid #d8dee4;
      padding-bottom: 1.5pt; break-after: avoid; }
-h3 { font-size: 9.6pt; margin: 7pt 0 2pt 0; break-after: avoid; }
-p  { margin: 3pt 0; text-align: justify; }
-img { max-width: 100%; max-height: 58mm; width: auto; height: auto; display: block;
-      margin: 4pt auto 1pt auto; break-inside: avoid; }
+h3 { font-size: %(h3)spt; margin: 8pt 0 2pt 0; break-after: avoid; }
+p  { margin: %(pgap)spt 0; text-align: justify; }
+img { max-width: 100%%; max-height: %(imgh)smm; width: auto; height: auto; display: block;
+      margin: 5pt auto 1pt auto; break-inside: avoid; }
 figure, p:has(img) { break-inside: avoid; }
 em { color: #333; }
-table { border-collapse: collapse; width: 100%; font-size: 8.0pt; margin: 4pt 0;
+table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt; margin: 4pt 0;
         break-inside: avoid; }
 th, td { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; text-align: left; }
 th { background: #eef2f6; }
@@ -58,6 +62,15 @@ hr { border: 0; border-top: 1px solid #d8dee4; margin: 9pt 0; }
 
 
 MAX_PAGES = 4
+
+# Per-document type scale. Tuned against the real render: raise until the PDF turns 5
+# pages, then step back one. build() asserts the result is still within MAX_PAGES.
+SCALE = {
+    "REPORT":         dict(font=9.2, lh=1.38, h1=16, h2=11.8, h3=10.3, hgap=11,
+                           pgap=3.5, imgh=63, tbl=8.0),
+    "KAGGLE_WRITEUP": dict(font=8.9, lh=1.34, h1=15, h2=11, h3=9.6, hgap=9,
+                           pgap=3, imgh=58, tbl=8.0),
+}
 
 
 def page_count(pdf: Path) -> int:
@@ -85,7 +98,7 @@ def build(stem, title):
 
     # --- PDF via HTML + headless Chrome -------------------------------------------
     css = OUT / "_print.css"
-    css.write_text(CSS, encoding="utf8")
+    css.write_text(CSS % SCALE[stem], encoding="utf8")
     run(["pandoc", str(md), "-o", str(html), "--from", "gfm+tex_math_dollars",
          "--standalone", "--mathml", "--embed-resources",
          "--resource-path", str(DOCS), "--css", str(css),

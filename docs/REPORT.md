@@ -153,6 +153,10 @@ Sentinel-2 NDVI and 7.7×10⁻²⁰ on Sentinel-1 VH. The *ordering* is the resu
 October cotton is the only crop still standing and tops both witnesses, while maize is harvested and
 bottoms both — the crop calendar, recovered independently.
 
+![Figure 4](figures/gallery_07_independent_validation.png)
+
+*Figure 4. The independent witnesses. Both panels are sensors the pipeline never read: the crop classes separate on Sentinel-2 NDVI and Sentinel-1 VH, and the ordering matches the kharif calendar — cotton still standing on 13 October, maize already harvested.*
+
 **Health clusters spatially far beyond chance.** Moran's I = 0.105 against a 199-permutation null.
 Neighbouring fields share soil, water and management; modelling noise would not cluster.
 
@@ -182,14 +186,14 @@ never a mean of per-hectare rates.
    brightens toward bare soil. Sentinel-2 disagreed in all five crops, so the term was reading
    standing crop as senescence. The sign was corrected and the shipped column changed.
 
-![Figure 4](figures/gallery_10_negatives.png)
+![Figure 5](figures/gallery_10_negatives.png)
 
-*Figure 4. Two results we report as failures: repeat-pass coherence does not clear its own control floor, and the uniformity-health relationship holds on the date that feeds the index but fails on an independent date.*
+*Figure 5. Two results we report as failures: repeat-pass coherence does not clear its own control floor, and the uniformity-health relationship holds on the date that feeds the index but fails on an independent date.*
 
 
 ## 8. Reproducibility
 
 `notebooks/I9_pipeline.ipynb` runs from a fresh kernel and its final cell **asserts** that it
-reproduces the shipped `submission.csv` exactly. An 18-check ship gate verifies schema, value ranges,
+reproduces the shipped `submission.csv` exactly. A 19-check ship gate verifies schema, value ranges,
 units and deliverables, and a separate gate asserts that every number quoted in this report matches
 the shipped artefacts, so the prose cannot drift from the data.

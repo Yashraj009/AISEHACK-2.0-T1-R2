@@ -613,7 +613,13 @@ across the feature box and through the deliverable headings.
     fig.suptitle("Method — what feeds what, and what deliberately does not",
                  fontsize=14.5, fontweight="bold", y=1.02, x=0.02, ha="left")
     p = FIGURES / "gallery_00_method_overview.png"
-    fig.savefig(p, bbox_inches="tight"); plt.close(fig)
+    fig.savefig(p, bbox_inches="tight")
+    # Also as SVG -- XML, so the diagram can be restyled by hand in Inkscape/Illustrator/
+    # Figma without re-running the pipeline. svg.fonttype="none" keeps the labels as real
+    # <text> elements (the default converts them to outlines, which cannot be edited).
+    with mpl.rc_context({"svg.fonttype": "none"}):
+        fig.savefig(p.with_suffix(".svg"), bbox_inches="tight")
+    plt.close(fig)
     return p
 
 

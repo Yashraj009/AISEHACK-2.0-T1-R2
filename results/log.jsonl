@@ -897,3 +897,13 @@
 {"t": "2026-08-12T17:49:42", "stage": "check_writeup", "status": "PASS"}
 {"t": "2026-08-12T17:49:43", "stage": "d11.start"}
 {"t": "2026-08-12T17:49:43", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T18:24:00", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T18:26:08", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T18:26:48", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T18:26:50", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T18:27:09", "stage": "d11.start"}
+{"t": "2026-08-12T18:27:09", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T18:28:11", "stage": "upload.package", "size_mb": 174.1, "figures": 14}
+{"t": "2026-08-12T18:28:17", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T18:28:18", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T18:28:20", "stage": "check_writeup", "status": "PASS"}
