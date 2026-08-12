@@ -881,3 +881,10 @@
 {"t": "2026-08-12T15:21:55", "stage": "check_submission_pack", "status": "PASS"}
 {"t": "2026-08-12T15:21:55", "stage": "d11.start"}
 {"t": "2026-08-12T15:21:56", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T15:40:48", "stage": "upload.package", "size_mb": 174.0, "figures": 14}
+{"t": "2026-08-12T16:52:28", "stage": "upload.package", "size_mb": 174.0, "figures": 14}
+{"t": "2026-08-12T16:52:29", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T16:52:45", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T16:52:47", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T16:52:47", "stage": "d11.start"}
+{"t": "2026-08-12T16:52:48", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}

@@ -77,9 +77,38 @@ def main():
             sheet.to_excel(xl, index=False, sheet_name="farm_level_results")
     except Exception as exc:                      # openpyxl absent -> CSV still satisfies it
         print(f"  note: xlsx not written ({exc}); the CSV satisfies the requirement")
-    nfig = copy_tree(FIGURES, UP / "figures", "cover.png")
-    nfig += copy_tree(FIGURES, UP / "figures", "gallery_*.png")
-    nfig += copy_tree(FIGURES, UP / "figures", "thumbnail_560x280.png")
+    # Two DIFFERENT audiences, so two folders. The Media Gallery is browsed without the
+    # text and each item must stand alone -- it carries the deliverables and the proof
+    # they are real. The Project Description figures are argument: they need the
+    # surrounding prose to mean anything, and repeating them in the gallery would just
+    # make the gallery look padded. Nothing appears in both.
+    GALLERY = ["cover.png",                             # required Kaggle cover
+               "gallery_00_method_overview.png",        # the approach, standalone
+               "gallery_01_health_index_map.png",       # REQUIRED by the guidelines
+               "gallery_02_yield_to_date_map.png",      # REQUIRED by the guidelines
+               "gallery_03_crop_classification_map.png",
+               "gallery_05_village_aggregate.png",
+               "gallery_07_independent_validation.png"]
+    INLINE = ["gallery_04_coverage_and_confidence.png",
+              "gallery_06_temporal_trajectory.png",
+              "gallery_08_season_witness.png",
+              "gallery_09_robustness.png",
+              "gallery_10_negatives.png",
+              "gallery_11_why_xband.png"]
+
+    nfig = 0
+    for name in GALLERY:
+        nfig += copy_tree(FIGURES, UP / "media_gallery", name)
+    for name in INLINE:
+        nfig += copy_tree(FIGURES, UP / "description_figures", name)
+    nfig += copy_tree(FIGURES, UP / "media_gallery", "thumbnail_560x280.png")
+    # the report embeds four figures with paths relative to itself
+    for name in ("gallery_00_method_overview.png", "gallery_01_health_index_map.png",
+                 "gallery_02_yield_to_date_map.png", "gallery_10_negatives.png"):
+        copy_tree(FIGURES, UP / "figures", name)
+
+    stray = ({p.name for p in FIGURES.glob("gallery_*.png")} - set(GALLERY) - set(INLINE))
+    assert not stray, f"figure assigned to neither gallery nor description: {sorted(stray)}"
 
     # ---- the dataset the notebook needs to run on Kaggle ----------------------
     # layout must keep `src/` at the top so _find_root() resolves it

@@ -8,6 +8,7 @@ disqualification risk that no amount of good science recovers.
 
 Run:  python src/check_submission_pack.py
 """
+import re
 import sys
 from pathlib import Path
 
@@ -76,6 +77,21 @@ def main():
 
     gal = sorted(fig.glob("gallery_*.png"))
     check("supporting maps/plots in gallery", len(gal) >= 6, f"{len(gal)} gallery figures")
+
+    # The Media Gallery and the Project Description hold DIFFERENT figures. A figure in
+    # both makes the gallery look padded; a figure in neither is work the judges never see.
+    mg = {p.name for p in (up / "media_gallery").glob("*.png")} - {"thumbnail_560x280.png"}
+    df = {p.name for p in (up / "description_figures").glob("*.png")}
+    if mg or df:
+        check("gallery and description share no figure", not (mg & df),
+              f"gallery {len(mg)}, inline {len(df)}, overlap {len(mg & df)}")
+        every = {p.name for p in fig.glob("gallery_*.png")} | {"cover.png"}
+        check("every figure is assigned to one of the two", not (every - mg - df),
+              "unassigned: " + (", ".join(sorted(every - mg - df)) or "none"))
+        wr_txt = (docs / "KAGGLE_WRITEUP.md").read_text(encoding="utf8")
+        inline_named = set(re.findall(r"INSERT `([^`]+)`", wr_txt))
+        check("writeup embeds exactly the description figures", inline_named == df,
+              f"{len(inline_named)} referenced")
 
     xls = list(up.glob("*farm_level_results.xlsx")) + list(up.glob("*farm_level_results.csv"))
     check("standalone spreadsheet staged (xlsx and/or csv)", len(xls) >= 1,

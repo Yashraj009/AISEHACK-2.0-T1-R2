@@ -17,7 +17,8 @@ ANRF - AISEHack 2.0 Round 2 Submission - GDHTM
 | 2 | `GDHTM_Sokhda_farm_level_results.xlsx` | "standalone spreadsheet (Excel or CSV)" |
 | 3 | `REPORT.pdf` (export `docs/REPORT.md`) | 4-page methodology report |
 | 4 | `I9_pipeline.ipynb` | notebook, runs clean, reproduces the CSV |
-| 5 | `figures/` (12 images) | health map, yield map, cover, thumbnail, supporting |
+| 5 | `media_gallery/` (7 + card) | includes both **required** maps — health and yield-to-date |
+| 6 | `description_figures/` (6) | the evidence figures embedded in the Kaggle description |
 
 ---
 

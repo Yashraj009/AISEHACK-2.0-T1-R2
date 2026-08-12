@@ -1,17 +1,35 @@
 # Kaggle Writeup — copy/paste guide
 
 > **Title (80 char field, 79 used):**
-> `X-band Alone, Witnessed Throughout: Crop Health and Yield to Date for 966 Farms`
+> `Farm-Level Crop Health and Yield-to-Date Estimation from X-band SAR Time Series`
 >
-> **Subtitle (140 char field, 135 used):**
-> `Four Capella scenes produce every number; Sentinel-1 and Sentinel-2 are witnesses only, never inputs — including the tests that failed.`
+> **Subtitle (140 char field, 138 used):**
+> `966 parcels from four Capella acquisitions, kharif 2025; Sentinel-1 and Sentinel-2 withheld as independent validation. Negatives reported.`
 >
-> **Card / thumbnail image (560×280):** `figures/thumbnail_560x280.png`
-> **Cover image:** `figures/cover.png`
->
-> Everything below the line goes in the **Project Description** box. Insert each image with
-> the 🖼 toolbar button at the marked point — the images carry the argument, so please do
-> not leave them all to the gallery.
+> **Card / thumbnail (560×280):** `media_gallery/thumbnail_560x280.png`
+> **Cover image:** `media_gallery/cover.png`
+
+### Which image goes where — nothing appears twice
+
+The two sets have different jobs, so they hold different figures.
+
+**MEDIA GALLERY (7 items, in `upload/media_gallery/`)** — browsed *without* the text, so every
+item stands alone: what we built, and evidence it is real.
+
+| # | file | why it is in the gallery |
+|---|---|---|
+| 1 | `cover.png` | required cover — both deliverables at a glance |
+| 2 | `gallery_00_method_overview.png` | the entire approach in one image, so the gallery alone explains the method |
+| 3 | `gallery_01_health_index_map.png` | **required by the guidelines** |
+| 4 | `gallery_02_yield_to_date_map.png` | **required by the guidelines** |
+| 5 | `gallery_03_crop_classification_map.png` | supporting map the guidelines invite |
+| 6 | `gallery_05_village_aggregate.png` | village-level summary table and the aggregation rule |
+| 7 | `gallery_07_independent_validation.png` | the headline evidence: it validates on sensors it never saw |
+
+**PROJECT DESCRIPTION (6 figures, in `upload/description_figures/`)** — these are *argument*.
+They need the surrounding prose to mean anything, so they are inline and not in the gallery.
+
+Insert each with the 🖼 toolbar button at the marked point below.
 
 ---
 
@@ -28,12 +46,10 @@ That constraint costs accuracy and we kept it anyway. It keeps the Capella image
 source as the guidelines require, and it makes the validation mean something — a witness that also
 helped build the product cannot independently confirm it.
 
-The clearest way to state that is as a diagram, because it is a claim about **arrows**:
-
-> 🖼 **INSERT `gallery_00_method_overview.png`**
-> *The whole method on one page. Note what is missing: no arrow runs from a witness into a
-> deliverable. Auxiliary inputs that genuinely do feed the product — the Round 1 crop shares and the
-> district yield anchor — are drawn in amber and labelled as inputs rather than quietly mixed in.*
+It is a claim about **arrows**, so the method diagram in the gallery *(item 2)* states it directly:
+no arrow runs from a witness into a deliverable, while the auxiliary inputs that genuinely do feed
+the product — the Round 1 crop shares and the district yield anchor — are drawn in amber and
+labelled as inputs.
 
 ## 1. Applying the Round 1 crop classification to the new boundaries
 
@@ -49,11 +65,8 @@ The mechanism is a **constrained assignment**:
 3. **Argmax only at the very end**, once the constraint is satisfied.
 
 Why constrain rather than classify freely? Because we measured what happens otherwise: in Round 1,
-free per-pixel assignment scored **5× worse than assigning nothing at all**.
-
-> 🖼 **INSERT `gallery_03_crop_classification_map.png`**
-> *966 parcels, five classes, with the area table. The shares are an input constraint, not an
-> independent result, and the figure says so.*
+free per-pixel assignment scored **5× worse than assigning nothing at all**. The resulting map, with
+its area table, is gallery item 5.
 
 The physics underneath is visible in the season each crop draws:
 
@@ -84,11 +97,8 @@ witness by construction**; weights chosen by watching NDVI would turn a held-out
 fitting target. It also beat every hand-tuned variant we tried.
 
 **Scored within crop.** Cotton and groundnut differ by ~4 dB for reasons unrelated to health, so a
-pooled index would largely re-measure crop type. 50 means *typical for that crop*.
-
-> 🖼 **INSERT `gallery_01_health_index_map.png`**  ← *required Media Gallery item*
-> *Farm-level health index. Because the score is within-crop, every crop centres at 50 by
-> construction — the histogram states that rather than letting it look like a result.*
+pooled index would largely re-measure crop type. 50 means *typical for that crop* — on the map
+*(gallery item 3)*, 40 reads as "below par for this crop", not "failing".
 
 Which component actually carries the ranking, and does any single weight hold it up?
 
@@ -109,11 +119,9 @@ forecast**. Values are scaled by season completion (Cotton 0.45, Groundnut 0.75,
 
 **Level from statistics, variation from SAR — stated, not blurred.** SAR cannot measure absolute
 yield without calibration data. Both per-farm terms are measured: completion from each farm's own
-August→October change, accumulation from the season integral over all four acquisitions.
-
-> 🖼 **INSERT `gallery_02_yield_to_date_map.png`**  ← *required Media Gallery item*
-> *Cotton reads pale because on 13 October it is only ~45% through picking — the level is set by
-> crop, and the by-crop panel shows the within-crop spread, which is what the SAR contributes.*
+August→October change, accumulation from the season integral over all four acquisitions. The map is
+gallery item 4; cotton reads pale there because on 13 October it is only ~45% through picking, so
+the level is set by crop and the SAR contributes the within-crop spread.
 
 **A witness caught a sign error here.** We assumed a harvested field brightens back toward bare soil,
 so high October-minus-August meant *more* complete. Sentinel-2 disagreed in all five crops: a field
@@ -132,19 +140,14 @@ The accumulation term was then tested with a witness of the **right shape**:
 
 ## 4. Key findings
 
-**The crop classes separate on two sensors they never saw.**
+**The crop classes separate on two sensors they never saw.** Kruskal–Wallis p = 1.8×10⁻³⁴ on
+Sentinel-2 NDVI and 7.7×10⁻²⁰ on Sentinel-1 VH *(gallery item 7)*. The **ordering** is the real
+result: cotton is the only crop still standing on 13 October and tops both witnesses; maize is
+harvested and bottoms both. That is the crop calendar, recovered independently.
 
-> 🖼 **INSERT `gallery_07_independent_validation.png`**
-> *Kruskal–Wallis p = 1.8×10⁻³⁴ (S2 NDVI), 7.7×10⁻²⁰ (S1 VH). The **ordering** is the real result:
-> cotton is the only crop still standing on 13 October and tops both witnesses; maize is harvested
-> and bottoms both. That is the crop calendar, recovered independently.*
-
-**Village-level aggregation — all 966 farms, none dropped.**
-
-> 🖼 **INSERT `gallery_05_village_aggregate.png`**
-> *The rule is stated on the figure: village production = Σ(farm yield t/ha × farm area ha) —
-> area-weighted, never a mean of per-hectare rates, which would let a 0.05 ha plot count as much as
-> a 5 ha one.*
+**Village-level aggregation — all 966 farms, none dropped** *(gallery item 6)*. The rule is
+area-weighted: village production = Σ(farm yield t/ha × farm area ha), never a mean of per-hectare
+rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
 | crop | farms | area ha | median health | median t/ha to date | production t |
 |---|--:|--:|--:|--:|--:|
