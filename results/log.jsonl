@@ -951,3 +951,14 @@
 {"t": "2026-08-12T20:37:30", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
 {"t": "2026-08-12T20:37:50", "stage": "check_submission_pack", "status": "PASS"}
 {"t": "2026-08-12T20:40:52", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T21:00:59", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T21:06:20", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T21:06:27", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T21:06:33", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T21:07:03", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T21:07:33", "stage": "upload.package", "size_mb": 174.1, "figures": 14}
+{"t": "2026-08-12T21:07:38", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T21:07:39", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T21:07:41", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T21:07:42", "stage": "d11.start"}
+{"t": "2026-08-12T21:07:42", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}

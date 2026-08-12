@@ -107,7 +107,10 @@ def main():
                  "gallery_02_yield_to_date_map.png", "gallery_10_negatives.png"):
         copy_tree(FIGURES, UP / "figures", name)
 
-    stray = ({p.name for p in FIGURES.glob("gallery_*.png")} - set(GALLERY) - set(INLINE))
+    # _generated is the code-drawn method diagram, kept for reproducibility; the gallery
+    # ships the hand-designed one under the plain name, so it is not a stray.
+    stray = ({p.name for p in FIGURES.glob("gallery_*.png")} - set(GALLERY) - set(INLINE)
+             - {"gallery_00_method_overview_generated.png"})
     assert not stray, f"figure assigned to neither gallery nor description: {sorted(stray)}"
 
     # ---- the dataset the notebook needs to run on Kaggle ----------------------

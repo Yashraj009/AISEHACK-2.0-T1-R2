@@ -38,7 +38,7 @@ rather than an absolute level — the same discipline applied to a quantity with
 
 ![Figure 1](figures/gallery_00_method_overview.png)
 
-*Figure 1. What feeds what. No arrow runs from a witness into a deliverable; auxiliary inputs that do feed the product are drawn in amber and labelled as inputs.*
+*Figure 1. What feeds what. The witnesses (purple) carry one arrow only — into validation — so no witness reaches a deliverable; the two auxiliary quantities that genuinely do feed the product are drawn in amber and labelled as declared inputs.*
 
 
 We report the checks that failed as prominently as those that passed. Three findings in §6 are

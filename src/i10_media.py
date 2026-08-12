@@ -612,7 +612,10 @@ across the feature box and through the deliverable headings.
 
     fig.suptitle("Method — what feeds what, and what deliberately does not",
                  fontsize=14.5, fontweight="bold", y=1.02, x=0.02, ha="left")
-    p = FIGURES / "gallery_00_method_overview.png"
+    # SUPERSEDED. The gallery ships a hand-designed version of this diagram, which lives at
+    # gallery_00_method_overview.png. This function keeps the layout reproducible from code,
+    # so it writes to its own filename rather than clobbering the shipped asset on a re-run.
+    p = FIGURES / "gallery_00_method_overview_generated.png"
     fig.savefig(p, bbox_inches="tight")
     # Also as SVG -- XML, so the diagram can be restyled by hand in Inkscape/Illustrator/
     # Figma without re-running the pipeline. svg.fonttype="none" keeps the labels as real

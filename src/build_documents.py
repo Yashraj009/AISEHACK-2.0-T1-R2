@@ -47,6 +47,11 @@ p  { margin: %(pgap)spt 0; text-align: justify; }
 img { max-width: 100%%; max-height: %(imgh)smm; width: auto; height: auto; display: block;
       margin: 5pt auto 1pt auto; break-inside: avoid; }
 figure, p:has(img) { break-inside: avoid; }
+/* The method diagram is far wider than the map panels, so the shared height cap shrinks it
+   until its labels are unreadable. It is selected by ALT TEXT: --embed-resources rewrites
+   every src to a base64 data URI, so a src*="name" selector cannot match, and pandoc's gfm
+   reader has no link_attributes. Alt text survives into both the HTML and the DOCX. */
+img[alt="Figure 1"] { max-height: 62mm; }
 em { color: #333; }
 table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt; margin: 4pt 0;
         break-inside: avoid; }
