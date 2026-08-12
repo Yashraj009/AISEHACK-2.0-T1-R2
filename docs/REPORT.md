@@ -221,8 +221,9 @@ The three failures are not symmetric in consequence, so we state what each one l
 
 ## 8. Reproducibility
 
-- `notebooks/I9_pipeline.ipynb` runs from a fresh kernel, writes `submission.csv`, and its final
-  cell **asserts** that all three columns equal the shipped file exactly.
+- The **public notebook accompanying this submission** runs top to bottom from a fresh kernel,
+  writes `submission.csv`, and its final cell **asserts** that all three columns equal the shipped
+  file exactly.
 - A **19-check ship gate** verifies schema, value ranges, units and deliverables.
 - A separate gate asserts that every number quoted in this report matches the shipped artefacts, so
   the prose cannot drift from the data.

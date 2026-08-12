@@ -44,8 +44,8 @@ h1 { font-size: %(h1)spt; margin: 0 0 3pt 0; line-height: 1.2; text-align: cente
 h1 + h3 { text-align: center; font-size: 10.6pt; font-weight: 600; color: #334155;
           margin: 0 0 5pt 0; border: 0; }
 h1 + h3 + p { text-align: center; color: #334155; margin: 0 0 2pt 0; }
-h2 { font-size: %(h2)spt; margin: %(hgap)spt 0 4pt 0; padding: 3.5pt 0 0 0;
-     border-top: 2px solid #334155; color: #0f172a; break-after: avoid; }
+h2 { font-size: %(h2)spt; margin: %(hgap)spt 0 4pt 0; padding: 6.5pt 0 0 0;
+     border-top: 0.75pt solid #94a3b8; color: #0f172a; break-after: avoid; }
 h2:first-of-type { border-top: 0; }
 h3 { font-size: %(h3)spt; margin: 7pt 0 2pt 0; color: #1e293b; break-after: avoid;
      border-bottom: 1px solid #e2e8f0; padding-bottom: 1pt; }
@@ -62,6 +62,10 @@ figure, p:has(img) { break-inside: avoid; }
    reader has no link_attributes. Alt text survives into both the HTML and the DOCX. */
 img[alt="Figure 1"] { max-height: %(fig1)smm; }
 em { color: #333; }
+/* Figure and table captions: an all-italic paragraph. Centred under its figure and one
+   point smaller than the body, so it reads as a label rather than as more prose. */
+p:has(> em:only-child) { text-align: center; font-size: %(cap)spt; color: #475569;
+                         margin: 1.5pt 0 4pt 0; }
 table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt; margin: 4pt 0;
         break-inside: avoid; }
 td { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; }
@@ -84,9 +88,9 @@ MAX_PAGES = 4
 # pages, then step back one. build() asserts the result is still within MAX_PAGES.
 SCALE = {
     "REPORT":         dict(font=9.1, lh=1.33, h1=15.5, h2=11.4, h3=10.0, hgap=8,
-                           pgap=3.0, imgh=45, fig1=58, tbl=7.9, mtop=14, mbot=11.5),
+                           pgap=3.0, imgh=45, fig1=58, tbl=7.9, mtop=14, mbot=11.5, cap=8.1),
     "KAGGLE_WRITEUP": dict(font=8.9, lh=1.32, h1=15, h2=11, h3=9.6, hgap=8,
-                           pgap=2.9, imgh=52, fig1=58, tbl=8.0, mtop=13, mbot=10.5),
+                           pgap=2.9, imgh=52, fig1=58, tbl=8.0, mtop=13, mbot=10.5, cap=7.9),
 }
 
 
