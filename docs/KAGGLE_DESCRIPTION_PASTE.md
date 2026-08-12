@@ -8,19 +8,24 @@ So both deliverables are built the same way: **hold the aggregate, and let the S
 variation inside it.** Distributing a known total across finer units using an ancillary variable
 correlated with the true distribution is *dasymetric mapping*, and we apply it twice.
 
-<div align="center">
+<div align="center" style="text-align:center">
+<center>
 <table>
 <thead><tr>
-<th align="center">known in aggregate</th>
-<th align="center">disaggregated to</th>
-<th align="center">ancillary variable from Capella</th>
+<th align="center" style="text-align:center">known in aggregate</th>
+<th align="center" style="text-align:center">disaggregated to</th>
+<th align="center" style="text-align:center">ancillary variable from Capella</th>
 </tr></thead>
 <tbody>
-<tr><td align="center">Round 1 village crop-area shares (MSE 11.071)</td><td align="center">966 parcel labels</td><td align="center">per-farm soft evidence, area-constrained</td></tr>
-<tr><td align="center">Vadodara district yield (APY)</td><td align="center">966 parcel t/ha</td><td align="center">completion × accumulation</td></tr>
+<tr><td align="center" style="text-align:center">Round 1 village crop-area shares (MSE 11.071)</td><td align="center" style="text-align:center">966 parcel labels</td><td align="center" style="text-align:center">per-farm soft evidence, area-constrained</td></tr>
+<tr><td align="center" style="text-align:center">Vadodara district yield (APY)</td><td align="center" style="text-align:center">966 parcel t/ha</td><td align="center" style="text-align:center">completion × accumulation</td></tr>
 </tbody>
 </table>
+</center>
 </div>
+
+<br>
+
 Neither aggregate is error-free and we do not pretend otherwise — the Round 1 shares are our own
 best estimate of the village mix, not ground truth. The case for holding them is comparative: the
 aggregate is estimated from a whole village of evidence, a per-farm label from one parcel of it.
@@ -79,27 +84,34 @@ was tried and **rejected** — it degraded both witnesses.
 
 ## 2. Health index methodology
 
-<div align="center">
+<div align="center" style="text-align:center">
+<center>
 <table>
 <thead><tr>
-<th align="center">family</th>
-<th align="center">measurement</th>
-<th align="center">why it belongs</th>
+<th align="center" style="text-align:center">family</th>
+<th align="center" style="text-align:center">measurement</th>
+<th align="center" style="text-align:center">why it belongs</th>
 </tr></thead>
 <tbody>
-<tr><td align="center"><code>level</code></td><td align="center">August γ⁰</td><td align="center">peak canopy volume</td></tr>
-<tr><td align="center"><code>growth</code></td><td align="center">14 Aug − 19 Jun</td><td align="center">the <b>only geometry-matched</b> date pair (0.076° apart)</td></tr>
-<tr><td align="center"><code>uniform</code></td><td align="center">−(within-farm CV)</td><td align="center">patchiness means gaps, waterlogging or pest damage</td></tr>
-<tr><td align="center"><code>persist</code></td><td align="center">season integral</td><td align="center">canopy held all season, not on one lucky date</td></tr>
+<tr><td align="center" style="text-align:center"><code>level</code></td><td align="center" style="text-align:center">August γ⁰</td><td align="center" style="text-align:center">peak canopy volume</td></tr>
+<tr><td align="center" style="text-align:center"><code>growth</code></td><td align="center" style="text-align:center">14 Aug − 19 Jun</td><td align="center" style="text-align:center">the <b>only geometry-matched</b> date pair (0.076° apart)</td></tr>
+<tr><td align="center" style="text-align:center"><code>uniform</code></td><td align="center" style="text-align:center">−(within-farm CV)</td><td align="center" style="text-align:center">patchiness means gaps, waterlogging or pest damage</td></tr>
+<tr><td align="center" style="text-align:center"><code>persist</code></td><td align="center" style="text-align:center">season integral</td><td align="center" style="text-align:center">canopy held all season, not on one lucky date</td></tr>
 </tbody>
 </table>
+</center>
 </div>
+
+<br>
+
 **The weights are derived, not hand-chosen.** Each is inversely proportional to that family's total
 absolute correlation with the others:
 
-<div align="center">
-<h3>w(k) &nbsp;∝&nbsp; 1 / Σ |ρ(k, j)|</h3>
+<div align="center" style="text-align:center; margin: 1.4em 0">
+<center>
+<h3 style="margin: 0 0 0.35em 0">w(k) &nbsp;∝&nbsp; 1 / Σ |ρ(k, j)|</h3>
 <i>summed over the other families j — the more a family duplicates the rest, the less it weighs</i>
+</center>
 </div>
 
 giving `growth` 0.283, `uniform` 0.301, `persist` 0.228, `level` 0.189. The rule reads only the
@@ -120,9 +132,11 @@ Which component actually carries the ranking, and does any single weight hold it
 
 ## 3. Yield-to-date estimation
 
-<div align="center">
-<h3><code>yield_to_date</code> [t/ha] &nbsp;=&nbsp; anchor(district) &nbsp;×&nbsp; completion(farm) &nbsp;×&nbsp; accumulation(farm)</h3>
+<div align="center" style="text-align:center; margin: 1.4em 0">
+<center>
+<h3 style="margin: 0 0 0.35em 0"><code>yield_to_date</code> [t/ha] &nbsp;=&nbsp; anchor(district) &nbsp;×&nbsp; completion(farm) &nbsp;×&nbsp; accumulation(farm)</h3>
 <i>anchor(district) is the level, from statistics; the two per-farm terms are the variation, measured from SAR</i>
+</center>
 </div>
 
 We read the column exactly as the brief defines it — *"estimated yield potential up to the final
@@ -158,33 +172,40 @@ That is the crop calendar, recovered independently.
 
 **Village-level aggregation — all 966 farms, none dropped.** The rule is area-weighted:
 
-<div align="center">
-<h3>village production [t] &nbsp;=&nbsp; Σ ( yield(farm) [t/ha] &nbsp;×&nbsp; area(farm) [ha] )</h3>
+<div align="center" style="text-align:center; margin: 1.4em 0">
+<center>
+<h3 style="margin: 0 0 0.35em 0">village production [t] &nbsp;=&nbsp; Σ ( yield(farm) [t/ha] &nbsp;×&nbsp; area(farm) [ha] )</h3>
 <i>summed over all 966 farms</i>
+</center>
 </div>
 
 never a mean of per-hectare rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
-<div align="center">
+<div align="center" style="text-align:center">
+<center>
 <table>
 <thead><tr>
-<th align="center">crop</th>
-<th align="center">farms</th>
-<th align="center">area ha</th>
-<th align="center">median health</th>
-<th align="center">median t/ha to date</th>
-<th align="center">production t</th>
+<th align="center" style="text-align:center">crop</th>
+<th align="center" style="text-align:center">farms</th>
+<th align="center" style="text-align:center">area ha</th>
+<th align="center" style="text-align:center">median health</th>
+<th align="center" style="text-align:center">median t/ha to date</th>
+<th align="center" style="text-align:center">production t</th>
 </tr></thead>
 <tbody>
-<tr><td align="center">Rice</td><td align="center">86</td><td align="center">47.4</td><td align="center">50.0</td><td align="center">1.64</td><td align="center">77</td></tr>
-<tr><td align="center">Cotton</td><td align="center">455</td><td align="center">193.4</td><td align="center">51.9</td><td align="center">0.34</td><td align="center">77</td></tr>
-<tr><td align="center">Maize</td><td align="center">55</td><td align="center">26.7</td><td align="center">50.0</td><td align="center">2.18</td><td align="center">62</td></tr>
-<tr><td align="center">Bajra</td><td align="center">149</td><td align="center">42.3</td><td align="center">50.0</td><td align="center">2.57</td><td align="center">113</td></tr>
-<tr><td align="center">Groundnut</td><td align="center">221</td><td align="center">137.7</td><td align="center">50.0</td><td align="center">1.86</td><td align="center">266</td></tr>
-<tr><td align="center"><b>Village 1</b></td><td align="center"><b>966</b></td><td align="center"><b>447.5</b></td><td align="center"><b>50.7</b></td><td align="center"><b>1.41</b></td><td align="center"><b>595</b></td></tr>
+<tr><td align="center" style="text-align:center">Rice</td><td align="center" style="text-align:center">86</td><td align="center" style="text-align:center">47.4</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.64</td><td align="center" style="text-align:center">77</td></tr>
+<tr><td align="center" style="text-align:center">Cotton</td><td align="center" style="text-align:center">455</td><td align="center" style="text-align:center">193.4</td><td align="center" style="text-align:center">51.9</td><td align="center" style="text-align:center">0.34</td><td align="center" style="text-align:center">77</td></tr>
+<tr><td align="center" style="text-align:center">Maize</td><td align="center" style="text-align:center">55</td><td align="center" style="text-align:center">26.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.18</td><td align="center" style="text-align:center">62</td></tr>
+<tr><td align="center" style="text-align:center">Bajra</td><td align="center" style="text-align:center">149</td><td align="center" style="text-align:center">42.3</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.57</td><td align="center" style="text-align:center">113</td></tr>
+<tr><td align="center" style="text-align:center">Groundnut</td><td align="center" style="text-align:center">221</td><td align="center" style="text-align:center">137.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.86</td><td align="center" style="text-align:center">266</td></tr>
+<tr><td align="center" style="text-align:center"><b>Village 1</b></td><td align="center" style="text-align:center"><b>966</b></td><td align="center" style="text-align:center"><b>447.5</b></td><td align="center" style="text-align:center"><b>50.7</b></td><td align="center" style="text-align:center"><b>1.41</b></td><td align="center" style="text-align:center"><b>595</b></td></tr>
 </tbody>
 </table>
+</center>
 </div>
+
+<br>
+
 **Coverage is complete, and every row declares its provenance.**
 
 ![gallery_04_coverage_and_confidence](https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F18936911%2Fb2337ebce4c5d9f79fb694eace066a36%2Fgallery_04_coverage_and_confidence.png?generation=1786545477102861&alt=media)
