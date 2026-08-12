@@ -156,6 +156,14 @@ def _selfcheck():
     assert abs(db(10.0) - 10.0) < 1e-12
     assert FARMS.exists(), f"farm shapefile missing: {FARMS}"
     assert VILLAGE.exists(), f"village shapefile missing: {VILLAGE}"
+    # The 2.1 GB of SLCs are deliberately excluded from the Kaggle dataset -- FAST mode
+    # reads the cached rasters instead -- so their absence is a SUPPORTED configuration,
+    # not a failure. Checking them unconditionally made this self-check the first thing
+    # that dies in the very environment the dataset was built for.
+    if not any(DATA.glob("CAPELLA_*/CAPELLA_*SLC_HH_*.tif")):
+        print("common.py self-check OK -- shapefiles present; SLCs absent, so scene "
+              "resolution is skipped (this is FAST mode, the Kaggle configuration)")
+        return
     for d in DATES:
         p = slc_path(d)
         assert d in p.name, f"{d} resolved to wrong scene {p.name}"
