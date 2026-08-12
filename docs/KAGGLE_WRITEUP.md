@@ -1,17 +1,15 @@
 # Kaggle Writeup — copy/paste guide
 
-> **Title (80 char field, 79 used):**
-> `Farm-Level Crop Health and Yield-to-Date Estimation from X-band SAR Time Series`
+> **Title (80 char field, 75 used):**
+> `Dasymetric Mapping of Exact Crop Statistics to Parcel Level from X-band SAR`
 >
-> **Subtitle (140 char field, 136 used):**
-> `966 parcels, four Capella scenes: crop constrained to exact Round 1 shares, health weights derived not tuned, Sentinel withheld to test.`
+> **Subtitle (140 char field, 138 used):**
+> `Crop type, health index and yield-to-date for 966 farms from four Capella scenes, kharif 2025; Sentinel-1 and Sentinel-2 withheld to test.`
 >
 > **Card / thumbnail (560×280):** `media_gallery/thumbnail_560x280.png`
 > **Cover image:** `media_gallery/cover.png`
 
 ### Which image goes where — nothing appears twice
-
-The two sets have different jobs, so they hold different figures.
 
 **MEDIA GALLERY (7 items, in `upload/media_gallery/`)** — browsed *without* the text, so every
 item stands alone: what we built, and evidence it is real.
@@ -26,15 +24,32 @@ item stands alone: what we built, and evidence it is real.
 | 6 | `gallery_05_village_aggregate.png` | village-level summary table and the aggregation rule |
 | 7 | `gallery_07_independent_validation.png` | the headline evidence: it validates on sensors it never saw |
 
-**PROJECT DESCRIPTION (6 figures, in `upload/description_figures/`)** — these are *argument*.
-They need the surrounding prose to mean anything, so they are inline and not in the gallery.
-
-Insert each with the 🖼 toolbar button at the marked point below.
+**PROJECT DESCRIPTION (6 figures, in `upload/description_figures/`)** — these are *argument*. They
+need the surrounding prose to mean anything, so they are inline, not in the gallery. Insert each
+with the 🖼 toolbar button at the marked point below.
 
 ---
 
-**Team GDHTM** — Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya
+**Team GDHTM** — Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya\
 Sokhda village (`village_id` 1), Vadodara, Gujarat · 966 farms · kharif 2025
+
+## The shape of the problem, and the one technique that answers it
+
+Everything known **exactly** about Sokhda is an aggregate. Round 1's crop-area shares are exact at
+village level; the yield anchor is exact at district level. Nothing is known exactly per farm — that
+is the quantity the brief asks for.
+
+So both deliverables are built the same way: **take the exact aggregate, and let the SAR supply only
+the variation inside it.** Distributing a known total across finer units using an ancillary variable
+correlated with the true distribution is *dasymetric mapping*, and we apply it twice.
+
+| known exactly | disaggregated to | ancillary variable from Capella |
+|---|---|---|
+| Round 1 village crop-area shares (MSE 0.000) | 966 parcel labels | per-farm soft evidence, area-constrained |
+| Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
+
+The health index is the one deliverable with no aggregate to anchor to, so it is a **rank within
+crop**, never an absolute level — the same discipline applied to a quantity that has no exact total.
 
 ## The one rule this project is built on
 
@@ -47,16 +62,13 @@ source as the guidelines require, and it makes the validation mean something —
 helped build the product cannot independently confirm it.
 
 It is a claim about **arrows**, so the method diagram in the gallery *(item 2)* states it directly:
-no arrow runs from a witness into a deliverable, while the auxiliary inputs that genuinely do feed
-the product — the Round 1 crop shares and the district yield anchor — are drawn in amber and
-labelled as inputs.
+no arrow runs from a witness into a deliverable, while the two aggregates above are drawn in amber
+and labelled as inputs.
 
 ## 1. Applying the Round 1 crop classification to the new boundaries
 
-Round 1 ended at **MSE 0.000**, so its 145 village × crop cells are exact ground truth — including
-Sokhda's crop-area shares. Those shares are what we carry forward.
-
-The mechanism is a **constrained assignment**:
+Round 1 ended at **MSE 0.000**, so its 145 village × crop cells are exact ground truth. The
+mechanism that carries Sokhda's shares onto the new parcels is a **constrained assignment**:
 
 1. **Per-farm soft evidence from X-band** — the 19 June double-bounce response of flooded paddy,
    August volume scattering for tall woody cotton, the August-minus-June difference. Deliberately weak.
@@ -115,11 +127,10 @@ acquisition date using all available temporal observations"*, and explicitly **n
 forecast**. Values are scaled by season completion (Cotton 0.45, Groundnut 0.75, Rice/Maize/Bajra
 0.95) and never projected forward; divide by that factor to recover a full-season figure.
 
-**Level from statistics, variation from SAR — stated, not blurred.** SAR cannot measure absolute
-yield without calibration data. Both per-farm terms are measured: completion from each farm's own
-August→October change, accumulation from the season integral over all four acquisitions. The map is
-gallery item 4; cotton reads pale there because on 13 October it is only ~45% through picking, so
-the level is set by crop and the SAR contributes the within-crop spread.
+This is the second dasymetric step, and both per-farm terms are measured rather than assumed:
+completion from each farm's own August→October change, accumulation from the season integral over
+all four acquisitions. The map is gallery item 4; cotton reads pale there because on 13 October it
+is only ~45% through picking, so the level is set by crop and the SAR contributes the spread.
 
 **A witness caught a sign error here.** We assumed a harvested field brightens back toward bare soil,
 so high October-minus-August meant *more* complete. Sentinel-2 disagreed in all five crops: a field
@@ -182,9 +193,7 @@ never a mean of per-hectare rates, which would let a 0.05 ha plot count as much 
 
 *At 1.2 m the median farm is **95.2%** uncontaminated interior; at 10 m that falls to **63.3%** and a fifth of these farms become more than half edge-contaminated — the median parcel here is 0.27 ha. Over the crop-forming window Sentinel-2 offered **19 revisits and 0 usable ones**. Every Capella acquisition is usable regardless of cloud.*  *(Kaggle: insert `gallery_11_why_xband.png` here)*
 
-## Reproducibility
-
-The attached public notebook runs from a fresh kernel and its final cell **asserts** that it
-reproduces the submitted `submission.csv` exactly. A 19-check ship gate verifies schema, ranges,
+**Reproducibility.** The public notebook runs from a fresh kernel and its final cell **asserts** that
+it reproduces the submitted `submission.csv` exactly. A 19-check ship gate verifies schema, ranges,
 units and deliverables; a separate gate asserts that every number quoted here matches the shipped
 artefacts, so this text cannot drift from the data.

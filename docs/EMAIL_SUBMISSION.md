@@ -37,7 +37,10 @@ Please find below our Round 2 submission for the SAR Crop Health & Yield Estimat
 
 **Approach in brief.** Every value in our submission is derived from the four provided Capella
 X-band HH SLC acquisitions. Sentinel-1 and Sentinel-2 are used only as independent witnesses to test
-the product after it is built; no optical or C-band measurement enters any submitted number. Crop
+the product after it is built; no optical or C-band measurement enters any submitted number. The
+method is dasymetric throughout: everything we know exactly about Sokhda is an aggregate — the
+Round 1 crop-area shares at village level, the yield anchor at district level — and the SAR supplies
+only the variation inside each aggregate. Concretely, crop
 type carries our Round 1 result onto the new farm boundaries under an area-share constraint; the
 health index is a four-family composite whose weights are derived from feature redundancy rather
 than hand-tuned, scored within crop; and `yield_estimate_to_date` is a district anchor scaled by two

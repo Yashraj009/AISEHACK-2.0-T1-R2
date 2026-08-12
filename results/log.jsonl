@@ -913,3 +913,20 @@
 {"t": "2026-08-12T19:16:33", "stage": "check_submission_pack", "status": "PASS"}
 {"t": "2026-08-12T19:16:47", "stage": "build_documents", "files": 4}
 {"t": "2026-08-12T19:16:49", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T19:23:13", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:23:18", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:23:30", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:24:40", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:24:45", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:24:57", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:25:18", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T19:25:19", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T19:25:20", "stage": "d11.start"}
+{"t": "2026-08-12T19:25:20", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T19:26:17", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:26:29", "stage": "upload.package", "size_mb": 174.1, "figures": 14}
+{"t": "2026-08-12T19:26:34", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T19:26:35", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T19:26:37", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T19:26:38", "stage": "d11.start"}
+{"t": "2026-08-12T19:26:38", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}

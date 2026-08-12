@@ -1,8 +1,8 @@
-# Farm-Level Crop Health and Yield-to-Date from Capella X-band SAR
-### ANRF AISEHack 2.0 — Round 2 — Methodology Report
+# Dasymetric Mapping of Exact Crop Statistics to Parcel Level from X-band SAR
+### Crop type, health index and yield-to-date for 966 farms — ANRF AISEHack 2.0, Round 2
 
-**Team GDHTM** — Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya
-**Study area:** Sokhda village (`village_id` 1), Vadodara district, Gujarat — 966 farm parcels
+**Team GDHTM** — Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya\
+**Study area:** Sokhda village (`village_id` 1), Vadodara district, Gujarat — 966 farm parcels\
 **Data:** four Capella X-band HH SLC acquisitions — 6 Jun, 19 Jun, 14 Aug, 13 Oct 2025 (kharif)
 
 ---
@@ -15,9 +15,21 @@ product after it is built, and no optical or C-band measurement enters any shipp
 separation is deliberate: it keeps the Capella imagery the primary source as the guidelines require,
 and it means our validation is genuinely independent rather than self-confirming.
 
-The three deliverables are produced by one pipeline: crop type by carrying the Round 1 result onto
-the new boundaries under an area constraint; health as a four-family composite scored within crop;
-and yield-to-date as a district anchor scaled by two per-farm SAR-measured terms.
+**One technique, applied twice.** Everything known *exactly* about Sokhda is an aggregate: Round 1's
+crop-area shares are exact at village level, the yield anchor at district level. Nothing is known
+exactly per farm — which is what the brief asks for. Both quantities are therefore built the same
+way: take the exact aggregate, and let the SAR supply only the variation inside it. Distributing a
+known total across finer units using an ancillary variable correlated with the true distribution is
+**dasymetric mapping**, and it is the spine of this pipeline.
+
+| known exactly | disaggregated to | ancillary variable from Capella |
+|---|---|---|
+| Round 1 village crop-area shares (MSE 0.000) | 966 parcel crop labels | per-farm soft evidence, area-constrained |
+| Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
+
+The health index is the one deliverable with no exact aggregate to anchor to, so it is scored as a
+**rank within crop** rather than an absolute level — the same discipline applied to a quantity that
+has no total to honour.
 
 ![Figure 1](figures/gallery_00_method_overview.png)
 
@@ -64,9 +76,6 @@ not asserted: our between-farm spread on 13 Oct is 1.48 dB against the Sentinel-
 so the contrasts survive even though the level does not.
 
 ## 3. Crop type — Round 1 applied to the new boundaries
-
-Round 1 finished at MSE 0.000 on the final leaderboard, which means its 145 village × crop cells are
-**exact ground truth**, including Sokhda's crop-area shares. Those shares are what we carry forward.
 
 Per-farm soft evidence is built from X-band features with a physical basis — the 19 June
 flood/double-bounce response for rice, August volume scattering for cotton, and the
@@ -123,11 +132,11 @@ Rice/Maize/Bajra 0.95) and are never projected forward; dividing by that factor 
 full-season figure. Cotton reads low per hectare (median 0.34 t/ha) because on 13 October it is only
 about 45% through picking, and because the anchor is lint rather than seed cotton.
 
-The **level** comes from published district statistics (Vadodara APY) and the **variation** comes from
-SAR. We state that split rather than blur it: SAR cannot measure absolute yield without calibration
-data, and pretending otherwise would be the least defensible claim in this project. Both per-farm
-terms are measured, not assumed — completion from each farm's own August→October change, and
-accumulation from the season integral, which uses all four acquisitions as the brief requires.
+This is the second dasymetric step: the **level** is the district anchor and the **variation** is
+measured. We state that split rather than blur it — SAR cannot measure absolute yield without
+calibration data, and pretending otherwise would be the least defensible claim in this project.
+Both per-farm terms are measured, not assumed: completion from each farm's own August→October
+change, and accumulation from the season integral, which uses all four acquisitions.
 
 ![Figure 3](figures/gallery_02_yield_to_date_map.png)
 

@@ -143,6 +143,16 @@ def main():
     else:
         check("Kaggle writeup exists and is within the page limit", False, "missing")
 
+    # A title that names a technique the body never explains is worse than a plain one:
+    # the judges meet the term in the title and nowhere else. Both documents must define it.
+    for name, path in (("report", rep), ("writeup", wr)):
+        if path.exists():
+            t = path.read_text(encoding="utf8").lower()
+            titled = "dasymetric" in t.split("\n")[0].lower() or "dasymetric" in t[:600]
+            check(f"{name} defines 'dasymetric' where it uses it",
+                  not titled or ("distributing a known" in t or "exact aggregate" in t),
+                  f"{t.count('dasymetric')} mentions")
+
     # --- rendered deliverables ----------------------------------------------------
     # The organisers want a document, not markdown. Page count is measured on the actual
     # render: the words-per-page estimate said 2.9 pages while the PDF came out at 5.

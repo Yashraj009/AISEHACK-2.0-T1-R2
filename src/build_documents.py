@@ -67,9 +67,9 @@ MAX_PAGES = 4
 # pages, then step back one. build() asserts the result is still within MAX_PAGES.
 SCALE = {
     "REPORT":         dict(font=9.2, lh=1.38, h1=16, h2=11.8, h3=10.3, hgap=11,
-                           pgap=3.5, imgh=63, tbl=8.0),
+                           pgap=3.5, imgh=58, tbl=8.0),
     "KAGGLE_WRITEUP": dict(font=8.9, lh=1.34, h1=15, h2=11, h3=9.6, hgap=9,
-                           pgap=3, imgh=58, tbl=8.0),
+                           pgap=3, imgh=55, tbl=8.0),
 }
 
 
@@ -99,10 +99,13 @@ def build(stem, title):
     # --- PDF via HTML + headless Chrome -------------------------------------------
     css = OUT / "_print.css"
     css.write_text(CSS % SCALE[stem], encoding="utf8")
+    # pagetitle, NOT metadata title: --metadata title renders a second <h1> above the
+    # document's own heading, so the title appeared twice on page 1. pagetitle sets the
+    # browser/PDF title only.
     run(["pandoc", str(md), "-o", str(html), "--from", "gfm+tex_math_dollars",
          "--standalone", "--mathml", "--embed-resources",
          "--resource-path", str(DOCS), "--css", str(css),
-         "--metadata", f"title={title}"])
+         "--variable", f"pagetitle={title}"])
     assert CHROME.exists(), f"Chrome not found at {CHROME}"
     run([str(CHROME), "--headless", "--disable-gpu", "--no-pdf-header-footer",
          f"--print-to-pdf={pdf}", html.resolve().as_uri()])
