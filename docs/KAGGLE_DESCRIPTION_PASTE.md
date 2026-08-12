@@ -13,6 +13,8 @@ correlated with the true distribution is *dasymetric mapping*, and we apply it t
 | Round 1 village crop-area shares (MSE 11.071) | 966 parcel labels | per-farm soft evidence, area-constrained |
 | Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
+<br>
+
 Neither aggregate is error-free and we do not pretend otherwise — the Round 1 shares are our own
 best estimate of the village mix, not ground truth. The case for holding them is comparative: the
 aggregate is estimated from a whole village of evidence, a per-farm label from one parcel of it.
@@ -75,6 +77,8 @@ was tried and **rejected** — it degraded both witnesses.
 | `growth` | 14 Aug − 19 Jun | the **only geometry-matched** date pair (0.076° apart) |
 | `uniform` | −(within-farm CV) | patchiness means gaps, waterlogging or pest damage |
 | `persist` | season integral | canopy held all season, not on one lucky date |
+
+<br>
 
 **The weights are derived, not hand-chosen.** Each is inversely proportional to that family's total
 absolute correlation with the others:
@@ -148,6 +152,8 @@ never a mean of per-hectare rates, which would let a 0.05 ha plot count as much 
 | Bajra | 149 | 42.3 | 50.0 | 2.57 | 113 |
 | Groundnut | 221 | 137.7 | 50.0 | 1.86 | 266 |
 | **Village 1** | **966** | **447.5** | **50.7** | **1.41** | **595** |
+
+<br>
 
 **Coverage is complete, and every row declares its provenance.**
 
