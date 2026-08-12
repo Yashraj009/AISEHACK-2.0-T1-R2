@@ -191,6 +191,19 @@ never a mean of per-hectare rates.
 *Figure 5. Two results we report as failures: repeat-pass coherence does not clear its own control floor, and the uniformity-health relationship holds on the date that feeds the index but fails on an independent date.*
 
 
+### What the negatives imply for use
+
+The three failures above are not symmetric in consequence, so we state what each one licenses. The
+κ result means this product should be read at **village and crop-group level**, which is the level
+the aggregation table reports and the level Round 1 was scored at; a single farm's label should not
+be acted on alone. The coherence result costs us nothing shipped — no submitted column depends on
+it — but it does close off change detection as a route we could have claimed. The bajra
+contradiction is the one that would change a decision: bajra is 15% of the parcels and its
+season-integral term runs against the witness, so its yield column carries the weakest support of
+the five crops. We leave the value in rather than tune it, and flag it here, because the constraint
+that produced it — the Round 1 area shares — is exact truth we are not entitled to overwrite with a
+correction fitted to one witness.
+
 ## 8. Reproducibility
 
 `notebooks/I9_pipeline.ipynb` runs from a fresh kernel and its final cell **asserts** that it
