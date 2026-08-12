@@ -55,8 +55,11 @@ img[alt="Figure 1"] { max-height: 62mm; }
 em { color: #333; }
 table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt; margin: 4pt 0;
         break-inside: avoid; }
-th, td { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; text-align: left; }
-th { background: #eef2f6; }
+td { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; }
+/* column alignment is set per column in the markdown -- numbers centred, text left --
+   but a header is a label, not data, so it is centred and bold in every column. */
+th { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; background: #eef2f6;
+     text-align: center !important; font-weight: 600; }
 code { background: #f2f4f7; padding: 0.5pt 2.5pt; border-radius: 3px; font-size: 8.6pt; }
 pre  { background: #f6f8fa; padding: 5pt; overflow-x: auto; font-size: 8.4pt; }
 blockquote { margin: 4pt 0; padding: 2.5pt 8pt; border-left: 3px solid #cbd5e1;

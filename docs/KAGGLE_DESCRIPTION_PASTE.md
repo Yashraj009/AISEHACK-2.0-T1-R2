@@ -11,14 +11,14 @@ correlated with the true distribution is *dasymetric mapping*, and we apply it t
 <div align="center" style="text-align:center">
 <center>
 <table>
-<thead><tr>
-<th align="center" style="text-align:center">known in aggregate</th>
-<th align="center" style="text-align:center">disaggregated to</th>
-<th align="center" style="text-align:center">ancillary variable from Capella</th>
+<th align="center" style="text-align:center; font-weight:bold"><tr>
+<th align="center" style="text-align:center; font-weight:bold">known in aggregate</th>
+<th align="center" style="text-align:center; font-weight:bold">disaggregated to</th>
+<th align="center" style="text-align:center; font-weight:bold">ancillary variable from Capella</th>
 </tr></thead>
 <tbody>
-<tr><td align="center" style="text-align:center">Round 1 village crop-area shares (MSE 11.071)</td><td align="center" style="text-align:center">966 parcel labels</td><td align="center" style="text-align:center">per-farm soft evidence, area-constrained</td></tr>
-<tr><td align="center" style="text-align:center">Vadodara district yield (APY)</td><td align="center" style="text-align:center">966 parcel t/ha</td><td align="center" style="text-align:center">completion × accumulation</td></tr>
+<tr><td align="left" style="text-align:left">Round 1 village crop-area shares (MSE 11.071)</td><td align="left" style="text-align:left">966 parcel labels</td><td align="left" style="text-align:left">per-farm soft evidence, area-constrained</td></tr>
+<tr><td align="left" style="text-align:left">Vadodara district yield (APY)</td><td align="left" style="text-align:left">966 parcel t/ha</td><td align="left" style="text-align:left">completion × accumulation</td></tr>
 </tbody>
 </table>
 </center>
@@ -87,16 +87,16 @@ was tried and **rejected** — it degraded both witnesses.
 <div align="center" style="text-align:center">
 <center>
 <table>
-<thead><tr>
-<th align="center" style="text-align:center">family</th>
-<th align="center" style="text-align:center">measurement</th>
-<th align="center" style="text-align:center">why it belongs</th>
+<th align="center" style="text-align:center; font-weight:bold"><tr>
+<th align="center" style="text-align:center; font-weight:bold">family</th>
+<th align="center" style="text-align:center; font-weight:bold">measurement</th>
+<th align="center" style="text-align:center; font-weight:bold">why it belongs</th>
 </tr></thead>
 <tbody>
-<tr><td align="center" style="text-align:center"><code>level</code></td><td align="center" style="text-align:center">August γ⁰</td><td align="center" style="text-align:center">peak canopy volume</td></tr>
-<tr><td align="center" style="text-align:center"><code>growth</code></td><td align="center" style="text-align:center">14 Aug − 19 Jun</td><td align="center" style="text-align:center">the <b>only geometry-matched</b> date pair (0.076° apart)</td></tr>
-<tr><td align="center" style="text-align:center"><code>uniform</code></td><td align="center" style="text-align:center">−(within-farm CV)</td><td align="center" style="text-align:center">patchiness means gaps, waterlogging or pest damage</td></tr>
-<tr><td align="center" style="text-align:center"><code>persist</code></td><td align="center" style="text-align:center">season integral</td><td align="center" style="text-align:center">canopy held all season, not on one lucky date</td></tr>
+<tr><td align="left" style="text-align:left"><code>level</code></td><td align="left" style="text-align:left">August γ⁰</td><td align="left" style="text-align:left">peak canopy volume</td></tr>
+<tr><td align="left" style="text-align:left"><code>growth</code></td><td align="left" style="text-align:left">14 Aug − 19 Jun</td><td align="left" style="text-align:left">the <b>only geometry-matched</b> date pair (0.076° apart)</td></tr>
+<tr><td align="left" style="text-align:left"><code>uniform</code></td><td align="left" style="text-align:left">−(within-farm CV)</td><td align="left" style="text-align:left">patchiness means gaps, waterlogging or pest damage</td></tr>
+<tr><td align="left" style="text-align:left"><code>persist</code></td><td align="left" style="text-align:left">season integral</td><td align="left" style="text-align:left">canopy held all season, not on one lucky date</td></tr>
 </tbody>
 </table>
 </center>
@@ -184,21 +184,21 @@ never a mean of per-hectare rates, which would let a 0.05 ha plot count as much 
 <div align="center" style="text-align:center">
 <center>
 <table>
-<thead><tr>
-<th align="center" style="text-align:center">crop</th>
-<th align="center" style="text-align:center">farms</th>
-<th align="center" style="text-align:center">area ha</th>
-<th align="center" style="text-align:center">median health</th>
-<th align="center" style="text-align:center">median t/ha to date</th>
-<th align="center" style="text-align:center">production t</th>
+<th align="center" style="text-align:center; font-weight:bold"><tr>
+<th align="center" style="text-align:center; font-weight:bold">crop</th>
+<th align="center" style="text-align:center; font-weight:bold">farms</th>
+<th align="center" style="text-align:center; font-weight:bold">area ha</th>
+<th align="center" style="text-align:center; font-weight:bold">median health</th>
+<th align="center" style="text-align:center; font-weight:bold">median t/ha to date</th>
+<th align="center" style="text-align:center; font-weight:bold">production t</th>
 </tr></thead>
 <tbody>
-<tr><td align="center" style="text-align:center">Rice</td><td align="center" style="text-align:center">86</td><td align="center" style="text-align:center">47.4</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.64</td><td align="center" style="text-align:center">77</td></tr>
-<tr><td align="center" style="text-align:center">Cotton</td><td align="center" style="text-align:center">455</td><td align="center" style="text-align:center">193.4</td><td align="center" style="text-align:center">51.9</td><td align="center" style="text-align:center">0.34</td><td align="center" style="text-align:center">77</td></tr>
-<tr><td align="center" style="text-align:center">Maize</td><td align="center" style="text-align:center">55</td><td align="center" style="text-align:center">26.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.18</td><td align="center" style="text-align:center">62</td></tr>
-<tr><td align="center" style="text-align:center">Bajra</td><td align="center" style="text-align:center">149</td><td align="center" style="text-align:center">42.3</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.57</td><td align="center" style="text-align:center">113</td></tr>
-<tr><td align="center" style="text-align:center">Groundnut</td><td align="center" style="text-align:center">221</td><td align="center" style="text-align:center">137.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.86</td><td align="center" style="text-align:center">266</td></tr>
-<tr><td align="center" style="text-align:center"><b>Village 1</b></td><td align="center" style="text-align:center"><b>966</b></td><td align="center" style="text-align:center"><b>447.5</b></td><td align="center" style="text-align:center"><b>50.7</b></td><td align="center" style="text-align:center"><b>1.41</b></td><td align="center" style="text-align:center"><b>595</b></td></tr>
+<tr><td align="left" style="text-align:left">Rice</td><td align="center" style="text-align:center">86</td><td align="center" style="text-align:center">47.4</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.64</td><td align="center" style="text-align:center">77</td></tr>
+<tr><td align="left" style="text-align:left">Cotton</td><td align="center" style="text-align:center">455</td><td align="center" style="text-align:center">193.4</td><td align="center" style="text-align:center">51.9</td><td align="center" style="text-align:center">0.34</td><td align="center" style="text-align:center">77</td></tr>
+<tr><td align="left" style="text-align:left">Maize</td><td align="center" style="text-align:center">55</td><td align="center" style="text-align:center">26.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.18</td><td align="center" style="text-align:center">62</td></tr>
+<tr><td align="left" style="text-align:left">Bajra</td><td align="center" style="text-align:center">149</td><td align="center" style="text-align:center">42.3</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">2.57</td><td align="center" style="text-align:center">113</td></tr>
+<tr><td align="left" style="text-align:left">Groundnut</td><td align="center" style="text-align:center">221</td><td align="center" style="text-align:center">137.7</td><td align="center" style="text-align:center">50.0</td><td align="center" style="text-align:center">1.86</td><td align="center" style="text-align:center">266</td></tr>
+<tr><td align="left" style="text-align:left"><b>Village 1</b></td><td align="center" style="text-align:center"><b>966</b></td><td align="center" style="text-align:center"><b>447.5</b></td><td align="center" style="text-align:center"><b>50.7</b></td><td align="center" style="text-align:center"><b>1.41</b></td><td align="center" style="text-align:center"><b>595</b></td></tr>
 </tbody>
 </table>
 </center>

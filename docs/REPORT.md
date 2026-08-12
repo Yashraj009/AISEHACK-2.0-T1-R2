@@ -23,7 +23,7 @@ known total across finer units using an ancillary variable correlated with the t
 **dasymetric mapping**, and it is the spine of this pipeline.
 
 | known in aggregate | disaggregated to | ancillary variable from Capella |
-|:---:|:---:|:---:|
+|:---|:---|:---|
 | Round 1 village crop-area shares (MSE 11.071) | 966 parcel crop labels | per-farm soft evidence, area-constrained |
 | Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
@@ -102,7 +102,7 @@ That a Round 1 feature can be contradicted at all is the reason we treat the sha
 The index combines four families, each z-scored across farms:
 
 | family | measurement | rationale |
-|:---:|:---:|:---:|
+|:---|:---|:---|
 | `level` | August γ⁰ | peak canopy volume |
 | `growth` | 14 Aug − 19 Jun | the only geometry-matched date pair (0.076° apart) |
 | `uniform` | −(within-farm CV) | a patchy stand means gaps, waterlogging or pest damage |
@@ -150,7 +150,7 @@ change, and accumulation from the season integral, which uses all four acquisiti
 ## 6. External datasets, and what they were used for
 
 | dataset | access | role |
-|:---:|:---:|:---:|
+|:---|:---|:---|
 | Sentinel-2 L2A | Microsoft Planetary Computer, open | **witness only** — same-day, 13 Oct, 0.003% cloud |
 | Sentinel-1 RTC | Microsoft Planetary Computer, open | **witness only** — single date and 10-scene season integral |
 | NASA POWER | open | rainfall context for the acquisition dates |
