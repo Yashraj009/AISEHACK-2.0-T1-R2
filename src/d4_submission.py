@@ -35,10 +35,14 @@ from scipy.spatial import cKDTree
 from scipy.stats import norm
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, DATES, RESULTS, AUX, farm_centroids, log
+from common import CROPS, DATES, RESULTS, OUTPUT, AUX, farm_centroids, log
 
-SUB = RESULTS / "submission.csv"
-DEBUG = RESULTS / "d4_debug.csv"
+# Written to OUTPUT, not RESULTS. They are the same directory locally, but on Kaggle the
+# project is mounted read-only under /kaggle/input and OUTPUT redirects to
+# /kaggle/working -- so main() can produce the deliverable there instead of dying on the
+# write. Inputs are still read from RESULTS, which is where the dataset supplies them.
+SUB = OUTPUT / "submission.csv"
+DEBUG = OUTPUT / "d4_debug.csv"
 
 # Season completion at the Oct 13 acquisition, as a fraction of the crop's total
 # kharif cycle. Gujarat kharif is sown mid-June on the monsoon onset [J8].

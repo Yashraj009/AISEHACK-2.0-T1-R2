@@ -982,3 +982,22 @@
 {"t": "2026-08-12T22:10:43", "stage": "check_submission_pack", "status": "PASS"}
 {"t": "2026-08-12T22:10:44", "stage": "d11.start"}
 {"t": "2026-08-12T22:10:44", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T22:18:14", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-12T22:18:27", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-12T22:19:30", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-12T22:19:42", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-12T22:21:13", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-12T22:21:25", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-12T22:21:25", "stage": "d4.start"}
+{"t": "2026-08-12T22:21:25", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-12T22:21:25", "stage": "d4.prior_bias", "Rice": -0.686, "Cotton": 0.334, "Maize": -0.277, "Bajra": -0.115, "Groundnut": 0.333}
+{"t": "2026-08-12T22:21:25", "stage": "d4.weights", "level": 0.189, "growth": 0.283, "uniform": 0.301, "persist": 0.228, "source": "decorrelation", "drift": false}
+{"t": "2026-08-12T22:21:25", "stage": "d4.impute", "method": "knn5_same_crop", "n_imputed": 52, "n_spatial": 52}
+{"t": "2026-08-12T22:21:25", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-12T22:21:25", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-12T22:22:02", "stage": "upload.package", "size_mb": 174.1, "figures": 14}
+{"t": "2026-08-12T22:22:09", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T22:22:15", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T22:22:16", "stage": "d11.start"}
+{"t": "2026-08-12T22:22:16", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T22:22:17", "stage": "check_writeup", "status": "PASS"}
