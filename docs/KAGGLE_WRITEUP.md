@@ -70,9 +70,9 @@ its area table, is gallery item 5.
 
 The physics underneath is visible in the season each crop draws:
 
-> 🖼 **INSERT `gallery_06_temporal_trajectory.png`**
-> *Left: rice peaks on 19 June — double bounce off stems in standing water, HH-favoured, persisting
-> up to ~46 days after transplanting. Right: the two inter-date differences that separate the classes.*
+![gallery_06_temporal_trajectory.png](figures/gallery_06_temporal_trajectory.png)
+
+*Left: rice peaks on 19 June — double bounce off stems in standing water, HH-favoured, persisting up to ~46 days after transplanting. Right: the two inter-date differences that separate the classes.*  *(Kaggle: insert `gallery_06_temporal_trajectory.png` here)*
 
 **One Round 1 signature was re-imported, after four tests.** Checking every Round 1 feature sign
 against its own exact truth, 13 of 15 agree — but Groundnut × NDVI-entropy *significantly
@@ -91,7 +91,7 @@ was tried and **rejected** — it degraded both witnesses.
 | `persist` | season integral | canopy held all season, not on one lucky date |
 
 **The weights are derived, not hand-chosen.** Each is inversely proportional to that family's total
-absolute correlation with the others — w_k ∝ 1/Σ|ρ(k,j)| — giving `growth` 0.283, `uniform` 0.301,
+absolute correlation with the others — $w_k \propto 1 \big/ \sum_j |\rho(k,j)|$ — giving `growth` 0.283, `uniform` 0.301,
 `persist` 0.228, `level` 0.189. The rule reads only the feature matrix and is **blind to every
 witness by construction**; weights chosen by watching NDVI would turn a held-out check into a
 fitting target. It also beat every hand-tuned variant we tried.
@@ -102,15 +102,13 @@ pooled index would largely re-measure crop type. 50 means *typical for that crop
 
 Which component actually carries the ranking, and does any single weight hold it up?
 
-> 🖼 **INSERT `gallery_09_robustness.png`**
-> *Component importance by ablation: drop each family and re-rank. `uniform` matters most
-> (ρ 0.686), no single weight is load-bearing, and randomising all weights ±50% still leaves
-> ρ ≥ 0.943. Right: health clusters spatially far beyond a 199-permutation null (Moran's I = 0.105) —
-> neighbouring fields share soil and management, and modelling noise would not cluster.*
+![gallery_09_robustness.png](figures/gallery_09_robustness.png)
+
+*Component importance by ablation: drop each family and re-rank. `uniform` matters most (ρ 0.686), no single weight is load-bearing, and randomising all weights ±50% still leaves ρ ≥ 0.943. Right: health clusters spatially far beyond a 199-permutation null (Moran's I = 0.105) — neighbouring fields share soil and management, and modelling noise would not cluster.*  *(Kaggle: insert `gallery_09_robustness.png` here)*
 
 ## 3. Yield-to-date estimation
 
-    yield_to_date (t/ha) = district anchor × season completion(farm) × accumulation(farm)
+$$\text{yield\_to\_date}\;[\mathrm{t/ha}] \;=\; \underbrace{\text{anchor}_{\text{district}}}_{\text{level, from statistics}} \;\times\; \underbrace{\text{completion}_{\text{farm}} \;\times\; \text{accumulation}_{\text{farm}}}_{\text{variation, measured from SAR}}$$
 
 We read the column exactly as the brief defines it — *"estimated yield potential up to the final
 acquisition date using all available temporal observations"*, and explicitly **not a final harvest
@@ -131,12 +129,9 @@ that, only a sensor that disagrees.
 
 The accumulation term was then tested with a witness of the **right shape**:
 
-> 🖼 **INSERT `gallery_08_season_witness.png`**
-> *`season_integral` spans 12 Jun–13 Oct, but our original witnesses were single instants. Cumulative
-> NDVI is impossible here — Sokhda had **zero** Sentinel-2 scenes under 20% cloud in June, July,
-> August or September. So the matched witness is 10 Sentinel-1 scenes on one orbit, same trapezoid.
-> It corroborates cotton (ρ +0.305) and rice (+0.290), is null for maize and groundnut, and
-> **contradicts bajra** (−0.219, p = 0.008). We report that rather than tune it away.*
+![gallery_08_season_witness.png](figures/gallery_08_season_witness.png)
+
+*`season_integral` spans 12 Jun–13 Oct, but our original witnesses were single instants. Cumulative NDVI is impossible here — Sokhda had **zero** Sentinel-2 scenes under 20% cloud in June, July, August or September. So the matched witness is 10 Sentinel-1 scenes on one orbit, same trapezoid. It corroborates cotton (ρ +0.305) and rice (+0.290), is null for maize and groundnut, and **contradicts bajra** (−0.219, p = 0.008). We report that rather than tune it away.*  *(Kaggle: insert `gallery_08_season_witness.png` here)*
 
 ## 4. Key findings
 
@@ -146,8 +141,11 @@ result: cotton is the only crop still standing on 13 October and tops both witne
 harvested and bottoms both. That is the crop calendar, recovered independently.
 
 **Village-level aggregation — all 966 farms, none dropped** *(gallery item 6)*. The rule is
-area-weighted: village production = Σ(farm yield t/ha × farm area ha), never a mean of per-hectare
-rates, which would let a 0.05 ha plot count as much as a 5 ha one.
+area-weighted,
+
+$$\text{village production}\;[\mathrm{t}] \;=\; \sum_{\text{farms}} \Big( \text{yield}_{\text{farm}}\;[\mathrm{t/ha}] \times \text{area}_{\text{farm}}\;[\mathrm{ha}] \Big)$$
+
+never a mean of per-hectare rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
 | crop | farms | area ha | median health | median t/ha to date | production t |
 |---|--:|--:|--:|--:|--:|
@@ -160,19 +158,15 @@ rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
 **Coverage is complete, and every row declares its provenance.**
 
-> 🖼 **INSERT `gallery_04_coverage_and_confidence.png`**
-> *895 measured, 52 imputed, 19 RFI-flagged — 966 total. Missing coverage is spatially clustered in
-> the north-west rather than random, which is why imputation borrows from adjacent farms of the same
-> crop instead of a village mean. Per-farm crop confidence is low **by design**.*
+![gallery_04_coverage_and_confidence.png](figures/gallery_04_coverage_and_confidence.png)
+
+*895 measured, 52 imputed, 19 RFI-flagged — 966 total. Missing coverage is spatially clustered in the north-west rather than random, which is why imputation borrows from adjacent farms of the same crop instead of a village mean. Per-farm crop confidence is low **by design**.*  *(Kaggle: insert `gallery_04_coverage_and_confidence.png` here)*
 
 ### What failed
 
-> 🖼 **INSERT `gallery_10_negatives.png`**
-> *Left: repeat-pass coherence sits at the noise floor and the stable-scatterer control does not
-> clear its own bias floor — so we cannot separate true decorrelation from our own limitation, and
-> claim neither. Right: "a uniform canopy should score higher" holds on the date that feeds the index
-> (ρ −0.631) and **fails** on an independent date (−0.168). We report the failure rather than quote
-> the circular version.*
+![gallery_10_negatives.png](figures/gallery_10_negatives.png)
+
+*Left: repeat-pass coherence sits at the noise floor and the stable-scatterer control does not clear its own bias floor — so we cannot separate true decorrelation from our own limitation, and claim neither. Right: "a uniform canopy should score higher" holds on the date that feeds the index (ρ −0.631) and **fails** on an independent date (−0.168). We report the failure rather than quote the circular version.*  *(Kaggle: insert `gallery_10_negatives.png` here)*
 
 - **Per-farm crop labels do not survive an independent rebuild.** Against a Sentinel-2 + Sentinel-1
   map, Cohen's κ = **+0.103** — negligible. The village mix is well constrained; the individual farm
@@ -184,11 +178,9 @@ rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
 ## 5. Why X-band was worth it, measured
 
-> 🖼 **INSERT `gallery_11_why_xband.png`**
-> *At 1.2 m the median farm is **95.2%** uncontaminated interior; at 10 m that falls to **63.3%** and
-> a fifth of these farms become more than half edge-contaminated — the median parcel here is 0.27 ha.
-> Over the crop-forming window Sentinel-2 offered **19 revisits and 0 usable ones**. Every Capella
-> acquisition is usable regardless of cloud.*
+![gallery_11_why_xband.png](figures/gallery_11_why_xband.png)
+
+*At 1.2 m the median farm is **95.2%** uncontaminated interior; at 10 m that falls to **63.3%** and a fifth of these farms become more than half edge-contaminated — the median parcel here is 0.27 ha. Over the crop-forming window Sentinel-2 offered **19 revisits and 0 usable ones**. Every Capella acquisition is usable regardless of cloud.*  *(Kaggle: insert `gallery_11_why_xband.png` here)*
 
 ## Reproducibility
 

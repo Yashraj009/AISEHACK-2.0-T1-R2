@@ -89,7 +89,8 @@ def main():
         check("every figure is assigned to one of the two", not (every - mg - df),
               "unassigned: " + (", ".join(sorted(every - mg - df)) or "none"))
         wr_txt = (docs / "KAGGLE_WRITEUP.md").read_text(encoding="utf8")
-        inline_named = set(re.findall(r"INSERT `([^`]+)`", wr_txt))
+        # the writeup now embeds the figures directly rather than naming a placeholder
+        inline_named = set(re.findall(r"!\[[^\]]*\]\(figures/([^)]+)\)", wr_txt))
         check("writeup embeds exactly the description figures", inline_named == df,
               f"{len(inline_named)} referenced")
 
@@ -130,6 +131,18 @@ def main():
         check("writeup names the team", TEAM in t, TEAM)
     else:
         check("Kaggle writeup exists and is within the page limit", False, "missing")
+
+    # --- rendered deliverables ----------------------------------------------------
+    # The organisers want a document, not markdown. Page count is measured on the actual
+    # render: the words-per-page estimate said 2.9 pages while the PDF came out at 5.
+    for stem in ("REPORT", "KAGGLE_WRITEUP"):
+        pdf, docx = up / f"{stem}.pdf", up / f"{stem}.docx"
+        check(f"{stem}.pdf and .docx rendered", pdf.exists() and docx.exists(),
+              f"{pdf.stat().st_size // 1024 if pdf.exists() else 0} KB pdf")
+        if pdf.exists():
+            n = len(re.findall(rb"/Type\s*/Page[^s]", pdf.read_bytes()))
+            imgs = len(re.findall(rb"/Subtype\s*/Image", pdf.read_bytes()))
+            check(f"{stem}.pdf is within 4 pages", n <= 4, f"{n} pages, {imgs} images")
 
     # --- notebook ---------------------------------------------------------------
     nb = ROOT / "notebooks" / "I9_pipeline.ipynb"

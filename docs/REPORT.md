@@ -29,9 +29,16 @@ negative, and one of them forced a sign correction in the shipped yield column.
 
 ## 2. Preprocessing workflow
 
-**Radiometry.** Capella SLC pixels are complex. We form β⁰ = `scale_factor · |z|²` following the
-product's own `radiometry` field (`beta_nought`) and the ESA EDAP guidance, then convert to γ⁰ =
-β⁰ · tanθ using a **per-pixel** incidence angle. The angle field is reconstructed from the orbit
+**Radiometry.** Capella SLC pixels are complex. We form the brightness
+
+$$\beta^{0} \;=\; \text{scale\_factor} \cdot |z|^{2}$$
+
+following the product's own `radiometry` field (`beta_nought`) and the ESA EDAP guidance, then
+convert to the terrain-referenced
+
+$$\gamma^{0} \;=\; \beta^{0} \cdot \tan\theta$$
+
+using a **per-pixel** incidence angle $\theta$. The angle field is reconstructed from the orbit
 state vectors rather than assumed constant across the scene; it agrees with the product metadata to
 0.006°. Using γ⁰ rather than σ⁰ removes the first-order dependence on local geometry, which matters
 here because the four acquisitions span 28.7°–35.2° in incidence.
@@ -89,7 +96,7 @@ The index combines four families, each z-scored across farms:
 | `persist` | season integral | canopy held across the season, not on one lucky date |
 
 **Weights are derived, not chosen.** Each family's weight is inversely proportional to its total
-absolute correlation with the others, w_k ∝ 1/Σ|ρ(k,j)|, giving `growth` 0.283, `uniform` 0.301,
+absolute correlation with the others, $w_k \propto 1 \big/ \sum_j |\rho(k,j)|$, giving `growth` 0.283, `uniform` 0.301,
 `persist` 0.228, `level` 0.189. The rule reads only the feature matrix and is blind to every witness
 by construction — weights tuned by watching NDVI would convert a held-out check into a fitting
 target. Notably, this blind rule outperformed every hand-tuned variant we tried.
@@ -107,7 +114,7 @@ it to a rank.
 
 ## 5. Yield to date
 
-    yield_to_date (t/ha) = district anchor × season completion(farm) × accumulation(farm)
+$$\text{yield\_to\_date}\;[\mathrm{t/ha}] \;=\; \underbrace{\text{anchor}_{\text{district}}}_{\text{level, from statistics}} \;\times\; \underbrace{\text{completion}_{\text{farm}} \;\times\; \text{accumulation}_{\text{farm}}}_{\text{variation, measured from SAR}}$$
 
 We read the column exactly as the brief defines it — *"the estimated yield potential up to the final
 acquisition date using all available temporal observations"*, and explicitly **not a final harvest
@@ -157,8 +164,11 @@ period: 10 Sentinel-1 scenes, 12 Jun–10 Oct, all one relative orbit, integrate
 trapezoid. It corroborates cotton (ρ +0.305, p = 5×10⁻¹⁰) and rice (+0.290, p = 0.007), is null for
 maize and groundnut, and **contradicts bajra** (−0.219, p = 0.008).
 
-**Village aggregate.** 447.5 ha, 595 t accumulated to 13 October. Aggregation is area-weighted:
-village production = Σ(farm yield t/ha × farm area ha), never a mean of per-hectare rates.
+**Village aggregate.** 447.5 ha, 595 t accumulated to 13 October. Aggregation is area-weighted,
+
+$$\text{village production}\;[\mathrm{t}] \;=\; \sum_{\text{farms}} \Big( \text{yield}_{\text{farm}}\;[\mathrm{t/ha}] \times \text{area}_{\text{farm}}\;[\mathrm{ha}] \Big)$$
+
+never a mean of per-hectare rates.
 
 ### What failed, reported as failures
 
