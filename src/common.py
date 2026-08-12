@@ -15,31 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "anrf-aise-hack-2-0-round-2-sar-crop-health-yield-estimation"
-
-
-def _shp(canonical, name):
-    """The shapefile at its canonical path, or wherever the upload actually put it.
-
-    The host ships each shapefile inside a folder of its own name -- Farm_boundaries_shp/
-    Farm_boundaries_shp/ -- and that doubled level does not always survive a round trip
-    through a dataset upload. The layout is not worth a failed run, so if the canonical
-    path is absent, search the tree for the file by name. Nothing else changes: the
-    sidecars (.dbf/.shx/.prj) travel with the .shp, so finding it finds the whole set.
-    """
-    if canonical.exists():
-        return canonical
-    for base in (DATA, ROOT):
-        if base.exists():
-            hits = sorted(base.rglob(name))
-            if hits:
-                return hits[0]
-    return canonical          # keep the canonical path so the error names it
-
-
-FARMS = _shp(DATA / "Farm_boundaries_shp" / "Farm_boundaries_shp" / "Sokhda_Farms.shp",
-             "Sokhda_Farms.shp")
-VILLAGE = _shp(DATA / "Village_Shp" / "Village_Shp" / "Sokhda_Village.shp",
-               "Sokhda_Village.shp")
+FARMS = DATA / "Farm_boundaries_shp" / "Farm_boundaries_shp" / "Sokhda_Farms.shp"
+VILLAGE = DATA / "Village_Shp" / "Village_Shp" / "Sokhda_Village.shp"
 RESULTS = ROOT / "results"
 CACHE = RESULTS / "cache"
 FIGURES = RESULTS / "figures"

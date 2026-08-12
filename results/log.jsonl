@@ -1006,3 +1006,14 @@
 {"t": "2026-08-12T22:27:34", "stage": "check_submission_pack", "status": "PASS"}
 {"t": "2026-08-12T22:27:35", "stage": "d11.start"}
 {"t": "2026-08-12T22:27:35", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T23:07:08", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T23:07:13", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T23:07:43", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T23:08:23", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-12T23:08:24", "stage": "check_submission_pack", "status": "FAIL", "failed": 2}
+{"t": "2026-08-12T23:08:42", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-12T23:08:43", "stage": "d11.start"}
+{"t": "2026-08-12T23:08:43", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-12T23:09:09", "stage": "upload.package", "size_mb": 174.1, "figures": 14}
+{"t": "2026-08-12T23:09:14", "stage": "build_documents", "files": 4}
+{"t": "2026-08-12T23:09:15", "stage": "check_submission_pack", "status": "PASS"}

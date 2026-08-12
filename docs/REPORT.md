@@ -1,24 +1,25 @@
 # Dasymetric Mapping of Village Crop Statistics to Parcel Level from X-band SAR
-### Crop type, health index and yield-to-date for 966 farms — ANRF AISEHack 2.0, Round 2
 
-**Team GDHTM** — Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya\
-**Study area:** Sokhda village (`village_id` 1), Vadodara district, Gujarat — 966 farm parcels\
-**Data:** four Capella X-band HH SLC acquisitions — 6 Jun, 19 Jun, 14 Aug, 13 Oct 2025 (kharif)
+### Crop type, health index and yield-to-date for 966 farms
+
+**Team GDHTM** · Yash Sorathiya · Jenish Sorathiya · Yajurshi Velani · Mahi Parmar · Aayush Pandya\
+**Study area:** Sokhda village (`village_id` 1), Vadodara district, Gujarat - 966 farm parcels\
+**Data:** four Capella X-band HH SLC acquisitions - 6 Jun, 19 Jun, 14 Aug, 13 Oct 2025 (kharif)
 
 ---
 
 ## 1. Summary
 
 Every value in `submission.csv` is derived from the four provided Capella X-band scenes. Sentinel-1
-and Sentinel-2 appear in this project **only as independent witnesses** — they are used to test the
-product after it is built, and no optical or C-band measurement enters any shipped number. That
-separation is deliberate: it keeps the Capella imagery the primary source as the guidelines require,
-and it means our validation is genuinely independent rather than self-confirming.
+and Sentinel-2 appear in this project **only as independent witnesses**: they test the product after
+it is built, and no optical or C-band measurement enters any shipped number. That separation keeps
+the Capella imagery the primary source as the guidelines require, and it makes the validation
+genuinely independent rather than self-confirming.
 
 **One technique, applied twice.** Everything we know about this village's crops, we know only *in
 aggregate*: the crop-area shares at village level, the yield anchor at district level. Nothing is
-known per farm — which is exactly what the brief asks for. Both quantities are therefore built the
-same way: hold the aggregate, and let the SAR supply only the variation inside it. Distributing a
+known per farm, which is exactly what the brief asks for. Both quantities are therefore built the
+same way - hold the aggregate, and let the SAR supply only the variation inside it. Distributing a
 known total across finer units using an ancillary variable correlated with the true distribution is
 **dasymetric mapping**, and it is the spine of this pipeline.
 
@@ -27,26 +28,25 @@ known total across finer units using an ancillary variable correlated with the t
 | Round 1 village crop-area shares (MSE 11.071) | 966 parcel crop labels | per-farm soft evidence, area-constrained |
 | Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
-Neither aggregate is error-free, and we do not treat them as such — the Round 1 shares are our own
-best estimate of the village mix, not ground truth. The argument for holding them is comparative,
-not absolute: the aggregate is estimated from a whole village of evidence, the per-farm label from
-one parcel of it, so the aggregate is by far the better-constrained of the two. §6 reports what that
-costs at farm level.
+Two qualifications belong here rather than in a footnote:
 
-The health index has no aggregate to anchor to at all, so it is scored as a **rank within crop**
-rather than an absolute level — the same discipline applied to a quantity with no total to honour.
+- **Neither aggregate is error-free, and we do not treat them as such.** The Round 1 shares are our
+  own best estimate of the village mix, not ground truth. The argument for holding them is
+  comparative, not absolute: the aggregate is estimated from a whole village of evidence, the
+  per-farm label from one parcel of it. §7 reports what that costs at farm level.
+- **The health index has no aggregate to anchor to at all**, so it is scored as a **rank within
+  crop** rather than an absolute level - the same discipline applied to a quantity with no total.
 
 ![Figure 1](figures/gallery_00_method_overview.png)
 
-*Figure 1. What feeds what. The witnesses (purple) carry one arrow only — into validation — so no witness reaches a deliverable; the two auxiliary quantities that genuinely do feed the product are drawn in amber and labelled as declared inputs.*
+*Figure 1. What feeds what. The witnesses (purple) carry one arrow only, into validation, so no witness reaches a deliverable; the two auxiliary quantities that do feed the product are drawn in amber and labelled as declared inputs.*
 
-
-We report the checks that failed as prominently as those that passed. Three findings in §6 are
+We report the checks that failed as prominently as those that passed. Three findings in §7 are
 negative, and one of them forced a sign correction in the shipped yield column.
 
 ## 2. Preprocessing workflow
 
-**Radiometry.** Capella SLC pixels are complex. We form the brightness
+**2.1 Radiometry.** Capella SLC pixels are complex. We form the brightness
 
 $$\beta^{0} \;=\; \text{scale\_factor} \cdot |z|^{2}$$
 
@@ -55,47 +55,55 @@ convert to the terrain-referenced
 
 $$\gamma^{0} \;=\; \beta^{0} \cdot \tan\theta$$
 
-using a **per-pixel** incidence angle $\theta$. The angle field is reconstructed from the orbit
-state vectors rather than assumed constant across the scene; it agrees with the product metadata to
-0.006°. Using γ⁰ rather than σ⁰ removes the first-order dependence on local geometry, which matters
-here because the four acquisitions span 28.7°–35.2° in incidence.
+using a **per-pixel** incidence angle $\theta$, reconstructed from the orbit state vectors rather
+than assumed constant across the scene; it agrees with the product metadata to 0.006°. Using γ⁰
+rather than σ⁰ removes the first-order dependence on local geometry, which matters because the four
+acquisitions span 28.7°–35.2° in incidence.
 
-**Geocoding.** Slant range to EPSG:32643 using the 225 ground control points supplied with each
+**2.2 Geocoding.** Slant range to EPSG:32643 using the 225 ground control points supplied with each
 product. Resampling is by **averaging**, which performs the multi-look in the same step and avoids a
-second interpolation. Two grids are produced: a 5 m base grid for per-farm statistics and a 2 m fine
+second interpolation. Two grids are produced: a 5 m base grid for per-farm statistics, a 2 m fine
 grid for texture.
 
-**Per-farm extraction.** Each parcel is eroded before sampling so that boundary-straddling pixels do
-not mix two fields. Where erosion would empty a small parcel, a documented fallback ladder applies
-(erode → unbuffered → centroid). Coverage is complete: **966 of 966 farms carry a row** — 895
-measured directly, 52 filled by spatial nearest-neighbour imputation from adjacent farms of the same
-crop, and 19 flagged for radio-frequency interference. Every row carries its provenance in
-`d4_debug.csv`. Missing coverage is spatially clustered in the north-west rather than random, which
-is why imputation borrows from neighbours of the same crop instead of using a village mean.
+**2.3 Per-farm extraction.** Each parcel is eroded before sampling so that boundary-straddling
+pixels never mix two fields; where erosion would empty a small parcel a documented fallback ladder
+applies (erode → unbuffered → centroid). Coverage is complete - **966 of 966 farms carry a row**:
 
-**Absolute calibration is not claimed.** Our γ⁰ reads about +17 dB above the physically expected
+- **895** measured directly;
+- **52** filled by spatial nearest-neighbour imputation from adjacent farms of the same crop;
+- **19** flagged for radio-frequency interference.
+
+Every row carries its provenance in `d4_debug.csv`. Missing coverage is spatially clustered in the
+north-west rather than random, which is why imputation borrows from neighbours of the same crop
+instead of using a village mean.
+
+**2.4 Absolute calibration is not claimed.** Our γ⁰ reads about +17 dB above the physically expected
 level. ESA's EDAP assessment notes that Capella's absolute accuracy is not declared while its
-relative accuracy is good — exactly the condition we observe. Every downstream quantity is therefore
-a **difference between dates** or a **rank within a crop**, never an absolute level. This is verified,
-not asserted: our between-farm spread on 13 Oct is 1.48 dB against the Sentinel-1 witness's 1.82 dB,
-so the contrasts survive even though the level does not.
+relative accuracy is good, exactly the condition we observe. Every downstream quantity is therefore
+a **difference between dates** or a **rank within a crop**, never an absolute level. This is
+verified, not asserted: our between-farm spread on 13 Oct is 1.48 dB against the Sentinel-1
+witness's 1.82 dB, so the contrasts survive even though the level does not.
 
-## 3. Crop type — Round 1 applied to the new boundaries
+## 3. Crop type: Round 1 applied to the new boundaries
 
-Per-farm soft evidence is built from X-band features with a physical basis — the 19 June
-flood/double-bounce response for rice, August volume scattering for cotton, and the
-August-minus-June difference. These give per-farm class probabilities, which are then biased until
-the **area-weighted argmax shares match the Round 1 shares exactly**. Area weighting is used because
-the Round 1 quantity is an area share; weighting by farm count would satisfy the wrong constraint.
+The mechanism is a **constrained assignment**, in three steps:
 
-The justification is measured, not stylistic: in Round 1, free per-pixel assignment scored 5× *worse*
-than assigning nothing at all, so the village mix is honoured as a constraint rather than re-inferred.
+1. **Per-farm soft evidence from X-band** with a physical basis - the 19 June flood/double-bounce
+   response for rice, August volume scattering for cotton, and the August-minus-June difference.
+2. **Bias to the Round 1 shares.** Class log-probabilities are shifted until the **area-weighted
+   argmax shares match the Round 1 shares exactly**. Area weighting is used because the Round 1
+   quantity is an area share; weighting by farm count would satisfy the wrong constraint.
+3. **Argmax only at the very end**, once the constraint is satisfied.
+
+The justification is measured, not stylistic: in Round 1, free per-pixel assignment scored 5×
+*worse* than assigning nothing at all, so the village mix is honoured as a constraint rather than
+re-inferred.
 
 One Round 1 signature was re-validated and imported. Testing all Round 1 feature signs against the
 Round 1 reconstruction, 13 of 15 agree, but Groundnut × NDVI-entropy significantly contradicts it
-(ρ −0.531, p = 0.003) — evidence that the tail of the Round 1 ladder partly fitted leaderboard noise.
+(ρ −0.531, p = 0.003), evidence that the tail of the Round 1 ladder partly fitted leaderboard noise.
 Only the rice August-minus-June signature cleared all four of our transfer tests and was shipped.
-That a Round 1 feature can be contradicted at all is the reason we treat the shares as an estimate.
+That a Round 1 feature can be contradicted at all is why we treat the shares as an estimate.
 
 ## 4. Crop health index
 
@@ -108,51 +116,47 @@ The index combines four families, each z-scored across farms:
 | `uniform` | −(within-farm CV) | a patchy stand means gaps, waterlogging or pest damage |
 | `persist` | season integral | canopy held across the season, not on one lucky date |
 
-**Weights are derived, not chosen.** Each family's weight is inversely proportional to its total
-absolute correlation with the others, $w_k \propto 1 \big/ \sum_j |\rho(k,j)|$, giving `growth` 0.283, `uniform` 0.301,
-`persist` 0.228, `level` 0.189. The rule reads only the feature matrix and is blind to every witness
-by construction — weights tuned by watching NDVI would convert a held-out check into a fitting
-target. Notably, this blind rule outperformed every hand-tuned variant we tried.
-
-**Scored within crop.** Cotton and groundnut differ by roughly 4 dB for reasons unrelated to health,
-so a pooled score would largely re-measure crop type. Each farm is scored against its own crop's
-median, so 50 means "typical for this crop", and the score is a bounded transform of a robust
-z-score rather than a percentile rank, which preserves the size of a difference instead of flattening
-it to a rank.
+- **Weights are derived, not chosen.** Each family's weight is inversely proportional to its total
+  absolute correlation with the others, $w_k \propto 1 \big/ \sum_j |\rho(k,j)|$, giving `growth`
+  0.283, `uniform` 0.301, `persist` 0.228, `level` 0.189. The rule reads only the feature matrix and
+  is blind to every witness by construction; weights tuned by watching NDVI would convert a held-out
+  check into a fitting target. This blind rule outperformed every hand-tuned variant we tried.
+- **Scored within crop.** Cotton and groundnut differ by roughly 4 dB for reasons unrelated to
+  health, so a pooled score would largely re-measure crop type. Each farm is scored against its own
+  crop's median, so 50 means "typical for this crop", and the score is a bounded transform of a
+  robust z-score rather than a percentile rank, which preserves the size of a difference instead of
+  flattening it to a rank.
 
 ![Figure 2](figures/gallery_01_health_index_map.png)
 
 *Figure 2. Farm-level Crop Health Index, 13 October 2025. Within-crop scoring centres every crop at 50 by construction; the histogram states this rather than letting it read as a result.*
 
-
 ## 5. Yield to date
 
 $$\text{yield\_to\_date}\;[\mathrm{t/ha}] \;=\; \underbrace{\text{anchor}_{\text{district}}}_{\text{level, from statistics}} \;\times\; \underbrace{\text{completion}_{\text{farm}} \;\times\; \text{accumulation}_{\text{farm}}}_{\text{variation, measured from SAR}}$$
 
-We read the column exactly as the brief defines it — *"the estimated yield potential up to the final
-acquisition date using all available temporal observations"*, and explicitly **not a final harvest
-forecast**. Values are therefore scaled by season completion (Cotton 0.45, Groundnut 0.75,
-Rice/Maize/Bajra 0.95) and are never projected forward; dividing by that factor recovers a
-full-season figure. Cotton reads low per hectare (median 0.34 t/ha) because on 13 October it is only
-about 45% through picking, and because the anchor is lint rather than seed cotton.
-
-This is the second dasymetric step: the **level** is the district anchor and the **variation** is
-measured. We state that split rather than blur it — SAR cannot measure absolute yield without
-calibration data, and pretending otherwise would be the least defensible claim in this project.
-Both per-farm terms are measured, not assumed: completion from each farm's own August→October
-change, and accumulation from the season integral, which uses all four acquisitions.
+- **Read as the brief defines it** - *"the estimated yield potential up to the final acquisition
+  date using all available temporal observations"*, and explicitly **not a final harvest forecast**.
+  Values are scaled by season completion (Cotton 0.45, Groundnut 0.75, Rice/Maize/Bajra 0.95) and
+  never projected forward; dividing by that factor recovers a full-season figure.
+- **Level from statistics, variation from SAR.** This is the second dasymetric step. We state the
+  split rather than blur it: SAR cannot measure absolute yield without calibration data, and
+  pretending otherwise would be the least defensible claim in this project. Both per-farm terms are
+  measured, not assumed - completion from each farm's own August→October change, accumulation from
+  the season integral over all four acquisitions.
+- **Why cotton reads low** (median 0.34 t/ha): on 13 October it is only about 45% through picking,
+  and the anchor is lint rather than seed cotton.
 
 ![Figure 3](figures/gallery_02_yield_to_date_map.png)
 
 *Figure 3. Farm-level Yield Estimate to Date. Cotton reads pale because on 13 October it is only ~45% through picking; the level is set by crop and the SAR contributes the within-crop spread.*
 
-
 ## 6. External datasets, and what they were used for
 
 | dataset | access | role |
 |:---|:---|:---|
-| Sentinel-2 L2A | Microsoft Planetary Computer, open | **witness only** — same-day, 13 Oct, 0.003% cloud |
-| Sentinel-1 RTC | Microsoft Planetary Computer, open | **witness only** — single date and 10-scene season integral |
+| Sentinel-2 L2A | Microsoft Planetary Computer, open | **witness only** - same-day, 13 Oct, 0.003% cloud |
+| Sentinel-1 RTC | Microsoft Planetary Computer, open | **witness only** - single date and 10-scene season integral |
 | NASA POWER | open | rainfall context for the acquisition dates |
 | Vadodara APY statistics | published government statistics | yield **level** anchor (an input, and declared as one) |
 | Gujarat DCS parcel registry | open government WFS | survey numbers for 947/966 farms, for future field validation |
@@ -161,36 +165,33 @@ No paid or restricted dataset was used. Nothing in the first two rows enters `su
 
 ## 7. Key findings
 
-**The crop classes separate on two sensors they never saw.** Kruskal–Wallis p = 1.8×10⁻³⁴ on
-Sentinel-2 NDVI and 7.7×10⁻²⁰ on Sentinel-1 VH. The *ordering* is the result, not the p-value: on 13
-October cotton is the only crop still standing and tops both witnesses, while maize is harvested and
-bottoms both — the crop calendar, recovered independently.
-
-![Figure 4](figures/gallery_07_independent_validation.png)
-
-*Figure 4. The independent witnesses. Both panels are sensors the pipeline never read: the crop classes separate on Sentinel-2 NDVI and Sentinel-1 VH, and the ordering matches the kharif calendar — cotton still standing on 13 October, maize already harvested.*
-
-**Health clusters spatially far beyond chance.** Moran's I = 0.105 against a 199-permutation null.
-Neighbouring fields share soil, water and management; modelling noise would not cluster.
-
-**The yield accumulation term now has a witness of the right shape.** `season_integral` spans 12 Jun
-to 13 Oct, but both original witnesses were single instants. Cumulative NDVI — the textbook fix — is
-impossible here: Sokhda had **zero** Sentinel-2 scenes under 20% cloud in June, July, August *or*
-September. We therefore built a season-integrated witness from the sensor that did observe that
-period: 10 Sentinel-1 scenes, 12 Jun–10 Oct, all one relative orbit, integrated by the same
-trapezoid. It corroborates cotton (ρ +0.305, p = 5×10⁻¹⁰) and rice (+0.290, p = 0.007), is null for
-maize and groundnut, and **contradicts bajra** (−0.219, p = 0.008).
-
-**Village aggregate.** 447.5 ha, 595 t accumulated to 13 October. Aggregation is area-weighted,
+1. **The crop classes separate on two sensors they never saw.** Kruskal–Wallis p = 1.8×10⁻³⁴ on
+   Sentinel-2 NDVI and 7.7×10⁻²⁰ on Sentinel-1 VH. The *ordering* is the result, not the p-value: on
+   13 October cotton is the only crop still standing and tops both witnesses, while maize is
+   harvested and bottoms both - the crop calendar, recovered independently.
+2. **Health clusters spatially far beyond chance.** Moran's I = 0.105 against a 199-permutation
+   null. Neighbouring fields share soil, water and management; modelling noise would not cluster.
+3. **The yield accumulation term now has a witness of the right shape.** `season_integral` spans 12
+   Jun to 13 Oct, but both original witnesses were single instants. Cumulative NDVI, the textbook
+   fix, is impossible here: Sokhda had **zero** Sentinel-2 scenes under 20% cloud in June, July,
+   August *or* September. We therefore built a season-integrated witness from the sensor that did
+   observe that period - 10 Sentinel-1 scenes, 12 Jun–10 Oct, all one relative orbit, integrated by
+   the same trapezoid. It corroborates cotton (ρ +0.305, p = 5×10⁻¹⁰) and rice (+0.290, p = 0.007),
+   is null for maize and groundnut, and **contradicts bajra** (−0.219, p = 0.008).
+4. **Village aggregate.** 447.5 ha, 595 t accumulated to 13 October, area-weighted:
 
 $$\text{village production}\;[\mathrm{t}] \;=\; \sum_{\text{farms}} \Big( \text{yield}_{\text{farm}}\;[\mathrm{t/ha}] \times \text{area}_{\text{farm}}\;[\mathrm{ha}] \Big)$$
 
 never a mean of per-hectare rates.
 
-### What failed, reported as failures
+![Figure 4](figures/gallery_07_independent_validation.png)
+
+*Figure 4. The independent witnesses. Both panels are sensors the pipeline never read: the crop classes separate on Sentinel-2 NDVI and Sentinel-1 VH, and the ordering matches the kharif calendar.*
+
+### 7.1 What failed, reported as failures
 
 1. **Per-farm crop labels do not survive an independent rebuild.** Against a Sentinel-2 + Sentinel-1
-   map, Cohen's κ = +0.103 — negligible. Cotton is the one class both methods find. The village mix
+   map, Cohen's κ = +0.103, negligible. Cotton is the one class both methods find. The village mix
    is well constrained; the per-farm label is not, and we say so.
 2. **Repeat-pass coherence (19 Jun × 14 Aug) sits at the noise floor.** The stable-scatterer control
    failed to clear its own bias floor, so we cannot separate true decorrelation from our own
@@ -203,23 +204,25 @@ never a mean of per-hectare rates.
 
 *Figure 5. Two results we report as failures: repeat-pass coherence does not clear its own control floor, and the uniformity-health relationship holds on the date that feeds the index but fails on an independent date.*
 
+### 7.2 What the negatives imply for use
 
-### What the negatives imply for use
+The three failures are not symmetric in consequence, so we state what each one licenses:
 
-The three failures above are not symmetric in consequence, so we state what each one licenses. The
-κ result means this product should be read at **village and crop-group level**, which is the level
-the aggregation table reports and the level Round 1 was scored at; a single farm's label should not
-be acted on alone. The coherence result costs us nothing shipped — no submitted column depends on
-it — but it does close off change detection as a route we could have claimed. The bajra
-contradiction is the one that would change a decision: bajra is 15% of the parcels and its
-season-integral term runs against the witness, so its yield column carries the weakest support of
-the five crops. We leave the value in rather than tune it, and flag it here, because the constraint
-that produced it — the Round 1 area shares — is estimated from far more evidence than a single
-witness correction would be, so we do not overwrite it on one contradicting signal.
+- **κ = 0.103** means the product should be read at **village and crop-group level** - the level the
+  aggregation table reports, and the level Round 1 was scored at. A single farm's label should not
+  be acted on alone.
+- **The coherence result costs nothing shipped** - no submitted column depends on it - but it does
+  close off change detection as a route we could have claimed.
+- **The bajra contradiction is the one that would change a decision.** Bajra is 15% of the parcels
+  and its season-integral term runs against the witness, so its yield column carries the weakest
+  support of the five crops. We leave the value in and flag it rather than tune it, because the
+  constraint that produced it, the Round 1 area shares, is estimated from far more evidence than a
+  single witness correction would be.
 
 ## 8. Reproducibility
 
-`notebooks/I9_pipeline.ipynb` runs from a fresh kernel and its final cell **asserts** that it
-reproduces the shipped `submission.csv` exactly. A 19-check ship gate verifies schema, value ranges,
-units and deliverables, and a separate gate asserts that every number quoted in this report matches
-the shipped artefacts, so the prose cannot drift from the data.
+- `notebooks/I9_pipeline.ipynb` runs from a fresh kernel, writes `submission.csv`, and its final
+  cell **asserts** that all three columns equal the shipped file exactly.
+- A **19-check ship gate** verifies schema, value ranges, units and deliverables.
+- A separate gate asserts that every number quoted in this report matches the shipped artefacts, so
+  the prose cannot drift from the data.

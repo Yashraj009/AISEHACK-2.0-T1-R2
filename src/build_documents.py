@@ -35,14 +35,23 @@ CSS = """
    SCALE is per document (see SCALE below) because the two have different densities: one
    shared value has to satisfy the tighter document, which left the other one's last page
    two-thirds empty. Each is tuned to fill its fourth page without spilling onto a fifth. */
-@page { size: A4; margin: 12mm 13mm 12mm 13mm; }
+@page { size: A4; margin: %(mtop)smm 13mm %(mbot)smm 13mm; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: %(font)spt;
        line-height: %(lh)s; color: #111; max-width: none; margin: 0; }
-h1 { font-size: %(h1)spt; margin: 0 0 2pt 0; line-height: 1.18; }
-h2 { font-size: %(h2)spt; margin: %(hgap)spt 0 4pt 0; border-bottom: 1px solid #d8dee4;
-     padding-bottom: 1.5pt; break-after: avoid; }
-h3 { font-size: %(h3)spt; margin: 8pt 0 2pt 0; break-after: avoid; }
+h1 { font-size: %(h1)spt; margin: 0 0 3pt 0; line-height: 1.2; text-align: center; }
+/* the subtitle and the author/study-area block are centred with the title */
+h1 + h3 { text-align: center; font-size: 10.6pt; font-weight: 600; color: #334155;
+          margin: 0 0 5pt 0; border: 0; }
+h1 + h3 + p { text-align: center; color: #334155; margin: 0 0 2pt 0; }
+h2 { font-size: %(h2)spt; margin: %(hgap)spt 0 4pt 0; padding: 3.5pt 0 0 0;
+     border-top: 2px solid #334155; color: #0f172a; break-after: avoid; }
+h2:first-of-type { border-top: 0; }
+h3 { font-size: %(h3)spt; margin: 7pt 0 2pt 0; color: #1e293b; break-after: avoid;
+     border-bottom: 1px solid #e2e8f0; padding-bottom: 1pt; }
+ul, ol { margin: 3pt 0 3pt 0; padding-left: 14pt; }
+li { margin: 1.2pt 0; text-align: justify; }
+li > strong:first-child { color: #0f172a; }
 p  { margin: %(pgap)spt 0; text-align: justify; }
 img { max-width: 100%%; max-height: %(imgh)smm; width: auto; height: auto; display: block;
       margin: 5pt auto 1pt auto; break-inside: avoid; }
@@ -51,7 +60,7 @@ figure, p:has(img) { break-inside: avoid; }
    until its labels are unreadable. It is selected by ALT TEXT: --embed-resources rewrites
    every src to a base64 data URI, so a src*="name" selector cannot match, and pandoc's gfm
    reader has no link_attributes. Alt text survives into both the HTML and the DOCX. */
-img[alt="Figure 1"] { max-height: 62mm; }
+img[alt="Figure 1"] { max-height: %(fig1)smm; }
 em { color: #333; }
 table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt; margin: 4pt 0;
         break-inside: avoid; }
@@ -74,17 +83,24 @@ MAX_PAGES = 4
 # Per-document type scale. Tuned against the real render: raise until the PDF turns 5
 # pages, then step back one. build() asserts the result is still within MAX_PAGES.
 SCALE = {
-    "REPORT":         dict(font=9.2, lh=1.38, h1=16, h2=11.8, h3=10.3, hgap=11,
-                           pgap=3.5, imgh=55, tbl=8.0),
-    "KAGGLE_WRITEUP": dict(font=8.9, lh=1.34, h1=15, h2=11, h3=9.6, hgap=9,
-                           pgap=3, imgh=55, tbl=8.0),
+    "REPORT":         dict(font=9.1, lh=1.33, h1=15.5, h2=11.4, h3=10.0, hgap=8,
+                           pgap=3.0, imgh=45, fig1=58, tbl=7.9, mtop=14, mbot=11.5),
+    "KAGGLE_WRITEUP": dict(font=8.9, lh=1.32, h1=15, h2=11, h3=9.6, hgap=8,
+                           pgap=2.9, imgh=52, fig1=58, tbl=8.0, mtop=13, mbot=10.5),
 }
 
 
 def page_count(pdf: Path) -> int:
-    """Pages in a PDF, without pulling in a PDF library for one number."""
-    import re
-    return len(re.findall(rb"/Type\s*/Page[^s]", pdf.read_bytes()))
+    """Pages in a PDF.
+
+    Was a regex over /Type /Page. That stopped being true once the header/footer stamp
+    rewrote the file: the incremental save leaves the superseded page objects in place,
+    so the regex counted 10 for a 4-page document. Ask the parser instead.
+    """
+    import pymupdf
+
+    with pymupdf.open(pdf) as doc:
+        return doc.page_count
 
 
 def run(cmd, **kw):
@@ -92,6 +108,35 @@ def run(cmd, **kw):
     if r.returncode != 0:
         raise SystemExit(f"FAILED: {' '.join(map(str, cmd))}\n{r.stdout}\n{r.stderr}")
     return r
+
+
+def stamp(pdf: Path, left: str, right: str):
+    """Draw the running header and the centred page number onto every page.
+
+    Chrome supports no paged-media margin boxes and no header template via the CLI, so
+    this is done after the fact. PyMuPDF is already a dependency of the page-count gate.
+    """
+    import pymupdf
+
+    doc = pymupdf.open(pdf)
+    n = doc.page_count
+    for i, page in enumerate(doc, start=1):
+        w, h = page.rect.width, page.rect.height
+        y_head, y_rule, y_foot = 30.0, 36.0, h - 24.0
+        page.insert_text((37, y_head), left, fontname="Helvetica-Bold", fontsize=7.6,
+                         color=(0.20, 0.26, 0.33))
+        rw = pymupdf.get_text_length(right, fontname="Helvetica-Bold", fontsize=7.6)
+        page.insert_text((w - 37 - rw, y_head), right, fontname="Helvetica-Bold",
+                         fontsize=7.6, color=(0.20, 0.26, 0.33))
+        page.draw_line(pymupdf.Point(37, y_rule), pymupdf.Point(w - 37, y_rule),
+                       color=(0.80, 0.84, 0.88), width=0.6)
+        num = f"{i} of {n}"
+        nw = pymupdf.get_text_length(num, fontname="Helvetica", fontsize=7.6)
+        page.insert_text(((w - nw) / 2, y_foot), num, fontname="Helvetica", fontsize=7.6,
+                         color=(0.40, 0.45, 0.50))
+    doc.saveIncr() if doc.can_save_incrementally() else doc.save(str(pdf), incremental=False)
+    doc.close()
+    return n
 
 
 def build(stem, title):
@@ -117,6 +162,8 @@ def build(stem, title):
     assert CHROME.exists(), f"Chrome not found at {CHROME}"
     run([str(CHROME), "--headless", "--disable-gpu", "--no-pdf-header-footer",
          f"--print-to-pdf={pdf}", html.resolve().as_uri()])
+
+    stamp(pdf, "ANRF AISEHack 2.0 Round 2", "Team GDHTM")
 
     html.unlink(missing_ok=True)
     css.unlink(missing_ok=True)

@@ -186,8 +186,13 @@ def main():
         check(f"{stem}.pdf and .docx rendered", pdf.exists() and docx.exists(),
               f"{pdf.stat().st_size // 1024 if pdf.exists() else 0} KB pdf")
         if pdf.exists():
-            n = len(re.findall(rb"/Type\s*/Page[^s]", pdf.read_bytes()))
-            imgs = len(re.findall(rb"/Subtype\s*/Image", pdf.read_bytes()))
+            # Counted by the parser, not by a regex over /Type /Page: the header/footer
+            # stamp saves incrementally, leaving the superseded page objects in the file,
+            # and the regex then reported 10 pages for a 4-page document.
+            import pymupdf
+            with pymupdf.open(pdf) as doc:
+                n = doc.page_count
+                imgs = sum(len(p.get_images(full=True)) for p in doc)
             check(f"{stem}.pdf is within 4 pages", n <= 4, f"{n} pages, {imgs} images")
 
     # --- notebook ---------------------------------------------------------------
