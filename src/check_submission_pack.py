@@ -155,6 +155,18 @@ def main():
             check(f"{name} does not claim the Round 1 shares are exact", not bad,
                   "; ".join(bad) if bad else "MSE 11.071 throughout")
 
+    # Kaggle's writeup editor has NO MathJax: $$...$$ prints literally, and the underscores
+    # inside \text{}_{...} are read as markdown emphasis, so the equation comes out as
+    # italicised gibberish. The pasteable description must therefore be LaTeX-free -- the
+    # report and writeup keep their LaTeX, since those render through MathML.
+    paste = docs / "KAGGLE_DESCRIPTION_PASTE.md"
+    if paste.exists():
+        t = paste.read_text(encoding="utf8")
+        latex = [m for m in ("$$", r"\text", r"\sum", r"\propto", r"\frac", r"\underbrace",
+                             r"\mathrm") if m in t]
+        check("pasteable description carries no LaTeX (Kaggle cannot render it)",
+              not latex, "; ".join(latex) if latex else "unicode maths only")
+
     # A title that names a technique the body never explains is worse than a plain one:
     # the judges meet the term in the title and nowhere else. Both documents must define it.
     for name, path in (("report", rep), ("writeup", wr)):

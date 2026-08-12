@@ -9,7 +9,7 @@ variation inside it.** Distributing a known total across finer units using an an
 correlated with the true distribution is *dasymetric mapping*, and we apply it twice.
 
 | known in aggregate | disaggregated to | ancillary variable from Capella |
-|---|---|---|
+|:---:|:---:|:---:|
 | Round 1 village crop-area shares (MSE 11.071) | 966 parcel labels | per-farm soft evidence, area-constrained |
 | Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
@@ -72,7 +72,7 @@ was tried and **rejected** — it degraded both witnesses.
 ## 2. Health index methodology
 
 | family | measurement | why it belongs |
-|---|---|---|
+|:---:|:---:|:---:|
 | `level` | August γ⁰ | peak canopy volume |
 | `growth` | 14 Aug − 19 Jun | the **only geometry-matched** date pair (0.076° apart) |
 | `uniform` | −(within-farm CV) | patchiness means gaps, waterlogging or pest damage |
@@ -81,7 +81,8 @@ was tried and **rejected** — it degraded both witnesses.
 **The weights are derived, not hand-chosen.** Each is inversely proportional to that family's total
 absolute correlation with the others:
 
-$$w_k \;\propto\; \frac{1}{\sum_j \left| \rho(k,j) \right|}$$
+> ### **w(k)  ∝  1 / Σ |ρ(k, j)|**
+> summed over the other families *j* — the more a family duplicates the rest, the less it weighs
 
 giving `growth` 0.283, `uniform` 0.301, `persist` 0.228, `level` 0.189. The rule reads only the
 feature matrix and is **blind to every witness by construction**; weights chosen by watching NDVI
@@ -101,13 +102,9 @@ Which component actually carries the ranking, and does any single weight hold it
 
 ## 3. Yield-to-date estimation
 
-$$
-\text{yield\_to\_date}\;[\mathrm{t/ha}]
-\;=\;
-\underbrace{\text{anchor}_{\text{district}}}_{\text{level, from statistics}}
-\;\times\;
-\underbrace{\text{completion}_{\text{farm}} \;\times\; \text{accumulation}_{\text{farm}}}_{\text{variation, measured from SAR}}
-$$
+> ### **`yield_to_date` [t/ha]  =  anchor(district)  ×  completion(farm)  ×  accumulation(farm)**
+> where **anchor(district)** is the *level, from statistics*, and the two per-farm terms are the
+> *variation, measured from SAR*
 
 We read the column exactly as the brief defines it — *"estimated yield potential up to the final
 acquisition date using all available temporal observations"*, and explicitly **not a final harvest
@@ -142,16 +139,13 @@ That is the crop calendar, recovered independently.
 
 **Village-level aggregation — all 966 farms, none dropped.** The rule is area-weighted:
 
-$$
-\text{village production}\;[\mathrm{t}]
-\;=\;
-\sum_{\text{farms}} \Big( \text{yield}_{\text{farm}}\;[\mathrm{t/ha}] \;\times\; \text{area}_{\text{farm}}\;[\mathrm{ha}] \Big)
-$$
+> ### **village production [t]  =  Σ ( yield(farm) [t/ha]  ×  area(farm) [ha] )**
+> summed over all 966 farms
 
 never a mean of per-hectare rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
 | crop | farms | area ha | median health | median t/ha to date | production t |
-|---|--:|--:|--:|--:|--:|
+|:---:|:---:|:---:|:---:|:---:|:---:|
 | Rice | 86 | 47.4 | 50.0 | 1.64 | 77 |
 | Cotton | 455 | 193.4 | 51.9 | 0.34 | 77 |
 | Maize | 55 | 26.7 | 50.0 | 2.18 | 62 |

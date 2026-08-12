@@ -15,7 +15,7 @@
 item stands alone: what we built, and evidence it is real.
 
 | # | file | why it is in the gallery |
-|---|---|---|
+|:---:|:---:|:---:|
 | 1 | `cover.png` | required cover — both deliverables at a glance |
 | 2 | `gallery_00_method_overview.png` | the entire approach in one image, so the gallery alone explains the method |
 | 3 | `gallery_01_health_index_map.png` | **required by the guidelines** |
@@ -44,7 +44,7 @@ variation inside it.** Distributing a known total across finer units using an an
 correlated with the true distribution is *dasymetric mapping*, and we apply it twice.
 
 | known in aggregate | disaggregated to | ancillary variable from Capella |
-|---|---|---|
+|:---:|:---:|:---:|
 | Round 1 village crop-area shares (MSE 11.071) | 966 parcel labels | per-farm soft evidence, area-constrained |
 | Vadodara district yield (APY) | 966 parcel t/ha | completion × accumulation |
 
@@ -100,7 +100,7 @@ was tried and **rejected** — it degraded both witnesses.
 ## 2. Health index methodology
 
 | family | measurement | why it belongs |
-|---|---|---|
+|:---:|:---:|:---:|
 | `level` | August γ⁰ | peak canopy volume |
 | `growth` | 14 Aug − 19 Jun | the **only geometry-matched** date pair (0.076° apart) |
 | `uniform` | −(within-farm CV) | patchiness means gaps, waterlogging or pest damage |
@@ -163,7 +163,7 @@ $$\text{village production}\;[\mathrm{t}] \;=\; \sum_{\text{farms}} \Big( \text{
 never a mean of per-hectare rates, which would let a 0.05 ha plot count as much as a 5 ha one.
 
 | crop | farms | area ha | median health | median t/ha to date | production t |
-|---|--:|--:|--:|--:|--:|
+|:---:|:---:|:---:|:---:|:---:|:---:|
 | Rice | 86 | 47.4 | 50.0 | 1.64 | 77 |
 | Cotton | 455 | 193.4 | 51.9 | 0.34 | 77 |
 | Maize | 55 | 26.7 | 50.0 | 2.18 | 62 |
