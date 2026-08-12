@@ -33,7 +33,9 @@ helped build the product cannot independently confirm it.
 It is a claim about **arrows**, so the method diagram states it directly: no arrow runs from a
 witness into a deliverable, while the two aggregates above are drawn in amber and labelled as inputs.
 
-![method_overview](https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F18936911%2F7bb06f4b2fffb2acb74265100694ad97%2Fgallery_00_method_overview.png?generation=1786544861048297&alt=media)
+>>> DELETE THIS LINE AND INSERT gallery_00_method_overview.png WITH THE TOOLBAR IMAGE BUTTON.
+>>> The old upload reads "Exact truth (MSE 0.000)". Upload the corrected file from
+>>> upload/media_gallery/, which reads "Village mix (MSE 11.071)".
 
 ## 1. Applying the Round 1 crop classification to the new boundaries
 
