@@ -26,6 +26,29 @@ CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 
 # A4 with sane margins and figures that cannot overflow the page. Kept here rather than in
 # a separate .css so the whole conversion is one file with no hidden dependency.
+FONT_DIR = DOCS / "fonts"
+
+
+def _font_face():
+    """Literata as base64 @font-face rules, or nothing if the files are absent.
+
+    Falling back silently matters: the build must not break on a machine that has not
+    fetched the fonts, it should just render in the stack named after Literata.
+    """
+    import base64
+
+    faces = []
+    for fname, style in (("Literata.ttf", "normal"), ("Literata-Italic.ttf", "italic")):
+        p = FONT_DIR / fname
+        if not p.exists():
+            continue
+        b64 = base64.b64encode(p.read_bytes()).decode("ascii")
+        faces.append(
+            "@font-face { font-family: Literata; font-style: %s; font-weight: 200 900;"
+            " src: url(data:font/ttf;base64,%s) format('truetype'); }" % (style, b64))
+    return "\n".join(faces)
+
+
 CSS = """
 /* The 4-page cap is a hard requirement and the figures are what push against it, so the
    image height is capped rather than the prose cut. Verified by counting pages in the
@@ -37,7 +60,7 @@ CSS = """
    two-thirds empty. Each is tuned to fill its fourth page without spilling onto a fifth. */
 @page { size: A4; margin: %(mtop)smm 13mm %(mbot)smm 13mm; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: %(font)spt;
+body { font-family: Literata, Georgia, "Times New Roman", serif; font-size: %(font)spt;
        line-height: %(lh)s; color: #111; max-width: none; margin: 0; }
 h1 { font-size: %(h1)spt; margin: 0 0 3pt 0; line-height: 1.2; text-align: center; }
 /* the subtitle and the author/study-area block are centred with the title */
@@ -73,7 +96,9 @@ td { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; }
    but a header is a label, not data, so it is centred and bold in every column. */
 th { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; background: #eef2f6;
      text-align: center !important; font-weight: 600; }
-code { background: #f2f4f7; padding: 0.5pt 2.5pt; border-radius: 3px; font-size: 8.6pt; }
+code { background: #f2f4f7; padding: 0.5pt 2.5pt; border-radius: 3px;
+       font-family: "Cascadia Mono", Consolas, monospace; font-size: 8.0pt; }
+table { font-variant-numeric: tabular-nums; }
 pre  { background: #f6f8fa; padding: 5pt; overflow-x: auto; font-size: 8.4pt; }
 blockquote { margin: 4pt 0; padding: 2.5pt 8pt; border-left: 3px solid #cbd5e1;
              background: #f8fafc; }
@@ -87,8 +112,8 @@ MAX_PAGES = 4
 # Per-document type scale. Tuned against the real render: raise until the PDF turns 5
 # pages, then step back one. build() asserts the result is still within MAX_PAGES.
 SCALE = {
-    "REPORT":         dict(font=9.1, lh=1.33, h1=15.5, h2=11.4, h3=10.0, hgap=8,
-                           pgap=3.0, imgh=45, fig1=58, tbl=7.9, mtop=14, mbot=11.5, cap=8.1),
+    "REPORT":         dict(font=8.8, lh=1.30, h1=15.5, h2=11.4, h3=10.0, hgap=8,
+                           pgap=3.0, imgh=52, fig1=64, tbl=7.9, mtop=14, mbot=11.5, cap=8.1),
     "KAGGLE_WRITEUP": dict(font=8.9, lh=1.32, h1=15, h2=11, h3=9.6, hgap=8,
                            pgap=2.9, imgh=52, fig1=58, tbl=8.0, mtop=13, mbot=10.5, cap=7.9),
 }
@@ -126,7 +151,9 @@ def stamp(pdf: Path, left: str, right: str):
     n = doc.page_count
     for i, page in enumerate(doc, start=1):
         w, h = page.rect.width, page.rect.height
-        y_head, y_rule, y_foot = 30.0, 36.0, h - 24.0
+        # 21/26pt against a 14mm (39.7pt) top margin leaves ~14pt of clear space; at
+        # 30/36 the rule sat under 4pt above the first line of body text
+        y_head, y_rule, y_foot = 21.0, 26.0, h - 22.0
         page.insert_text((37, y_head), left, fontname="Helvetica-Bold", fontsize=7.6,
                          color=(0.20, 0.26, 0.33))
         rw = pymupdf.get_text_length(right, fontname="Helvetica-Bold", fontsize=7.6)
@@ -155,7 +182,7 @@ def build(stem, title):
 
     # --- PDF via HTML + headless Chrome -------------------------------------------
     css = OUT / "_print.css"
-    css.write_text(CSS % SCALE[stem], encoding="utf8")
+    css.write_text(_font_face() + "\n" + CSS % SCALE[stem], encoding="utf8")
     # pagetitle, NOT metadata title: --metadata title renders a second <h1> above the
     # document's own heading, so the title appeared twice on page 1. pagetitle sets the
     # browser/PDF title only.
