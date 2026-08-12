@@ -89,8 +89,9 @@ em { color: #333; }
    point smaller than the body, so it reads as a label rather than as more prose. */
 p:has(> em:only-child) { text-align: center; font-size: %(cap)spt; color: #475569;
                          margin: 1.5pt 0 4pt 0; }
-table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt; margin: 4pt 0;
-        break-inside: avoid; }
+/* a table is a block, not a paragraph: give it room to read as one */
+table { border-collapse: collapse; width: 100%%; font-size: %(tbl)spt;
+        margin: 7.5pt 0 8pt 0; break-inside: avoid; }
 td { border: 1px solid #cfd6dd; padding: 1.8pt 4pt; }
 /* column alignment is set per column in the markdown -- numbers centred, text left --
    but a header is a label, not data, so it is centred and bold in every column. */
@@ -113,7 +114,7 @@ MAX_PAGES = 4
 # pages, then step back one. build() asserts the result is still within MAX_PAGES.
 SCALE = {
     "REPORT":         dict(font=8.8, lh=1.30, h1=15.5, h2=11.4, h3=10.0, hgap=8,
-                           pgap=3.0, imgh=52, fig1=64, tbl=7.9, mtop=14, mbot=11.5, cap=8.1),
+                           pgap=3.0, imgh=49, fig1=62, tbl=7.9, mtop=14, mbot=11.5, cap=8.1),
     "KAGGLE_WRITEUP": dict(font=8.9, lh=1.32, h1=15, h2=11, h3=9.6, hgap=8,
                            pgap=2.9, imgh=52, fig1=58, tbl=8.0, mtop=13, mbot=10.5, cap=7.9),
 }
