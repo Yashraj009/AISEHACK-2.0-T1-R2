@@ -28,7 +28,11 @@ def check(label, ok, detail=""):
 
 
 def main():
-    w = (ROOT / "docs" / "WRITEUP.md").read_text(encoding="utf8")
+    # WRITEUP.md (the old flat draft) is gone -- the shipped text now lives across three
+    # documents: the mailed report, the Kaggle writeup guide, and the pasteable Kaggle
+    # description. A number quoted in any one of them must still match the CSV.
+    w = "\n".join((ROOT / "docs" / name).read_text(encoding="utf8") for name in
+                  ("REPORT.md", "KAGGLE_WRITEUP.md", "KAGGLE_DESCRIPTION_PASTE.md"))
     sub = pd.read_csv(RESULTS / "submission.csv")
     dbg = pd.read_csv(RESULTS / "d4_debug.csv")
     f = pd.read_csv(RESULTS / "farm_features.csv")
@@ -47,7 +51,7 @@ def main():
         check(f"provenance {key}", got == n and word in w, f"{got}")
 
     cot = float(sub.loc[sub.crop_type == "Cotton", "yield_estimate_to_date"].median())
-    check("cotton median yield 0.35 t/ha", abs(cot - 0.35) < 0.02 and "0.35 t/ha" in w,
+    check("cotton median yield 0.34 t/ha", abs(cot - 0.34) < 0.01 and "0.34 t/ha" in w,
           f"{cot:.3f}")
 
     # weights quoted in prose must equal the shipped ones, and the shipped ones must

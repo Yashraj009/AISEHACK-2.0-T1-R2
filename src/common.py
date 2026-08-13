@@ -1,7 +1,7 @@
 """Shared paths, run ledger, and guards for the R2 pipeline.
 
 Every stage imports from here so paths and logging are defined in exactly one place.
-See docs/MASTER_PLAN.md for what each stage does and why.
+See internal/MASTER_PLAN.md for what each stage does and why.
 """
 import os
 

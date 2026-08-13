@@ -25,7 +25,7 @@ HOST = ROOT / "Sokhda_Dummy_Submission.xlsx"
 # rubric line no matter how good the model is, so they are checked as data.
 DELIVERABLES = {
     "submission.csv": RESULTS / "submission.csv",
-    "writeup (<=4 pages)": ROOT / "docs" / "WRITEUP.md",
+    "writeup (<=4 pages)": ROOT / "docs" / "KAGGLE_WRITEUP.md",
     "public notebook": ROOT / "notebooks" / "I9_pipeline.ipynb",
     "cover image": RESULTS / "figures" / "cover.png",
     # the two maps the Round 2 guidelines require BY NAME, not just "some gallery figure"
@@ -77,7 +77,7 @@ def main():
     check("gallery has >=6 figures", len(gal) >= 6, f"{len(gal)} figures")
 
     print("\n" + "=" * 68 + "\n4. CONTENT SANITY\n" + "=" * 68)
-    words = len((ROOT / "docs" / "WRITEUP.md").read_text(encoding="utf-8").split())
+    words = len((ROOT / "docs" / "KAGGLE_WRITEUP.md").read_text(encoding="utf-8").split())
     # ~650 words/page at this formatting; 4 pages is the hard cap in the brief.
     check("writeup under 4 pages", words < 2600, f"{words} words ~ {words / 650:.1f} pages")
     nb = (ROOT / "notebooks" / "I9_pipeline.ipynb").read_text(encoding="utf-8")

@@ -7,11 +7,16 @@ find its data because the dataset was assembled by hand at 2am.
 Produces `upload/`:
 
     upload/submission.csv          the deliverable CSV, verified against the host dummy
-    upload/WRITEUP.md              the <=4-page writeup
-    upload/figures/                cover + gallery, exactly what goes in the media gallery
+    upload/REPORT.md, KAGGLE_WRITEUP.md, EMAIL_SUBMISSION.md   staged from docs/
+    upload/media_gallery/          Kaggle Media Gallery -- stands alone, no prose needed
+    upload/description_figures/    Kaggle Project Description -- needs the surrounding prose
     upload/I9_pipeline.ipynb       the public notebook
     upload/kaggle_dataset/         <- zip THIS and upload as a Kaggle Dataset
     upload/UPLOAD_CHECKLIST.md     the steps, in order
+
+Note: build_documents.py (run separately) adds REPORT.pdf/.docx and KAGGLE_WRITEUP.pdf/.docx,
+and docs/KAGGLE_DESCRIPTION_PASTE.md is the ready-to-paste Project Description -- neither is
+produced by this script.
 
 The kaggle_dataset folder preserves the directory layout the notebook's root-discovery
 expects (a folder containing src/), and deliberately EXCLUDES the 2.1 GB of SLCs: with
@@ -58,13 +63,13 @@ def main():
 
     # ---- what a judge and the organisers actually open ------------------------
     shutil.copy2(RESULTS / "submission.csv", UP / "submission.csv")
-    shutil.copy2(ROOT / "docs" / "WRITEUP.md", UP / "WRITEUP.md")
     shutil.copy2(ROOT / "notebooks" / "I9_pipeline.ipynb", UP / "I9_pipeline.ipynb")
     # The guidelines name three further artefacts explicitly: the 4-page report that goes
     # to Insights@galaxeye.space, the Kaggle Project Description, and a STANDALONE
     # spreadsheet of the farm-level results. Staging them here keeps the email and the
     # Kaggle upload reading from one folder instead of from scattered paths.
-    for name in ("REPORT.md", "KAGGLE_WRITEUP.md", "EMAIL_SUBMISSION.md"):
+    for name in ("REPORT.md", "KAGGLE_WRITEUP.md", "EMAIL_SUBMISSION.md",
+                "KAGGLE_DESCRIPTION_PASTE.md"):
         src = ROOT / "docs" / name
         if src.exists():
             shutil.copy2(src, UP / name)
@@ -96,12 +101,14 @@ def main():
               "gallery_10_negatives.png",
               "gallery_11_why_xband.png"]
 
-    nfig = 0
+    ngal = 0
     for name in GALLERY:
-        nfig += copy_tree(FIGURES, UP / "media_gallery", name)
+        ngal += copy_tree(FIGURES, UP / "media_gallery", name)
+    ninline = 0
     for name in INLINE:
-        nfig += copy_tree(FIGURES, UP / "description_figures", name)
-    nfig += copy_tree(FIGURES, UP / "media_gallery", "thumbnail_560x280.png")
+        ninline += copy_tree(FIGURES, UP / "description_figures", name)
+    ngal += copy_tree(FIGURES, UP / "media_gallery", "thumbnail_560x280.png")
+    nfig = ngal + ninline
     # the report embeds four figures with paths relative to itself
     for name in ("gallery_00_method_overview.png", "gallery_01_health_index_map.png",
                  "gallery_02_yield_to_date_map.png", "gallery_10_negatives.png"):
@@ -151,7 +158,7 @@ def main():
         raise SystemExit("CSV does not match the host schema -- do not upload")
 
     (UP / "UPLOAD_CHECKLIST.md").write_text(CHECKLIST.format(
-        size_mb=size_mb, nfig=nfig,
+        size_mb=size_mb, nfig=nfig, ngal=ngal, ninline=ninline,
         crops=", ".join(f"{c} {int(n)}" for c, n in
                         sub.crop_type.value_counts().items())), encoding="utf8")
 
@@ -193,15 +200,22 @@ Everything below is already staged in `upload/`. Nothing needs to be regenerated
 > That means the dataset is not attached, or was zipped one level too deep — the folder
 > containing `src/` must be at the top of the dataset.
 
-## 3. Writeup
+## 3. Kaggle Writeup
+
+The Title and Subtitle fields are the two fenced blocks at the top of
+`upload/KAGGLE_WRITEUP.md` -- copy each verbatim, both already fit their character caps.
 
 1. Kaggle → competition → **New Writeup**.
-2. Paste `upload/WRITEUP.md`. It is ~2600 words, about 4 pages rendered — check the
-   rendered length before submitting, since the cap is on pages, not words.
-3. **Media Gallery**: upload all {nfig} images from `upload/figures/`.
-   Set `cover.png` as the **cover image** (required).
+2. **Project Description**: paste `upload/KAGGLE_DESCRIPTION_PASTE.md` whole. It already
+   embeds its figures as uploaded Kaggle images; the only manual step is the `>>>` marker
+   lines, which mark where to (re-)insert the method-overview diagram.
+3. **Media Gallery**: the 7 images in `upload/media_gallery/` (plus its required
+   560x280 card, `thumbnail_560x280.png`, uploaded separately as the card, not a gallery
+   item) — set `cover.png` as the cover image. The {ninline} files in
+   `upload/description_figures/` belong in the description instead — nothing appears in
+   both places.
 4. **Project Files / Link**: attach the public notebook from step 2.
-5. Attach `upload/submission.csv`.
+5. Attach `upload/GDHTM_Sokhda_farm_level_results.csv` (and the `.xlsx`).
 
 ## 4. Submit
 
@@ -213,16 +227,21 @@ Click **Submit** in the top right. A saved-but-unsubmitted writeup is not judged
 
 - `submission.csv` — 966 rows, 5 columns, no nulls, verified against the host's own dummy
 - crop mix: {crops}
-- writeup — approach, aux-data declaration, validation, limitations
+- report — `REPORT.pdf`/`.docx`, 4-page methodology, mailed to the organisers
+- writeup — Kaggle title/subtitle/description, approach, validation, limitations
 - notebook — full pipeline, runs clean from a fresh kernel, self-reproduction assert
-- {nfig} figures including the required cover
+- {nfig} figures: {ngal} in the Media Gallery (incl. the required cover), {ninline} inline
+  in the Project Description
 
 ## Last-minute sanity
 
-If you change anything at all, re-run:
+If you change anything at all, re-run in this order:
 
-    python src/d11_ship.py        # 18/18 must pass
-    python src/check_writeup.py   # every quoted number must match the CSV
+    python src/make_upload_package.py   # restage everything into upload/
+    python src/build_documents.py       # re-render REPORT.pdf/.docx and KAGGLE_WRITEUP.pdf/.docx
+    python src/check_submission_pack.py # the organisers' own checklist
+    python src/check_writeup.py         # every quoted number must match the CSV
+    python src/d11_ship.py              # 19/19 must pass
 """
 
 
