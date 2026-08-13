@@ -50,7 +50,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import FARMS, RESULTS, VILLAGE, log
+from common import FARMS, RESULTS, RESULTS_AUX, VILLAGE, log
 from witness import search, zonal
 
 SEASON = "2025-06-01/2025-10-20"
@@ -105,7 +105,7 @@ def main():
     # the season curve is the thing that makes "C-band saw what optical missed" visible.
     for d, col in zip(used, lin.T):
         out[f"s1_vh_db_{d.replace('-', '')}"] = 10.0 * np.log10(np.where(col > 0, col, np.nan))
-    out.to_csv(RESULTS / "witness_season.csv", index=False)
+    out.to_csv(RESULTS_AUX / "witness_season.csv", index=False)
     log("witness_season.done", dates=len(cols), farms_with_integral=int(np.isfinite(integral).sum()),
         span_days=float(doy[-1] - doy[0]), used=",".join(used))
     print(out.describe().round(4).to_string())

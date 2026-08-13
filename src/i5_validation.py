@@ -22,7 +22,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, FARMS, RESULTS, log
+from common import CROPS, FARMS, RESULTS, RESULTS_AUX, log
 import d4_submission as D4
 
 RNG = np.random.default_rng(7)
@@ -196,7 +196,7 @@ def main():
     sub = pd.read_csv(RESULTS / "submission.csv")
     dbg = pd.read_csv(RESULTS / "d4_debug.csv")
     f = pd.read_csv(RESULTS / "farm_features.csv")
-    wit = pd.read_csv(RESULTS / "witness.csv")
+    wit = pd.read_csv(RESULTS_AUX / "witness.csv")
     farms = gpd.read_file(FARMS)
     truth = pd.read_csv(Path(__file__).resolve().parent.parent / "data_aux" /
                         "sokhda_r1_truth.csv")
@@ -225,7 +225,7 @@ def main():
     print(check_agronomy(sub, dbg).to_string())
 
     print("\n" + "=" * 72 + "\n6. CROSS-PROPOSAL AGREEMENT\n" + "=" * 72)
-    pb = pd.read_csv(RESULTS / "pb_crop.csv")
+    pb = pd.read_csv(RESULTS_AUX / "pb_crop.csv")
     mm = sub.merge(pb, on="farm_id").merge(dbg[["farm_id", "area_ha"]], on="farm_id")
     a = (mm.crop_type == mm.pb_crop)
     print(f"  P-A vs P-B crop map: {a.mean():.3f} by farm, "

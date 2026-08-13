@@ -50,7 +50,7 @@ from rasterio.windows import Window
 from scipy.ndimage import uniform_filter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CACHE, FARMS, RESULTS, log, slc_path
+from common import CACHE, FARMS, RESULTS, RESULTS_AUX, log, slc_path
 from prep_r2 import UTM, aoi_window, geocode, target_grid, write
 
 PRIMARY, SECONDARY = "20250619", "20250814"
@@ -280,7 +280,7 @@ def main():
 
     pd.DataFrame({"farm_id": fa.get("farm_id", pd.RangeIndex(1, n + 1)),
                   "repeat_coh_jun19_aug14": per_farm}).to_csv(
-        RESULTS / "i8_repeat_coh.csv", index=False)
+        RESULTS_AUX / "i8_repeat_coh.csv", index=False)
     log("i8.done", self=round(m_self, 4), null=round(m_null, 4), real=round(m_real, 4),
         stable=round(m_stable, 4), stable_null=round(m_stable_null, 4),
         farm=round(m_farm, 4), verdict=verdict)

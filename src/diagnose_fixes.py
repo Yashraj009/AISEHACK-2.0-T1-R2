@@ -15,7 +15,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, RESULTS
+from common import CROPS, RESULTS, RESULTS_AUX
 from d4_submission import HEALTH_W, z
 
 # The incumbent this bake-off compares against is the weighting that was SHIPPED BEFORE
@@ -60,7 +60,7 @@ def build_health(f, crop, parts, weights=BASELINE_W, rank=True):
 
 def main():
     f = pd.read_csv(RESULTS / "farm_features.csv")
-    w = pd.read_csv(RESULTS / "witness.csv")
+    w = pd.read_csv(RESULTS_AUX / "witness.csv")
     sub = pd.read_csv(RESULTS / "baseline" / "submission_BASELINE.csv")
     d = f.merge(w, on="farm_id")
     crop = sub.set_index("farm_id").loc[f.farm_id, "crop_type"].values

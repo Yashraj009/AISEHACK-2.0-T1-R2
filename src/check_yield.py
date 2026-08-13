@@ -30,7 +30,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import AUX, CROPS, RESULTS, log
+from common import AUX, CROPS, RESULTS, RESULTS_AUX, log
 
 MIN_N = 20
 
@@ -47,7 +47,7 @@ def rho(a, b):
 def main():
     sub = pd.read_csv(RESULTS / "submission.csv")
     f = pd.read_csv(RESULTS / "farm_features.csv")
-    w = pd.read_csv(RESULTS / "witness.csv")
+    w = pd.read_csv(RESULTS_AUX / "witness.csv")
     dbg = pd.read_csv(RESULTS / "d4_debug.csv")
     # farm_features and d4_debug both carry area_ha; take one explicitly rather than
     # letting the merge suffix them and then reading whichever pandas happened to pick
@@ -94,7 +94,7 @@ def main():
     # Cumulative NDVI, the textbook choice, is impossible here: Sokhda had ZERO
     # Sentinel-2 scenes under 20% cloud in June, July, August or September, so the whole
     # accumulation period has no optical record. C-band saw it; optical did not.
-    sp = RESULTS / "witness_season.csv"
+    sp = RESULTS_AUX / "witness_season.csv"
     matched = pd.read_csv(sp) if sp.exists() else None
     if matched is not None:
         m = m.merge(matched, on="farm_id", how="left")

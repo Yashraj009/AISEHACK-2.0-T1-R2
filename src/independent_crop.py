@@ -36,11 +36,11 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import d4_submission as D4
-from common import AUX, CACHE, CROPS, FARMS, RESULTS, VILLAGE, log
+from common import AUX, CACHE, CROPS, FARMS, RESULTS, RESULTS_AUX, VILLAGE, log
 from witness import search, sign
 
-FEAT = RESULTS / "independent_features.csv"
-OUT = RESULTS / "independent_crop.csv"
+FEAT = RESULTS_AUX / "independent_features.csv"
+OUT = RESULTS_AUX / "independent_crop.csv"
 
 # Monthly windows across the kharif season. July/August are ~100% cloud over
 # Gujarat, so the optical series is genuinely absent there -- which is precisely

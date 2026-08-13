@@ -48,7 +48,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import NearestNeighbors
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, FARMS, RESULTS, log
+from common import CROPS, FARMS, RESULTS, RESULTS_AUX, log
 from d4_submission import fit_prior, z
 
 K_NN = 8           # same graph as the Moran's I in [J8], so the two are comparable
@@ -223,7 +223,7 @@ def main():
     for i, c in enumerate(CROPS):
         f[f"pb_p_{c}"] = Q[:, i]
     keep = ["farm_id", "pb_crop"] + [f"pb_p_{c}" for c in CROPS]
-    f[keep].to_csv(RESULTS / "pb_crop.csv", index=False)
+    f[keep].to_csv(RESULTS_AUX / "pb_crop.csv", index=False)
     log("pb.done", agree_farm=round(float(agree.mean()), 3),
         agree_area=round(float(area[agree].sum() / area.sum()), 3))
 

@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import FARMS, FIGURES, RESULTS, VILLAGE, log
+from common import FARMS, FIGURES, RESULTS, RESULTS_AUX, VILLAGE, log
 
 # the window when kharif crop structure and grain actually form -- what a health or
 # yield product most needs to observe
@@ -143,8 +143,8 @@ def main():
     print(f"    best single scene          {w.cloud.min():.1f}% cloud")
     print("    Capella acquisitions usable: ALL (SAR penetrates cloud)")
 
-    mix.to_csv(RESULTS / "why_xband_mixedpixels.csv", index=False)
-    monthly.to_csv(RESULTS / "why_xband_optical.csv", index=False)
+    mix.to_csv(RESULTS_AUX / "why_xband_mixedpixels.csv", index=False)
+    monthly.to_csv(RESULTS_AUX / "why_xband_optical.csv", index=False)
     p = figure(mix, monthly, w, A)
     print(f"\n  wrote {p}")
     log("why_xband", pure_10m=float(mix.loc[mix.res_m == 10, "median_pure_pct"].iloc[0]),

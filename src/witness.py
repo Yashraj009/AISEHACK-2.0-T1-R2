@@ -32,7 +32,7 @@ import rasterio
 from rasterio.mask import mask
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import FARMS, RESULTS, VILLAGE, log
+from common import FARMS, RESULTS, RESULTS_AUX, VILLAGE, log
 
 STAC = "https://planetarycomputer.microsoft.com/api/stac/v1"
 SAS = "https://planetarycomputer.microsoft.com/api/sas/v1/token"
@@ -121,7 +121,7 @@ def main():
     out = pd.DataFrame({"farm_id": farms.get("farm_id", pd.RangeIndex(1, len(farms) + 1)),
                         "s2_ndvi_20251013": ndvi,
                         "s1_vh_db": 10.0 * np.log10(np.where(vh > 0, vh, np.nan))})
-    out.to_csv(RESULTS / "witness.csv", index=False)
+    out.to_csv(RESULTS_AUX / "witness.csv", index=False)
     print(out.describe().round(3).to_string())
     log("witness.done", s2=used, s1=s1id)
 

@@ -1070,3 +1070,41 @@
 {"t": "2026-08-13T10:51:31", "stage": "check_writeup", "status": "PASS"}
 {"t": "2026-08-13T10:51:32", "stage": "d11.start"}
 {"t": "2026-08-13T10:51:32", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-13T11:05:31", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-13T11:06:05", "stage": "i10.start"}
+{"t": "2026-08-13T11:06:07", "stage": "i10.fig", "name": "cover"}
+{"t": "2026-08-13T11:06:07", "stage": "i10.fig", "name": "00_method_overview"}
+{"t": "2026-08-13T11:06:07", "stage": "i10.fig", "name": "01_health_index_map"}
+{"t": "2026-08-13T11:06:08", "stage": "i10.fig", "name": "02_yield_to_date_map"}
+{"t": "2026-08-13T11:06:08", "stage": "i10.fig", "name": "03_crop_classification_map"}
+{"t": "2026-08-13T11:06:09", "stage": "i10.fig", "name": "thumbnail_560x280"}
+{"t": "2026-08-13T11:06:09", "stage": "i10.fig", "name": "1_trajectory"}
+{"t": "2026-08-13T11:06:09", "stage": "i10.fig", "name": "2_confidence"}
+{"t": "2026-08-13T11:06:10", "stage": "i10.fig", "name": "3_witness"}
+{"t": "2026-08-13T11:06:11", "stage": "i10.fig", "name": "4_robustness"}
+{"t": "2026-08-13T11:06:12", "stage": "i10.fig", "name": "5_negatives"}
+{"t": "2026-08-13T11:06:12", "stage": "i10.fig", "name": "6_yield"}
+{"t": "2026-08-13T11:06:12", "stage": "i10.fig", "name": "8_season_witness"}
+{"t": "2026-08-13T11:06:12", "stage": "i10.done", "figures": 14}
+{"t": "2026-08-13T11:06:29", "stage": "check_yield.matched_witness", "positive": 3, "significant": 2, "Rice": 0.29, "Cotton": 0.305, "Maize": 0.058, "Bajra": -0.219, "Groundnut": -0.087}
+{"t": "2026-08-13T11:06:29", "stage": "check_yield", "completion_all_positive": true, "rho_health_yield_cotton": 0.541, "rho_yield_area": 0.115}
+{"t": "2026-08-13T11:06:31", "stage": "i5.start"}
+{"t": "2026-08-13T11:06:34", "stage": "i5.done"}
+{"t": "2026-08-13T11:06:36", "stage": "rice.independence", "margin_p": "2.65e-13", "margin_med_flooded": 0.264, "margin_med_other": -0.559, "vh_rice_med": -15.71, "vh_other_med": -14.52, "vh_p": "2.10e-08"}
+{"t": "2026-08-13T11:06:54", "stage": "d11.start"}
+{"t": "2026-08-13T11:06:54", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-13T11:06:55", "stage": "upload.package", "size_mb": 173.3, "figures": 14}
+{"t": "2026-08-13T11:07:04", "stage": "build_documents", "files": 4}
+{"t": "2026-08-13T11:07:05", "stage": "check_submission_pack", "status": "FAIL", "failed": 1}
+{"t": "2026-08-13T11:08:23", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-13T11:08:24", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-13T11:08:25", "stage": "d11.start"}
+{"t": "2026-08-13T11:08:26", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-13T11:12:38", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-13T11:12:39", "stage": "i5.start"}
+{"t": "2026-08-13T11:12:42", "stage": "i5.done"}
+{"t": "2026-08-13T11:12:43", "stage": "d11.start"}
+{"t": "2026-08-13T11:12:43", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-13T11:13:18", "stage": "upload.package", "size_mb": 173.3, "figures": 14}
+{"t": "2026-08-13T11:13:27", "stage": "build_documents", "files": 4}
+{"t": "2026-08-13T11:13:28", "stage": "check_submission_pack", "status": "PASS"}

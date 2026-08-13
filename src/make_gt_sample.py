@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import AUX, CROPS, RESULTS, farm_centroids, log
+from common import AUX, CROPS, RESULTS, RESULTS_AUX, farm_centroids, log
 
 SEED = 20260806          # fixed so the sample is reproducible and cannot be re-drawn
                          # after seeing an unfavourable result
@@ -37,7 +37,7 @@ def main():
     dbg = pd.read_csv(RESULTS / "d4_debug.csv")
     d = sub.merge(dbg[["farm_id", "crop_confidence", "area_ha", "source"]], on="farm_id")
 
-    ind_p = RESULTS / "independent_crop.csv"
+    ind_p = RESULTS_AUX / "independent_crop.csv"
     if ind_p.exists():
         d = d.merge(pd.read_csv(ind_p)[["farm_id", "independent_crop"]], on="farm_id",
                     how="left")

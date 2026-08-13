@@ -28,7 +28,7 @@ from scipy.stats import mannwhitneyu
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import d4_submission as D4
-from common import AUX, CROPS, RESULTS, log
+from common import AUX, CROPS, RESULTS, RESULTS_AUX, log
 
 
 def main():
@@ -109,7 +109,7 @@ def main():
     print("=" * 74)
     print("EXTERNAL TEST: rice labels vs Sentinel-1 C-VH (never an input)")
     print("=" * 74)
-    w = pd.read_csv(RESULTS / "witness.csv")
+    w = pd.read_csv(RESULTS_AUX / "witness.csv")
     # reindex onto f's row order rather than relying on an inner join to preserve
     # length: `shipped` and `hit` are in f's order, so a witness fetch that ever drops
     # a farm would silently pair the wrong rows (or raise on the boolean mask)

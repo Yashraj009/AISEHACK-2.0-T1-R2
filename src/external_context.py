@@ -33,7 +33,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CACHE, FARMS, RESULTS, VILLAGE, log
+from common import CACHE, FARMS, RESULTS, RESULTS_AUX, VILLAGE, log
 
 POWER = ("https://power.larc.nasa.gov/api/temporal/daily/point"
          "?parameters=PRECTOTCORR&community=AG&longitude={lon}&latitude={lat}"
@@ -129,8 +129,8 @@ def main():
     log("ext.start", lon=round(lon, 4), lat=round(lat, 4))
 
     scenes, months, _ = rainfall(lon, lat)
-    scenes.to_csv(RESULTS / "context_rain_scenes.csv", index=False)
-    months.to_csv(RESULTS / "context_rain_monthly.csv", index=False)
+    scenes.to_csv(RESULTS_AUX / "context_rain_scenes.csv", index=False)
+    months.to_csv(RESULTS_AUX / "context_rain_monthly.csv", index=False)
 
     print("=" * 72)
     print("RAINFALL AT SOKHDA, 2025 (NASA POWER, measured -- not a news report)")
@@ -159,7 +159,7 @@ def main():
 """)
 
     lulc, nyr = cropland_years()
-    lulc.to_csv(RESULTS / "context_cropland.csv", index=False)
+    lulc.to_csv(RESULTS_AUX / "context_cropland.csv", index=False)
     sub = pd.read_csv(RESULTS / "submission.csv")
     m = sub.merge(lulc, on="farm_id")
     print("=" * 72)

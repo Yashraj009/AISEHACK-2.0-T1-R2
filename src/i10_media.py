@@ -27,7 +27,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, DATES, FARMS, FIGURES, RESULTS, log
+from common import CROPS, DATES, FARMS, FIGURES, RESULTS, RESULTS_AUX, log
 
 mpl.rcParams.update({
     "figure.dpi": 130, "savefig.dpi": 160, "font.size": 10,
@@ -47,7 +47,7 @@ def load():
     sub = pd.read_csv(RESULTS / "submission.csv")
     dbg = pd.read_csv(RESULTS / "d4_debug.csv")
     f = pd.read_csv(RESULTS / "farm_features.csv")
-    wit = pd.read_csv(RESULTS / "witness.csv")
+    wit = pd.read_csv(RESULTS_AUX / "witness.csv")
     g = g.iloc[: len(sub)].copy()
     for c in ("crop_type", "health_index", "yield_estimate_to_date"):
         g[c] = sub[c].values
@@ -750,7 +750,7 @@ def fig_season_witness(sub):
     the reason it had to be radar. Optical usable-scene counts come from the same
     measurement `why_xband.py` makes, so the two figures cannot drift apart.
     """
-    sp = RESULTS / "witness_season.csv"
+    sp = RESULTS_AUX / "witness_season.csv"
     if not sp.exists():
         return None
     w = pd.read_csv(sp)
@@ -774,7 +774,7 @@ def fig_season_witness(sub):
     ax[0].tick_params(axis="x", rotation=30)
 
     # The optical record over the same window, as counted by why_xband.py
-    opt = RESULTS / "why_xband_optical.csv"
+    opt = RESULTS_AUX / "why_xband_optical.csv"
     if opt.exists():
         o = pd.read_csv(opt)
         x = np.arange(len(o))

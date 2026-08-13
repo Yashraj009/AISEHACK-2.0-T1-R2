@@ -16,7 +16,7 @@ from scipy.stats import spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import d4_submission as D4
-from common import CROPS, RESULTS, ROOT, log
+from common import CROPS, RESULTS, RESULTS_AUX, ROOT, log
 
 FAILED = []
 
@@ -67,7 +67,7 @@ def main():
           str(quoted))
 
     # the completion-sign claim in section 1: all five crops positive
-    wit = pd.read_csv(RESULTS / "witness.csv")
+    wit = pd.read_csv(RESULTS_AUX / "witness.csv")
     m = sub.merge(f.drop(columns=["area_ha"], errors="ignore"), on="farm_id")
     m = m.merge(wit, on="farm_id")
     allpos = True
@@ -103,7 +103,7 @@ def main():
     # calls one of them a contradiction; recompute all three, including the sign, so a
     # later change to the witness or the feature cannot leave the prose asserting the
     # opposite of the data.
-    sp = RESULTS / "witness_season.csv"
+    sp = RESULTS_AUX / "witness_season.csv"
     if sp.exists():
         ms = m.merge(pd.read_csv(sp), on="farm_id")
         for c, want in [("Cotton", 0.305), ("Rice", 0.290), ("Bajra", -0.219)]:

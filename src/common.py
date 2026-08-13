@@ -20,6 +20,13 @@ VILLAGE = DATA / "Village_Shp" / "Village_Shp" / "Sokhda_Village.shp"
 RESULTS = ROOT / "results"
 CACHE = RESULTS / "cache"
 FIGURES = RESULTS / "figures"
+# Secondary tables -- witness data, context, EDA/diagnostic exports -- kept out of
+# results/'s root so the four primary outputs (submission.csv, farm_features.csv,
+# d4_debug.csv, log.jsonl) are what a reader sees first.
+# NOT named "aux": that is a reserved Windows device name (like con/nul/prn) and a
+# directory called aux/ breaks Windows file APIs unpredictably -- git itself refused
+# to open files inside one ("No such file or directory" despite the file existing).
+RESULTS_AUX = RESULTS / "tables"
 AUX = ROOT / "data_aux"
 LEDGER = RESULTS / "log.jsonl"   # redirected below if the root is read-only
 
@@ -37,7 +44,7 @@ def _ensure_writable(dirs):
         return True
 
 
-_READONLY = _ensure_writable((RESULTS, CACHE, FIGURES, AUX))
+_READONLY = _ensure_writable((RESULTS, CACHE, FIGURES, RESULTS_AUX, AUX))
 if _READONLY:
     _work = Path(os.environ.get("KDSS_WORKDIR", "/kaggle/working"))
     if not _work.exists():

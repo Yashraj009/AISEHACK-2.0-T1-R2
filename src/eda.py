@@ -24,7 +24,7 @@ import rasterio
 from rasterio.windows import Window, from_bounds
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
-from common import (DATES, FARMS, FIGURES, INCIDENCE_DEG, RESULTS, VILLAGE,
+from common import (DATES, FARMS, FIGURES, INCIDENCE_DEG, RESULTS, RESULTS_AUX, VILLAGE,
                     log, slc_path)
 
 import geopandas as gpd
@@ -92,7 +92,7 @@ def fig_scene_metadata():
         ))
     import pandas as pd
     df = pd.DataFrame(rows)
-    out = RESULTS / "scene_metadata.csv"
+    out = RESULTS_AUX / "scene_metadata.csv"
     df.to_csv(out, index=False)
     log("eda.metadata", path=str(out.name),
         incidence_spread_deg=round(df.incidence_deg.max() - df.incidence_deg.min(), 3))

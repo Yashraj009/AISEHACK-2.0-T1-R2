@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import AUX, CROPS, RESULTS, log
+from common import AUX, CROPS, RESULTS, RESULTS_AUX, log
 
 GT = AUX / "ground_truth_vf12.csv"
 ALIAS = {"paddy": "Rice", "dhan": "Rice", "chawal": "Rice", "rice": "Rice",
@@ -142,7 +142,7 @@ def main():
 
     res = [evaluate(m.truth, m.crop_type, "Capella X-band map (shipped)", weights)]
 
-    ind = RESULTS / "independent_crop.csv"
+    ind = RESULTS_AUX / "independent_crop.csv"
     if ind.exists():
         # the field sheet already carries a stale copy of this column; drop it so the
         # merge does not silently suffix and then read the wrong one

@@ -85,7 +85,11 @@ def main():
     if mg or df:
         check("gallery and description share no figure", not (mg & df),
               f"gallery {len(mg)}, inline {len(df)}, overlap {len(mg & df)}")
-        every = {p.name for p in fig.glob("gallery_*.png")} | {"cover.png"}
+        # _generated is the code-drawn method diagram kept for reproducibility; the
+        # gallery ships the hand-designed one under the plain name, so it is not a
+        # stray (same exclusion as make_upload_package.py's own stray-figure check).
+        every = ({p.name for p in fig.glob("gallery_*.png")} | {"cover.png"}) \
+            - {"gallery_00_method_overview_generated.png"}
         check("every figure is assigned to one of the two", not (every - mg - df),
               "unassigned: " + (", ".join(sorted(every - mg - df)) or "none"))
         wr_txt = (docs / "KAGGLE_WRITEUP.md").read_text(encoding="utf8")

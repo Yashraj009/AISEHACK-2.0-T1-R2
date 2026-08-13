@@ -17,7 +17,7 @@ import pandas as pd
 from scipy.stats import kruskal, spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CROPS, RESULTS, farm_centroids, log
+from common import CROPS, RESULTS, RESULTS_AUX, farm_centroids, log
 
 
 def _rho(a, b):
@@ -79,7 +79,7 @@ def panel(sub_path=RESULTS / "submission.csv"):
     feat = pd.read_csv(load("farm_features"))
     dbg_path = load("d4_debug")
     dbg = pd.read_csv(dbg_path) if dbg_path.exists() else None
-    wit_path = RESULTS / "witness.csv"      # witnesses are external, never versioned
+    wit_path = RESULTS_AUX / "witness.csv"      # witnesses are external, never versioned
     wit = pd.read_csv(wit_path) if wit_path.exists() else None
 
     d = sub.merge(feat, on="farm_id", how="left")
