@@ -7,8 +7,14 @@ machine -- so PDF goes markdown -> standalone HTML (MathML, images inlined) -> h
 Chrome --print-to-pdf. Chrome renders MathML natively, so the equations survive.
 
 Images are referenced as `figures/NAME.png` relative to docs/, which is where a copy of
-each figure lives, so both documents render correctly in place AND after being copied
-into upload/ where a figures/ folder sits alongside them.
+each figure lives -- both so pandoc/Chrome can resolve them here AND so GitHub renders
+docs/REPORT.md and docs/KAGGLE_WRITEUP.md correctly in-browser (GitHub resolves markdown
+image paths against the repo tree, not against any --resource-path). That copy used to be
+hand-maintained with `cp`, which drifted: a figure regenerated in results/figures/ was not
+guaranteed to reach docs/figures/ before the next render. sync_docs_figures() below makes
+docs/figures/ an exact mirror of the shipped subset of results/figures/ on every run, so
+staleness is no longer possible. results/figures/ itself is gitignored -- it is pipeline
+output, docs/figures/ is the tracked copy that matters.
 
 Run:  python src/build_documents.py
 """
@@ -18,11 +24,37 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import ROOT, log
+from common import FIGURES, ROOT, log
 
 DOCS = ROOT / "docs"
 OUT = ROOT / "upload"
 CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+
+
+def sync_docs_figures():
+    """Mirror results/figures/ into docs/figures/, minus internal-only diagnostics.
+
+    Excluded: eda_*/i1_*/i2_* (EDA and early-stage checks, never embedded in a shipped
+    document) and *_generated.png (the code-drawn method diagram, superseded in the
+    gallery by the hand-designed one under the plain name -- see make_upload_package.py).
+    Anything left over in docs/figures/ that FIGURES no longer has is removed, so a
+    renamed or deleted figure cannot leave a stale file behind either.
+    """
+    dst = DOCS / "figures"
+    dst.mkdir(parents=True, exist_ok=True)
+    skip = ("eda_", "i1_", "i2_")
+    wanted = {p.name for p in FIGURES.glob("*.png")
+             if not p.name.startswith(skip) and not p.name.endswith("_generated.png")}
+    for p in dst.glob("*.png"):
+        if p.name not in wanted:
+            p.unlink()
+    n = 0
+    for name in wanted:
+        src, out = FIGURES / name, dst / name
+        if not out.exists() or src.stat().st_mtime > out.stat().st_mtime:
+            shutil.copy2(src, out)
+            n += 1
+    print(f"  docs/figures/ synced: {len(wanted)} files ({n} copied/updated)")
 
 # A4 with sane margins and figures that cannot overflow the page. Kept here rather than in
 # a separate .css so the whole conversion is one file with no hidden dependency.
@@ -204,6 +236,7 @@ def build(stem, title):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    sync_docs_figures()
     made = []
     for stem, title in [("REPORT", "AISEHack 2.0 Round 2 — Methodology Report — Team GDHTM"),
                         ("KAGGLE_WRITEUP", "AISEHack 2.0 Round 2 — Kaggle Writeup — Team GDHTM")]:

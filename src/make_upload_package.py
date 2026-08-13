@@ -7,16 +7,17 @@ find its data because the dataset was assembled by hand at 2am.
 Produces `upload/`:
 
     upload/submission.csv          the deliverable CSV, verified against the host dummy
-    upload/REPORT.md, KAGGLE_WRITEUP.md, EMAIL_SUBMISSION.md   staged from docs/
+    upload/KAGGLE_WRITEUP.md, EMAIL_SUBMISSION.md, KAGGLE_DESCRIPTION_PASTE.md
+                                    copy/paste sources -- staged from docs/, unrendered
     upload/media_gallery/          Kaggle Media Gallery -- stands alone, no prose needed
     upload/description_figures/    Kaggle Project Description -- needs the surrounding prose
     upload/I9_pipeline.ipynb       the public notebook
     upload/kaggle_dataset/         <- zip THIS and upload as a Kaggle Dataset
     upload/UPLOAD_CHECKLIST.md     the steps, in order
 
-Note: build_documents.py (run separately) adds REPORT.pdf/.docx and KAGGLE_WRITEUP.pdf/.docx,
-and docs/KAGGLE_DESCRIPTION_PASTE.md is the ready-to-paste Project Description -- neither is
-produced by this script.
+Note: build_documents.py (run separately) adds REPORT.pdf/.docx and KAGGLE_WRITEUP.pdf/.docx --
+those, not a copied docs/REPORT.md, are what actually gets read/mailed, so REPORT.md is not
+staged here at all.
 
 The kaggle_dataset folder preserves the directory layout the notebook's root-discovery
 expects (a folder containing src/), and deliberately EXCLUDES the 2.1 GB of SLCs: with
@@ -68,7 +69,7 @@ def main():
     # to Insights@galaxeye.space, the Kaggle Project Description, and a STANDALONE
     # spreadsheet of the farm-level results. Staging them here keeps the email and the
     # Kaggle upload reading from one folder instead of from scattered paths.
-    for name in ("REPORT.md", "KAGGLE_WRITEUP.md", "EMAIL_SUBMISSION.md",
+    for name in ("KAGGLE_WRITEUP.md", "EMAIL_SUBMISSION.md",
                 "KAGGLE_DESCRIPTION_PASTE.md"):
         src = ROOT / "docs" / name
         if src.exists():
@@ -109,10 +110,10 @@ def main():
         ninline += copy_tree(FIGURES, UP / "description_figures", name)
     ngal += copy_tree(FIGURES, UP / "media_gallery", "thumbnail_560x280.png")
     nfig = ngal + ninline
-    # the report embeds four figures with paths relative to itself
-    for name in ("gallery_00_method_overview.png", "gallery_01_health_index_map.png",
-                 "gallery_02_yield_to_date_map.png", "gallery_10_negatives.png"):
-        copy_tree(FIGURES, UP / "figures", name)
+    # No upload/figures/ copy: REPORT.pdf/.docx and KAGGLE_WRITEUP.pdf/.docx (rendered
+    # separately by build_documents.py from docs/, where docs/figures/ already lives)
+    # are what actually gets read -- a further figures/ copy here served only a raw
+    # upload/REPORT.md that nothing downstream ever read either. Both were dropped.
 
     # _generated is the code-drawn method diagram, kept for reproducibility; the gallery
     # ships the hand-designed one under the plain name, so it is not a stray.

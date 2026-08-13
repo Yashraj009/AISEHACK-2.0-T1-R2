@@ -12,3 +12,13 @@ data_aux/*token*
 
 # staged upload artefacts are regenerable from src/make_upload_package.py
 upload/
+
+# regenerable pipeline output. results/cache/*.tif (172 MB) is rebuilt by prep_r2.py
+# from the SLCs and is separately packaged into upload/kaggle_dataset/results/cache/
+# for the Kaggle dataset -- tracking it here duplicated 172 MB of raster binaries in
+# git for no reader who could not instead get them from that dataset or a rerun.
+# results/figures/*.png is rebuilt by i10_media.py; docs/figures/ is the tracked,
+# curated copy actually needed to render the shipped documents (see
+# build_documents.py's sync_docs_figures()), so this copy is redundant with it.
+results/cache/
+results/figures/
