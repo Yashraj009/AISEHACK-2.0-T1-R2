@@ -269,7 +269,9 @@ AISEHACK-2.0-T1-R2/
 ├── upload/                       staged, ready-to-submit package (gitignored, rebuilt on demand)
 ├── papers/                       reference literature the method draws on
 ├── internal/                     PLAN.md, MASTER_PLAN.md, RESEARCH_LOG.md, PROGRESS.md — design
-│                                 rationale and decision log, not required reading to run or judge it
+│   │                             rationale and decision log, not required reading to run or judge it
+│   └── research/                 the brief, the gap analysis, the ground-truth source survey,
+│                                 Phase T/U log, and the Round 1 transfer study
 └── Sokhda_Dummy_Submission.xlsx  the host's own schema reference — every gate checks against this file
 ```
 
