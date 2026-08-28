@@ -1115,3 +1115,7 @@
 {"t": "2026-08-27T14:21:32", "stage": "upload.package", "size_mb": 173.3, "figures": 14}
 {"t": "2026-08-27T14:21:42", "stage": "build_documents", "files": 4}
 {"t": "2026-08-27T14:21:47", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-28T15:34:14", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-28T15:34:16", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-28T15:34:17", "stage": "d11.start"}
+{"t": "2026-08-28T15:34:17", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}

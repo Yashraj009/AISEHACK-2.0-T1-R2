@@ -1,0 +1,566 @@
+<title>The Sokhda Six</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F4F7F8; --panel:#FFFFFF; --panel-2:#EDF2F4;
+  --ink:#111A1E; --ink-2:#3A4A52; --muted:#63767F;
+  --rule:#D6E0E4; --rule-2:#E8EEF0;
+  --accent:#0B6E7F; --accent-soft:#0B6E7F1A;
+  --bad:#B3341F; --bad-soft:#B3341F14;
+  --good:#3D7A46; --good-soft:#3D7A4614;
+  --warn:#A8761A; --warn-soft:#A8761A14;
+  --shadow:0 1px 2px rgba(17,26,30,.05),0 8px 24px -12px rgba(17,26,30,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1216; --panel:#131C21; --panel-2:#18242A;
+    --ink:#E6EDF0; --ink-2:#B7C6CD; --muted:#8399A3;
+    --rule:#243239; --rule-2:#1C282E;
+    --accent:#4FB3C4; --accent-soft:#4FB3C422;
+    --bad:#E8705A; --bad-soft:#E8705A1F;
+    --good:#6FB27B; --good-soft:#6FB27B1F;
+    --warn:#D9A648; --warn-soft:#D9A6481F;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1216; --panel:#131C21; --panel-2:#18242A;
+  --ink:#E6EDF0; --ink-2:#B7C6CD; --muted:#8399A3;
+  --rule:#243239; --rule-2:#1C282E;
+  --accent:#4FB3C4; --accent-soft:#4FB3C422;
+  --bad:#E8705A; --bad-soft:#E8705A1F;
+  --good:#6FB27B; --good-soft:#6FB27B1F;
+  --warn:#D9A648; --warn-soft:#D9A6481F;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 24px 96px}
+
+/* ---------- masthead ---------- */
+.mast{padding:64px 0 30px;border-bottom:1px solid var(--rule)}
+.eyebrow{
+  font-family:Archivo,system-ui,sans-serif;font-size:11.5px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 18px
+}
+h1{
+  font-family:Archivo,system-ui,sans-serif;font-weight:700;
+  font-size:clamp(34px,6.2vw,52px);line-height:1.04;letter-spacing:-.022em;
+  margin:0 0 16px;text-wrap:balance
+}
+.standfirst{font-size:20px;line-height:1.5;color:var(--ink-2);margin:0 0 24px;max-width:62ch}
+.byline{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;color:var(--muted);
+  display:flex;flex-wrap:wrap;gap:8px 18px;margin:0
+}
+
+/* ---------- verdict banner ---------- */
+.verdict{
+  margin:34px 0 0;padding:20px 22px;border-radius:3px;
+  background:var(--bad-soft);border:1px solid var(--bad);border-left-width:4px
+}
+.verdict h2{margin:0 0 8px;font-size:18px;border:0;padding:0}
+.verdict p{margin:0;color:var(--ink-2);font-size:16px}
+
+/* ---------- structure ---------- */
+h2{
+  font-family:Archivo,system-ui,sans-serif;font-weight:600;
+  font-size:26px;letter-spacing:-.014em;line-height:1.18;
+  margin:60px 0 18px;padding-top:22px;border-top:1px solid var(--rule);
+  text-wrap:balance
+}
+h2 .num{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;
+  color:var(--accent);display:block;margin-bottom:7px;letter-spacing:.04em
+}
+h3{
+  font-family:Archivo,system-ui,sans-serif;font-weight:600;font-size:18.5px;
+  letter-spacing:-.008em;margin:36px 0 10px;text-wrap:balance
+}
+h4{
+  font-family:Archivo,system-ui,sans-serif;font-weight:600;font-size:15px;
+  margin:26px 0 8px;color:var(--ink)
+}
+p{margin:0 0 16px;max-width:68ch}
+ul,ol{margin:0 0 16px;padding-left:22px;max-width:68ch}
+li{margin-bottom:8px}
+strong{font-weight:600}
+em{font-style:italic}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.88em}
+code{background:var(--panel-2);padding:1px 5px;border-radius:2px}
+hr{border:0;border-top:1px solid var(--rule);margin:44px 0}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:Archivo,system-ui,sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 9px;border-radius:2px;white-space:nowrap;vertical-align:middle
+}
+.chip.bad{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.chip.good{background:var(--good-soft);color:var(--good);border:1px solid var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.chip.neutral{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+
+/* ---------- panels ---------- */
+.panel{
+  background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+  padding:22px 24px;margin:24px 0;box-shadow:var(--shadow)
+}
+.panel > :last-child{margin-bottom:0}
+.panel.stripe-bad{border-left:4px solid var(--bad)}
+.panel.stripe-good{border-left:4px solid var(--good)}
+.panel.stripe-warn{border-left:4px solid var(--warn)}
+.panel-label{
+  font-family:Archivo,system-ui,sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px
+}
+
+/* ---------- the dB figure ---------- */
+figure{margin:30px 0;padding:0}
+.scale{
+  background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+  padding:26px 26px 16px;box-shadow:var(--shadow)
+}
+.scale-track{position:relative;height:118px;margin:8px 0 0}
+.band{
+  position:absolute;top:30px;height:26px;border-radius:2px;
+  background:var(--good-soft);border:1px dashed var(--good)
+}
+.band-lab{
+  position:absolute;top:2px;font-family:Archivo,sans-serif;font-size:10.5px;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--good)
+}
+.axis{position:absolute;left:0;right:0;top:56px;border-top:1px solid var(--rule)}
+.tick{position:absolute;top:56px;width:1px;height:6px;background:var(--rule)}
+.tick-lab{
+  position:absolute;top:66px;transform:translateX(-50%);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)
+}
+.mark{position:absolute;top:22px;transform:translateX(-50%);text-align:center;width:0}
+.mark i{display:block;width:2px;height:34px;background:currentColor;margin:0 auto}
+.mark b{
+  display:block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;
+  white-space:nowrap;margin-bottom:3px
+}
+.mark s{
+  display:block;text-decoration:none;font-family:Archivo,sans-serif;font-size:10px;
+  font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;
+  color:var(--muted);margin-top:3px
+}
+.m-ours{color:var(--bad)}
+.m-corr{color:var(--accent)}
+.m-comp{color:var(--muted)}
+figcaption{
+  font-size:14px;color:var(--muted);margin-top:14px;line-height:1.5;max-width:68ch;
+  font-style:italic
+}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+th{
+  font-family:Archivo,system-ui,sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule);
+  background:var(--panel-2);white-space:nowrap
+}
+td{padding:10px 14px;border-bottom:1px solid var(--rule-2);vertical-align:top;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:13.5px}
+td.team{color:var(--ink);font-weight:600;white-space:nowrap}
+tr.us td{background:var(--accent-soft)}
+tr.us td.team{color:var(--accent)}
+
+/* ---------- collision block ---------- */
+.coll{border-top:1px solid var(--rule);padding-top:20px;margin-top:28px}
+.coll-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin-bottom:10px}
+.coll-head h3{margin:0;flex:1 1 auto;min-width:min(100%,320px)}
+
+/* ---------- misc ---------- */
+.lede{font-size:18.5px;color:var(--ink-2);max-width:66ch}
+.kicker{
+  font-family:Archivo,sans-serif;font-size:11px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 6px
+}
+.foot{
+  margin-top:64px;padding-top:22px;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);line-height:1.7
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){
+  a{transition:color .15s ease}
+}
+@media (max-width:600px){
+  body{font-size:16px}
+  .wrap{padding:0 18px 64px}
+  .mast{padding:44px 0 26px}
+  .scale{padding:20px 14px 12px}
+  .mark b,.mark s{font-size:9.5px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">ANRF AISEHack 2.0 · Round 2 · Competitive teardown</p>
+  <h1>The Sokhda Six</h1>
+  <p class="standfirst">Six teams were shortlisted for measuring the same 966 farms from the same four Capella scenes. Reading the other five surfaced one defect in our own pipeline, one strong vindication of our central design choice, and twenty-two things worth stealing.</p>
+  <p class="byline">
+    <span>Team GDHTM</span>
+    <span>29 August 2026</span>
+    <span>5 competitor writeups · all figures recomputed from shipped artefacts</span>
+  </p>
+</header>
+
+<div class="verdict">
+  <h2>Headline: our radiometric calibration is wrong</h2>
+  <p>Two rival teams form brightness as <span class="mono">β₀ = SF²·|z|²</span>. We use <span class="mono">SF·|z|²</span>. Measured on our own rasters, our shipped γ⁰ sits at <strong>+7.2 to +9.3 dB</strong> — a physical impossibility for a farm field. It is a one-line fix, and our rankings mostly survive it, but the explanation in our report is incorrect.</p>
+</div>
+
+<h2><span class="num">01</span>The calibration finding</h2>
+
+<p class="lede">This is not an adoption suggestion. It is a defect, found by reading two competitors and then measuring our own data.</p>
+
+<h3>What each team ships</h3>
+
+<p><strong>Coding Bits</strong> use <span class="mono">σ⁰ = (SF·|A|)²·sinθ</span>. They state they tested our convention explicitly — <em>"the scale factor applies to power rather than amplitude"</em> — and rejected it, because it places the scene maximum at <span class="mono">+46.9 dB</span>, unattainable for a distributed target.</p>
+
+<p><strong>Project Orion</strong> use <span class="mono">β₀ = |I+jQ|²·SF²</span>, citing Capella's own reference implementation (<code>capella-reader</code>, <code>rtc_isce3.py</code>: <span class="mono">beta0_complex = SF · DN</span>). A complex amplitude scaled by SF gives power scaled by SF².</p>
+
+<p><strong>We</strong> use <span class="mono">β₀ = SF·|z|²</span>, with a code comment asserting that squaring the scale factor was a Round 1 bug. Our report then concedes γ⁰ reads <em>"about +17 dB above the physically expected level"</em> and blames Capella's undeclared absolute accuracy.</p>
+
+<figure>
+  <div class="scale">
+    <p class="panel-label">Median γ⁰ over the Sokhda AOI · decibel scale</p>
+    <div class="scale-track">
+      <div class="band" style="left:6.25%;width:16.25%"></div>
+      <div class="band-lab" style="left:6.25%">Expected: vegetated surface</div>
+
+      <div class="mark m-comp" style="left:10.6%"><b>−21.5</b><i></i><s>Orion</s></div>
+      <div class="mark m-corr" style="left:13.4%"><b>−19.3</b><i></i><s>us, corrected</s></div>
+
+      <div class="mark m-ours" style="left:46.75%"><b>+7.4</b><i></i><s>us, as shipped</s></div>
+
+      <div class="axis"></div>
+      <div class="tick" style="left:0%"></div><div class="tick-lab" style="left:0%">−30</div>
+      <div class="tick" style="left:25%"></div><div class="tick-lab" style="left:25%">−10</div>
+      <div class="tick" style="left:37.5%"></div><div class="tick-lab" style="left:37.5%">0</div>
+      <div class="tick" style="left:62.5%"></div><div class="tick-lab" style="left:62.5%">+20</div>
+      <div class="tick" style="left:100%"></div><div class="tick-lab" style="left:100%">+50</div>
+    </div>
+  </div>
+  <figcaption>Coding Bits report −20.2 dB, Orion −21.5 dB. Our shipped rasters read +7.4 dB on 6 June; under SF² the same rasters read −19.3 dB. A field returning +7 dB is returning roughly five times the power it receives.</figcaption>
+</figure>
+
+<h3>Three lines of evidence, all converging</h3>
+
+<ol>
+  <li><strong>Physics.</strong> A median field γ⁰ of +7 to +9 dB is impossible for a distributed target. Under SF² we land at −18 to −20 dB, the textbook range.</li>
+  <li><strong>Two competitors' measured values.</strong> Coding Bits −20.2 dB, Orion −21.5 dB. We land at −18.2 to −19.8 dB under the squared convention.</li>
+  <li><strong>Their falsification test reproduces on our data exactly.</strong> Coding Bits report the rejected convention giving a <span class="mono">+46.9 dB</span> scene max. Ours, using precisely that convention, gives <span class="mono">+41.7 to +49.5 dB</span>. The 26.7 dB gap between conventions is exactly <span class="mono">10·log₁₀(SF)</span>.</li>
+</ol>
+
+<div class="panel stripe-warn">
+  <p class="panel-label">Corroboration from a third direction</p>
+  <p>Team <strong>oindrieelmondal</strong> describe their chain as <span class="mono">DN → power → scale_factor → β₀</span> — our convention — and are the only other team reporting an unexplained absolute offset against Capella's preview product (+1.81, +0.94, +1.57, −2.00 dB). They refuse to call it resolved. Same convention, same symptom.</p>
+</div>
+
+<h3>What it actually costs us</h3>
+
+<p>The scale factor is <strong>per-scene, not per-pixel</strong>, so the error is one constant dB shift applied identically to all 966 farms on a given date. That makes the damage far smaller than the number suggests.</p>
+
+<ul>
+  <li><strong>Untouched:</strong> anything z-scored or ranked across farms within a fixed date — <code>level</code>, <code>growth</code>, <code>uniform</code>, and the within-crop health scoring. The constant cancels.</li>
+  <li><strong>Shifted by a constant:</strong> every cross-date difference, again identically for every farm.</li>
+  <li><strong>Genuinely changed:</strong> the season integral, which combines dates in linear power. Spearman against the corrected version is <span class="mono">0.9916</span> (n=913); 124 farms move more than 50 ranks, 11 move more than 100.</li>
+  <li><strong>Void:</strong> every absolute-level claim in the report.</li>
+</ul>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Cross-date quantity</th><th class="num">Spurious offset</th></tr></thead>
+  <tbody>
+    <tr><td><code>growth</code> = 14 Aug − 19 Jun (health)</td><td class="num">+0.75 dB</td></tr>
+    <tr><td><code>completion</code> = 13 Oct − 14 Aug (yield)</td><td class="num">+1.64 dB</td></tr>
+    <tr><td>June pair, 6 → 19 Jun (rice evidence)</td><td class="num">−0.47 dB</td></tr>
+    <tr><td>season span, 19 Jun → 13 Oct</td><td class="num">+2.38 dB</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>Verdict.</strong> Our shipped rankings are largely robust — a defensible position. But the explanation is wrong, and the fix makes the report <em>stronger</em>: we can claim an absolute level corroborated by two independent teams instead of conceding a 17 dB discrepancy.</p>
+
+<h2><span class="num">02</span>The vindication</h2>
+
+<p class="lede">Project Orion is our methodological twin, and the team that argues hardest against our central choice. Their own numbers undercut them.</p>
+
+<p>Orion read Round 1's Sokhda output as village-level hectares and then refused to use it: <em>"Round 1 classified pixels, and its log records per-village shares as its least stable output."</em> Their final cotton share is <strong>13.7%</strong>, against the <strong>43.0%</strong> their own Round 1 pipeline produced.</p>
+
+<p>Here is what they could not know. Their reported Round 1 read for Sokhda, against ours recomputed from the shipped submission:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Crop</th><th class="num">Orion's R1 read</th><th class="num">Our shipped share</th><th class="num">Δ</th></tr></thead>
+  <tbody>
+    <tr><td>Cotton</td><td class="num">43.0%</td><td class="num">43.22%</td><td class="num">+0.22</td></tr>
+    <tr><td>Groundnut</td><td class="num">31.0%</td><td class="num">30.76%</td><td class="num">−0.24</td></tr>
+    <tr><td>Rice</td><td class="num">10.6%</td><td class="num">10.60%</td><td class="num">0.00</td></tr>
+    <tr><td>Bajra</td><td class="num">9.4%</td><td class="num">9.45%</td><td class="num">+0.05</td></tr>
+    <tr><td>Maize</td><td class="num">6.0%</td><td class="num">5.97%</td><td class="num">−0.03</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>Two independent Round 1 pipelines agree on the Sokhda crop mix to within a quarter of a percentage point.</strong> Orion calls that constraint unstable and abandons it. We hold it. Their own number is ours.</p>
+
+<div class="panel stripe-good">
+  <p class="panel-label">Where the four teams actually land on cotton</p>
+  <div class="tw" style="margin:0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>Team</th><th class="num">Cotton share of 447.5 ha</th></tr></thead>
+    <tbody>
+      <tr><td class="team">Megalodon</td><td class="num">48.5%</td></tr>
+      <tr class="us"><td class="team">GDHTM (ours)</td><td class="num">43.2%</td></tr>
+      <tr><td class="team">oindrieelmondal</td><td class="num">39.4%</td></tr>
+      <tr><td class="team">Project Orion</td><td class="num">13.7%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px">Three teams cluster at 39–49% by three different methods. The outlier is the team that discarded the constraint — and its maize allocation of <strong>130.4 ha in Sokhda alone</strong> exceeds the entire Vadodara district total of under 50 ha, a figure Megalodon cites from official Kharif-2025 statistics.</p>
+</div>
+
+<p><em>One caveat, stated honestly:</em> I cannot rule out that both teams recovered a common published source rather than converging independently. Worth establishing before leaning on this in public — but if it holds, it is the strongest single defence of our approach we have.</p>
+
+<h2><span class="num">03</span>The five teams</h2>
+
+<h3>Coding Bits — the methodologist</h3>
+<p>The strongest methodology in the field. Thin-plate spline geocoding over the 225 GCPs (a polynomial left ~8 m residual against a 24.7 m median plot). The <strong>Quegan–Yu multitemporal speckle filter</strong>, which exploits cross-date correlation instead of spatial averaging, so a 0.4 ha plot keeps its full pixel count — 2.4–2.8× effective looks with zero blurring.</p>
+<p>Three things they do that we should copy outright:</p>
+<ul>
+  <li><strong>Spatial hold-out for weight selection.</strong> The west half selects, the east half reports. They then <em>reject their own data-driven optimum</em>: the western optimum improves the east by 0.0006 (noise), while the physical prior improves both halves independently. That is how you tell a generalising term from an overfitted one.</li>
+  <li><strong>The informative null.</strong> For their radar-only crop map they don't compare against random assignment — the area constraint alone induces a crop/plot-size association. They build the constraint-only null (H=12) and beat it (H=115).</li>
+  <li><strong>The model ceiling, refused.</strong> A gradient-boosted regressor beats their unfitted index (0.560 vs 0.462). They don't adopt it: an index optimised to predict NDVI is trainable only where optical data already exists, forfeiting the operational reason to use radar.</li>
+</ul>
+<p>They also turn the 19 June rain event into signal rather than discarding it — a closed canopy attenuates the soil contribution, so the <em>magnitude of the rain response is an inverse proxy for canopy cover</em>. Water Cloud Model, run backwards.</p>
+
+<h3>Megalodon — the instrument specialist</h3>
+<p>The best physics, and the single most impressive act of scientific honesty in the set. They <strong>retracted their own published finding</strong>: they first reported that more uniform fields score higher (ρ = −0.53), exactly what the rubric expects. Then they found the texture had been computed on noise-subtracted intensity, which adds variance in proportion to how near the noise floor a farm sits — dim farms are near the floor <em>and</em> unhealthy, so the statistic was <strong>a signal-to-noise proxy wearing an agronomic label</strong>. Corrected: ρ = +0.02, and all five structure metrics reverse sign.</p>
+<p><em>"Uniform here means uniformly nothing."</em></p>
+<p>They also measured the auxiliary-data ceiling <em>before</em> fetching anything — a covariate constant within a cell explains at most 0.226 of farm-to-farm variance at 250 m, 0.049 at 1 km, and <strong>0.000 at 50 km</strong>. Their validation against Sentinel-1 VH (ρ = 0.746) is the strongest independent check any team reports.</p>
+
+<h3>Project Orion — the twin</h3>
+<p>Two-tier crop labels: rice and cotton from measured physical thresholds, the rest <em>"an allocation on a measured axis, not a classification"</em>, every row carrying <code>crop_confidence</code>. Their circularity test is the sharpest instrument in the field — they rank tier 2 on γ⁰, note that NDVI correlates +0.533 with that same axis, and so regress NDVI on γ⁰ first and run the ANOVA on the <em>residual</em>. Tier 2 explains 19% of raw NDVI variance and <strong>0.2% of the residual</strong>. Their tier-1 control moves the opposite way, which is what makes the null a measurement rather than a blunt instrument.</p>
+
+<h3>8bit — the purist</h3>
+<p>The only genuinely SAR-only pipeline. Their core idea is elegant: the four scenes span 28.69–35.24° incidence, so rather than correct for it they <strong>anchor every temporal metric on the 19 Jun / 14 Aug pair, which is 0.08° apart</strong>. No empirical correction needed. Their decile-trend presentation — NDVI rising 0.260 → 0.415 across health deciles, rank correlation +0.988 — is worth copying purely as a way of reporting.</p>
+
+<h3>oindrieelmondal — the candid one</h3>
+<p>Weakest methodology, strongest instinct for reporting its own limits. They state that <strong>50.8% of farms carry crop-type confidence below 0.40</strong> and recommend those for manual review before <code>crop_type</code> is treated as final. They tested a literature claim about erectophile cereals and reported it unsupported — maize's apparent support reversed sign after outlier cleaning.</p>
+
+<h2><span class="num">04</span>Claim collisions</h2>
+
+<p class="lede">The most valuable content in the set, because all six teams are describing the same 966 farms. Two I resolved on our own data.</p>
+
+<div class="coll">
+  <div class="coll-head">
+    <h3>Does the rice flood signature work?</h3>
+    <span class="chip good">Resolved · both sides right</span>
+  </div>
+  <p>Orion measured the classic dark-flood rule failing: <span class="mono">−0.36 dB</span> median where it needs +6 dB. Coding Bits found rice doesn't separate on Aug→Oct retention. But we, Megalodon and oindrieelmondal all use a June flood signature and report it working.</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Test, run on our data</th><th class="num">Result</th></tr></thead>
+    <tbody>
+      <tr><td>Orion's rule: min(6 Jun, 19 Jun) → 14 Aug, all farms</td><td class="num">−0.17 dB</td></tr>
+      <tr><td>same, rice-labelled farms only</td><td class="num">−0.71 dB</td></tr>
+      <tr><td><strong>our</strong> signature: 6 Jun → 19 Jun, rice</td><td class="num">+3.23 dB</td></tr>
+      <tr><td>same, next-highest crop (maize)</td><td class="num">+1.12 dB</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>Orion is right about the rule they tested, and it is not the rule we use.</strong> The classic signature genuinely fails on our data too (−0.71 dB for rice, wrong sign). Ours is the 6→19 June wetting response, where rice separates from every other crop by 2.1–3.2 dB. Both Coding Bits and Megalodon independently confirm 19 June was a rain day (12.5 mm and 21.9 mm), which supplies the mechanism: a flooded transplanted paddy responds to surface wetting far more strongly than a field already carrying canopy.</p>
+</div>
+
+<div class="coll">
+  <div class="coll-head">
+    <h3>Is a uniform field a healthy field?</h3>
+    <span class="chip bad">Unresolved · our exposure</span>
+  </div>
+  <p>Our <code>uniform</code> family carries <strong>the largest weight in our health index (0.301)</strong> and has the same sign as the finding Megalodon publicly retracted. Coding Bits report their uniformity term correlating −0.146 with October greenness — opposite in sign to their other three components — and near-neutral on leave-one-out. Orion side-steps the problem entirely by using CoV <em>excess over the L=1 speckle prediction</em>, which is better posed: at one look, fully developed speckle gives CoV = 1.0 exactly, so any excess is real heterogeneity.</p>
+  <p>Three of five teams report this term as neutral, negative, or retracted. Our own report already admits it fails on an independent date. <strong>This is the highest-priority item after the calibration fix.</strong></p>
+</div>
+
+<div class="coll">
+  <div class="coll-head">
+    <h3>Village production</h3>
+    <span class="chip warn">Unresolved · 2.1× spread</span>
+  </div>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Team</th><th class="num">Production to date</th></tr></thead>
+    <tbody>
+      <tr><td class="team">Megalodon</td><td class="num">578 t</td></tr>
+      <tr class="us"><td class="team">GDHTM (ours)</td><td class="num">595 t</td></tr>
+      <tr><td class="team">Project Orion</td><td class="num">1,002 t</td></tr>
+      <tr><td class="team">Coding Bits</td><td class="num">1,268 t</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Same 447.5 ha. We and Megalodon agree within 3% on independent pipelines, both anchoring on district statistics discounted by crop progress. Much of the spread is crop mix rather than the yield model — Orion assigns 130 ha to maize where we assign 27. Being one of two teams in the low cluster is a defensible position and worth stating.</p>
+</div>
+
+<h2><span class="num">05</span>Where we stand</h2>
+
+<h3>Ahead</h3>
+<ul>
+  <li><strong>The dasymetric framing.</strong> No other team names the technique or applies it to two different quantities. Several are doing it without saying so.</li>
+  <li><strong>A season-integrated witness of the right shape.</strong> Others validate a season-long accumulation term against a single-instant NDVI. Sokhda had <em>zero</em> Sentinel-2 scenes under 20% cloud across June–September, so we built a 10-scene Sentinel-1 integral instead. Genuinely unmatched.</li>
+  <li><strong>We keep a number that contradicts us.</strong> Bajra's season-integral term runs against the witness at −0.219 and we ship it flagged rather than tuned.</li>
+</ul>
+
+<div class="panel stripe-good">
+  <p class="panel-label">Measured this session — a direct pass</p>
+  <p>Orion found within-crop ρ(health, yield) = <strong>exactly 1.000</strong> on their first attempt — two scored columns carrying one measurement — and restructured yield to break it, reaching 0.928. The rubric scores those columns separately, so I measured ours:</p>
+  <div class="tw" style="margin:14px 0 0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>Crop</th><th class="num">n</th><th class="num">ρ</th></tr></thead>
+    <tbody>
+      <tr><td>Bajra</td><td class="num">149</td><td class="num">+0.133</td></tr>
+      <tr><td>Groundnut</td><td class="num">221</td><td class="num">+0.160</td></tr>
+      <tr><td>Rice</td><td class="num">86</td><td class="num">+0.338</td></tr>
+      <tr><td>Cotton</td><td class="num">455</td><td class="num">+0.541</td></tr>
+      <tr><td>Maize</td><td class="num">55</td><td class="num">+0.595</td></tr>
+      <tr class="us"><td class="team">Pooled</td><td class="num">966</td><td class="num">+0.170</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px">Our <em>worst</em> crop sits below Orion's <em>post-fix</em> figure. Our two columns carry separate information.</p>
+</div>
+
+<h3>Behind</h3>
+<ol>
+  <li><strong>The calibration bug.</strong> One line.</li>
+  <li><strong>No per-farm crop confidence.</strong> Four of five competitors ship one; we ship a flat label with a global κ = 0.103 caveat.</li>
+  <li><strong>The uniformity term</strong> — largest weight, weakest evidence, one public retraction against it.</li>
+  <li><strong>No hold-out for anything.</strong> Our weights are blind-derived, which is a good defence, but blind is not held out.</li>
+  <li><strong>No plot-size de-biasing.</strong> Coding Bits measured r up to +0.27 between backscatter and plot area and removed it. Our plots span 0.05–3.5 ha and we have never looked.</li>
+  <li><strong>Circular validation on 13 October.</strong> That scene set our completion-term sign correction <em>and</em> is a headline witness. Orion retires such a scene and reports against a reserved one.</li>
+  <li><strong>No sub-village product.</strong> Our village table is one row. Orion's 500 m grid found 32 points of health spread hidden behind theirs.</li>
+</ol>
+
+<h2><span class="num">06</span>The backlog</h2>
+
+<p class="lede">Ranked by rubric impact divided by effort. Tier A blocks everything downstream of it.</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Item</th><th>From</th><th>Cost</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A1 · Fix <span class="mono">β₀ = SF²·|z|²</span></strong>, rerun, diff</td><td>Coding Bits, Orion</td><td>1 line + rerun</td></tr>
+    <tr><td><strong>A2 · Rewrite REPORT §2.4</strong> — the new version is stronger</td><td>—</td><td>30 min</td></tr>
+    <tr><td><strong>A3 · Re-pose uniformity</strong> as CoV excess over L=1, partial out brightness</td><td>Orion, Megalodon</td><td>half a day</td></tr>
+    <tr><td>B1 · Per-farm crop confidence, quartile-validated</td><td>Orion, Coding Bits</td><td>half a day</td></tr>
+    <tr><td>B2 · Two-tier crop labels — measured vs allocated</td><td>Orion</td><td>half a day</td></tr>
+    <tr><td>B3 · Plot-size de-biasing: regress features on log(area)</td><td>Coding Bits</td><td>2 hours</td></tr>
+    <tr><td>B4 · 500 m grid sub-village table</td><td>Orion</td><td>2 hours</td></tr>
+    <tr><td>B5 · Non-circular label test on the residual</td><td>Orion</td><td>3 hours</td></tr>
+    <tr><td>B6 · Decile-trend presentation of health vs NDVI</td><td>8bit</td><td>1 hour</td></tr>
+    <tr><td>B7 · Reserved-scene validation, retiring 13 Oct</td><td>Orion</td><td>3 hours</td></tr>
+    <tr><td>C1 · Quegan–Yu multitemporal speckle filter</td><td>Coding Bits</td><td>1–2 days</td></tr>
+    <tr><td>C2 · Thin-plate spline geocoding</td><td>Coding Bits</td><td>1 day</td></tr>
+    <tr><td>C4 · Pre-registered expected signs as a module constant</td><td>Orion, Megalodon</td><td>3 hours</td></tr>
+    <tr><td>C7 · Degenerate-output assertions in the ship gate</td><td>Coding Bits</td><td>1 hour</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Explicitly rejected</h4>
+<ul>
+  <li><strong>Coding Bits' Sentinel-2-driven crop map.</strong> Better separation, but it makes the crop column optical in a SAR challenge. Our SAR-primary constraint is worth more than the accuracy.</li>
+  <li><strong>A fitted model for the health index.</strong> Coding Bits' own argument against adopting their GBM applies to us verbatim — borrow the argument, not the model.</li>
+  <li><strong>Orion's decision to drop the Round 1 shares.</strong> The evidence runs against them.</li>
+</ul>
+
+<h2><span class="num">07</span>Round 3 preparation</h2>
+
+<h3>What the shortlist reveals about the scoring</h3>
+<p>All six shortlisted writeups share five traits. That is not coincidence — it is the scoring function:</p>
+<ol>
+  <li><strong>Reported negative results.</strong> Megalodon retracted a published finding; Orion reports a component of its own index as null; we report three failures, one of which changed a shipped column.</li>
+  <li><strong>Validation against something the pipeline never read.</strong> Universal.</li>
+  <li><strong>Explicit reproducibility</strong> — a hash or an assertion. Universal.</li>
+  <li><strong>A stated scope limit on X-band</strong> — every team says some version of "relative within crop, not absolute biophysical retrieval".</li>
+  <li><strong>Physically justified constants</strong>, not fitted ones.</li>
+</ol>
+
+<h3>Questions we should have answers ready for</h3>
+<div class="tw">
+<table>
+  <thead><tr><th>Likely question</th><th>Our answer</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>"Another team called the Round 1 shares unstable and refused to use them."</td>
+      <td>Their own Round 1 read matches ours to 0.25 pp. Three of four teams land at 39–49% cotton; the outlier is the team that dropped the constraint, and its maize allocation exceeds its entire district by 2.6×.</td>
+    </tr>
+    <tr>
+      <td>"The rice flood signature is known to fail here."</td>
+      <td>It does — we measured the standard rule at −0.71 dB for rice, wrong sign, matching Orion. Ours is a different feature, the 6→19 June wetting response, where rice separates by 2.1–3.2 dB.</td>
+    </tr>
+    <tr>
+      <td>"Health and yield may be the same number twice."</td>
+      <td>Measured: within-crop ρ spans +0.133 to +0.595, pooled +0.170. Another shortlisted team measured exactly 1.000 and reached 0.928 after restructuring — our worst crop is below their best.</td>
+    </tr>
+    <tr>
+      <td>"Your uniformity term has the sign another team retracted."</td>
+      <td><em>Needs A3 first.</em> Recomputed as CoV excess over the L=1 prediction with brightness partialled out.</td>
+    </tr>
+    <tr>
+      <td>"Your absolute calibration is off."</td>
+      <td><em>Needs A1 first.</em> Fixed; our level now agrees with two independent teams at −18 to −20 dB.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>The highest-value action outside the code</h3>
+<div class="panel stripe-good">
+  <p><strong>Consensus pseudo-ground-truth.</strong> Six teams labelled the <em>same</em> 966 farms. Where four or more agree, that is the closest thing to labels that will ever exist for Sokhda — and it would let us measure our crop column against something external for the first time.</p>
+  <p><strong>This is partially executable today.</strong> oindrieelmondal published their submission notebook and both datasets publicly. One competitor CSV in hand converts our κ = 0.103 self-criticism into a two-way agreement measurement. Ask the other four; several may share.</p>
+</div>
+
+<h3>Other uses for this material</h3>
+<ul>
+  <li><strong>Convergent validity as evidence.</strong> Where independent teams derive the same constant it is corroborated; where we are the lone dissenter it is a defect. The calibration went against us, the crop mix went for us. Both belong in the Round 3 report.</li>
+  <li><strong>A failure-mode library.</strong> Between them the five teams document a geoid bug, an FID off-by-one, a calibration double-correction, an SNR-proxy artefact and a speckle-filter-induced correlation. Every one survived internal consistency checks in a competent pipeline — and every one is a cheap check we can add.</li>
+  <li><strong>Anchor reconciliation.</strong> Four teams, four different yield anchors and a 2.1× production spread. Orion's note that Indian statistics quote the same crop three ways — with their cotton lint→kapas conversion at 34% ginning outturn — is the standard to match.</li>
+</ul>
+
+<h2><span class="num">08</span>Order of work</h2>
+<ol>
+  <li><strong>A1 + A2</strong> — calibration fix and report correction. Everything sits downstream of a correct radiometry.</li>
+  <li><strong>A3</strong> — the uniformity term. Largest weight, weakest evidence, one public retraction against it.</li>
+  <li><strong>B1 + B2</strong> — crop confidence and tiering. Biggest presentation gain per hour.</li>
+  <li><strong>B3, B4, B6</strong> — plot-size de-biasing, the grid table, the decile plot. All cheap.</li>
+  <li><strong>B5, B7</strong> — the non-circular label test and the reserved scene. These need care.</li>
+  <li><strong>Tier C</strong> as Round 3 scope allows.</li>
+</ol>
+
+<p class="foot">
+  Team GDHTM · ANRF AISEHack 2.0 Round 2<br>
+  Sources: five competitor writeups as published on Kaggle, 29 August 2026.<br>
+  Every figure attributed to GDHTM was recomputed from the shipped artefacts, not quoted from the report.<br>
+  Full working: <span class="mono">internal/research/COMPETITOR_ANALYSIS_R2.md</span>
+</p>
+
+</div>
