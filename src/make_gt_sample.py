@@ -62,6 +62,15 @@ def main():
         d = d[d.overlap_frac.fillna(0) >= 0.5]
         print(f"restricted to {len(d)} farms with a confident (>=50%) registry match")
 
+    # DEGENERATE GEOMETRY. Nine parcels are valid FIDs enclosing effectively no ground
+    # (0 to 2.3e-7 ha) with centroids up to 835 km away; Orion documented ten. They carry a
+    # legitimate row in the submission, but nobody can stand on a parcel of 5e-9 ha, so a
+    # lookup spent on one is a lookup lost. One reached the staged field sheet (farm 19).
+    n0 = len(d)
+    d = d[d.area_ha > 1e-4]
+    if len(d) < n0:
+        print(f"dropped {n0 - len(d)} degenerate-geometry parcels (area < 1e-4 ha)")
+
     rng = np.random.default_rng(SEED)
     picks = []
     for c in CROPS:

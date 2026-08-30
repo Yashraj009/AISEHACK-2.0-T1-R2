@@ -82,6 +82,34 @@ Three independent lines of evidence converge:
 Our own report already noticed the anomaly and explained it away as a vendor property. The cause
 was our own formula.
 
+### 1.3b Why we got it wrong, and why that matters for how we answer
+
+We did not invent the unsquared form. It comes from a real citation - ESA's EDAP
+"Technical Note for Capella Data Assessment" (Issue 1.0), p7, which states verbatim:
+
+> `RADAR backscatter: beta0 = sc * |pixel|^2, where sc is a Scale Factor`
+
+Fetched and extracted from the source PDF while writing this document. The transcription in
+our notes was accurate. **The error is one level down: identifying ESA's `sc` with the
+product JSON's `collect.image.scale_factor`.** Those are not the same quantity.
+
+Capella's own reference implementation settles what `sc` must be. `capella-reader`'s
+`rtc_isce3.py` computes `beta0_complex = SF * DN`, so the *power* carries SF squared -
+which means ESA's `sc` equals the JSON field **squared**. Both formulas are correct; only
+the substitution was wrong.
+
+This matters for Round 3 because it changes our answer from an admission into a precise
+technical point. If a judge cites ESA at us, the response is not "we made an error" but:
+the ESA formula is stated in terms of a scale factor that is not the annotated JSON field,
+identifying the two produces backscatter above 0 dB for a distributed target, and Capella's
+own reference implementation resolves the ambiguity in favour of the square.
+
+One more consequence worth stating plainly: the same misidentification made us record
+Round 1's correct ~-18/-19 dB cropland means as *implausibly low*, and "fix" a Round 1
+implementation that had it right. The lesson is Megalodon's, exactly: **per-date
+consistency cannot catch a common-mode error in your own chain.** All four of our dates
+were wrong by the same mechanism, so every internal cross-check passed.
+
 ### 1.4 What it actually costs us
 
 Honest accounting, because the damage is smaller than the error sounds.
@@ -572,8 +600,10 @@ Ranked by rubric impact divided by effort. "Cost" is my estimate of implementati
 |:--|:--|:--|:--|:--|
 | A1 | **Fix `beta0 = SF^2 * |z|^2`**, rerun, diff | Coding Bits, Orion | 1 line + rerun | Correctness. Removes a 27 dB error and a wrong explanation from the report |
 | A2 | **Rewrite REPORT §2.4** | - | 30 min | Turns a conceded 17 dB anomaly into an absolute level corroborated by two teams |
-| A3 | **Re-pose uniformity as CoV excess over L=1**, and partial out brightness | Orion, Megalodon | half a day | Our largest health weight may be an SNR proxy; Megalodon retracted exactly this |
+| ~~A3~~ | ~~Re-pose uniformity / reweight~~ | Orion, Megalodon | **dropped** | **Mis-scoped, and now closed.** Not an SNR proxy (§8.2); CoV-excess does not port, our grid is 4-5 looks (§10.3); plot-size de-biasing makes it worse (§11.1); and under spatial hold-out no weighting beats any other (§11.2). The index is insensitive to this choice. Report the decorrelator argument and move on |
 | ~~A4~~ | ~~Measure rho(health, yield) within crop~~ | Orion | **done** | **Measured, and we pass** - see §3.2.6 |
+| A5 | **Re-derive the yield anchors** with a declared minimum-area rule and state fallback | Megalodon | 3 hours | **The only change identified that should move a shipped column.** Bajra is +52% above three independent government statistics, off a 7,022 ha base, and contradicts our own retraction in SOURCES.md (§9.4b) |
+| A6 | **Reduce yield's dependence on the crop label** (eta^2 0.82 -> nearer 0.5) | Coding Bits, Orion | half a day | Our yield inherits the crop map's disagreement wholesale (§9.4). Conditioned on agreeing labels we correlate +0.68 to +0.75 with the closest teams, so the model is sound and the label is the problem |
 
 ### Tier B - high value, clearly bounded
 
@@ -686,3 +716,678 @@ We are strong on 1-3 and 5, and should sharpen 4.
 The single highest-value action outside the code is obtaining one or more competitor submission
 CSVs (§6.3.1). It is the only route to an external check on the crop column, which is the
 weakest part of our submission and the one we are most honest about.
+
+---
+
+## 8. Experiments run against these findings
+
+All three live in `post-r2/experiments/` and read the shipped Round 2 artefacts as
+read-only inputs. The Round 2 submission is frozen; nothing below writes to `results/`,
+`docs/`, `src/` or `notebooks/`.
+
+### 8.1 e1 - the calibration correction, applied end to end
+
+The correction is one multiply by SF per date, because the scale factor is a per-scene
+constant. So the whole submission can be rebuilt without touching a raster: scale the
+per-date linear power, re-derive the temporal block exactly as `farm_stats.py` does, and
+re-run the **real** `d4_submission.main()` against the corrected frame with its output
+paths redirected into `post-r2/`.
+
+| quantity | shipped vs calibrated |
+|:--|:--|
+| `crop_type` | **958/966 unchanged (99.2%)** - 8 reassignments |
+| `health_index` | Spearman **0.9908**; median delta 0.905 points; 7 farms move >100 ranks |
+| `yield_estimate_to_date` | Spearman **0.9836**; median delta 0.008 t/ha; 9 farms move >100 ranks |
+| village production | 594.9 t -> **597.8 t** (+0.5%) |
+
+**This is the strongest possible outcome for us.** The bug is real, and the product is
+almost completely insensitive to it - because every shipped quantity is a difference
+between dates or a rank within a crop, never an absolute level. Our own stated discipline
+is precisely what contained our own error. That is the sentence to put in the Round 3
+report, and it is worth more than never having had the bug.
+
+What still must change: the formula, the `prep_r2.py` comment calling the square an R1
+bug, and REPORT §2.4's explanation.
+
+### 8.2 e2 - the uniformity term, and what it revealed about our weighting
+
+**T1. We do not have Megalodon's artefact.** Their retraction was caused by variance
+rising as a farm approaches the noise floor, so dim farms read as non-uniform:
+rho(CV, brightness) negative. Ours is **+0.173** - the opposite sign. Our term is not an
+SNR proxy.
+
+But rho(CV, pixel count) = **+0.229**, which is the *Coding Bits* artefact, not the
+Megalodon one: larger plots read as more variable. That is a real confound and it is what
+backlog item B3 (plot-size de-biasing) exists to remove.
+
+**T2. The term is null against both independent witnesses.**
+
+| witness | raw rho | brightness partialled out |
+|:--|--:|--:|
+| Sentinel-2 NDVI, 13 Oct | -0.030 | +0.084 |
+| Sentinel-1 VH | -0.020 | +0.051 |
+
+**T3.** Within crop and after partialling, four of five crops turn weakly positive
+(groundnut +0.167, maize +0.153, cotton +0.092, bajra +0.020) and rice runs negative
+(-0.065).
+
+**The real finding is one level up.** Our weights are `w_k` proportional to
+`1 / sum_j |rho(k,j)|` - each family rewarded for being *uncorrelated with the others*.
+The rule is genuinely blind to every witness, which is why REPORT §4 defends it. But
+independence is not information, and **a family carrying only noise correlates with
+nothing**, so the rule hands it the largest weight. Measured:
+
+| family | shipped weight | mean \|rho\| vs the two witnesses |
+|:--|--:|--:|
+| `growth` | 0.283 | **0.285** |
+| `persist` | 0.228 | 0.221 |
+| `level` | 0.189 | 0.214 |
+| `uniform` | **0.301** | **0.025** |
+
+Spearman(shipped weight, witness informativeness) = **-0.200**. The rule is mildly
+*anti*-correlated with how informative a family actually is. The most informative family
+draws a mid-range weight; the only uninformative one draws the largest.
+
+**T4. And yet removing it makes the index worse.** Four weightings, all still blind - none
+reads a witness to set a weight:
+
+| scheme | rho vs NDVI | rho vs S1 VH |
+|:--|--:|--:|
+| **shipped** (blind, `1/sum` of `\|rho\|`) | **+0.127** | **+0.156** |
+| equal | +0.122 | +0.151 |
+| drop uniform, rest equal | +0.078 | +0.133 |
+| drop uniform, rest as shipped | +0.086 | +0.136 |
+
+The shipped weighting is the best of the four, on both witnesses, and dropping `uniform`
+costs the most. The reading: `uniform` earns its place as a **decorrelator, not as a
+measurement**. `level` and `persist` are both brightness-like and partly redundant;
+re-weighting toward them adds correlation without adding information. The blind rule's
+independence logic has real merit even though the mechanism that produces it can be
+argued against.
+
+*Caveat, stated so it is not overread:* the T4 composite approximates the shipped index
+(robust-z within crop, weighted sum) but omits imputation and the bounded transform, so
+treat the ordering as indicative rather than exact.
+
+**This lands us where two other teams landed by different routes.** Coding Bits measured
+their uniformity at -0.146 against October greenness and near-neutral on leave-one-out,
+and **kept it at 0.20** on temporal-persistence grounds. Orion kept theirs at 0.20 using
+CoV excess over the L=1 speckle prediction. Three teams independently retain a
+near-neutral uniformity term. We are not the outlier - we simply weight ours highest and
+had not measured why.
+
+**Revised action for A3.** Not "drop or reweight". Instead: re-pose the term as Orion does
+(CoV excess over the speckle prediction rather than raw CoV), de-bias for plot size per
+B3, and *report the decorrelator argument explicitly* rather than letting the weight look
+like a claim about uniformity being healthy. The honest framing is that the largest weight
+in our index is carried by a term that stabilises the composite rather than one that
+measures condition - and that we tested this rather than assumed it.
+
+### 8.3 e3 - the consensus check, RUN
+
+oindrieelmondal published their submission notebook, so their `submission_round2.csv` is
+public. This is the first external check our crop column has ever had.
+
+**The file is verifiably theirs.** Their labels crossed with *our* `area_ha` reproduce the
+hectares published in their own writeup to 0.1 ha on all five crops (Bajra 36.8, Cotton
+176.3, Groundnut 130.8, Maize 31.9, Rice 71.8), and the confusion-matrix column sums
+reproduce their farm counts exactly (171 / 294 / 277 / 61 / 163). The join is sound.
+
+**Per-farm agreement is below chance.**
+
+| measure | value |
+|:--|--:|
+| raw agreement | **17.2%** |
+| Cohen's kappa | **-0.111** |
+| our own independent rebuild (REPORT 7.1) | +0.103 |
+| label-shuffle null, 999 draws | mean +0.0007, 95% interval [-0.034, +0.032] |
+
+Of the farms we call Rice, **0.0%** are theirs. Cotton 16.9%, Groundnut 30.8%, Bajra
+10.1%, Maize 10.9%.
+
+Three controls, because a result this extreme is usually a join bug - Megalodon lost a
+finding to exactly that (a 1-based shapefile FID against a 0-based raster label):
+
+1. **Join integrity** - passes, as above.
+2. **Off-by-one sweep** - shifting their `farm_id` by -2, -1, +1, +2 gives kappa -0.025,
+   -0.026, -0.017, -0.007. **No shift recovers agreement**, so the disagreement is real
+   rather than a registration artefact.
+3. **Chance null** - observed kappa falls *below* the shuffle interval.
+
+**Why below chance, and why that is not a bug.** Both pipelines impose an area constraint,
+so each is allocating a fixed budget of hectares per crop. When two constrained
+allocations disagree about *which* farms receive a label, the fixed marginals force
+negative dependence. kappa < 0 is the expected signature of two disagreeing constrained
+assignments, not evidence of an error.
+
+**And yet the village mix agrees closely.**
+
+| crop | ours % | theirs % | delta |
+|:--|--:|--:|--:|
+| Cotton | 43.22 | 39.39 | +3.83 |
+| Groundnut | 30.76 | 29.24 | +1.53 |
+| Rice | 10.60 | 16.03 | -5.43 |
+| Bajra | 9.45 | 8.22 | +1.23 |
+| Maize | 5.97 | 7.12 | -1.15 |
+| | | **mean \|delta\|** | **2.63 pp** |
+
+**This is the single most important result in this document.** Two independent teams,
+the same 966 parcels, the same four scenes: they agree on the village crop mix to a mean
+of 2.63 percentage points and disagree on individual farms at a rate worse than chance.
+
+That is precisely the claim REPORT §7.2 already makes - *"the product should be read at
+village and crop-group level... a single farm's label should not be acted on alone"* - and
+it has just been confirmed against an external team rather than against ourselves. Our
+kappa = +0.103 self-criticism was not pessimism. It was, if anything, generous.
+
+Both caveats stated: oindrieelmondal report 50.8% of their own farms carrying crop-type
+confidence below 0.40, so this is agreement between two acknowledged-uncertain labellings,
+and neither is truth. And a single comparison is one draw - the other four teams' CSVs
+would turn this into a consensus rather than a pairing.
+
+**What to do with it:**
+- Put the number in the Round 3 report. A measured external kappa is worth more than a
+  self-assessed one, and reporting a *negative* external result is exactly the behaviour
+  every shortlisted writeup shares.
+- It converts backlog items B1/B2 (per-farm confidence, tiered labels) from
+  presentation polish into a substantive necessity. Orion's two-tier scheme -
+  "an allocation on a measured axis, not a classification" - is now the demonstrably
+  correct description of what all of us are shipping.
+- Ask the other four teams for their CSVs. Where four or more agree, that is the closest
+  thing to ground truth Sokhda will ever have.
+
+---
+
+## 9. All six submissions, side by side
+
+All five competitor deliverables are now in `post-r2/writeups_submissions/`. Every file has
+the same schema and the same `farm_id` 1..966, so the six are directly comparable.
+`e4_consensus_all.py` runs the whole comparison.
+
+### 9.1 The structural result
+
+| column | agreement across the six teams |
+|:--|:--|
+| **crop type** | mean pairwise Cohen's kappa **+0.060** - chance |
+| **health index** | mean pairwise Spearman **+0.337** |
+| **yield to date** | mean pairwise Spearman **+0.073** - chance |
+
+**Six independent pipelines, the same 966 parcels, the same four scenes: they agree on
+health and they do not agree on crop type or yield.** That is a statement about the
+problem, not about any one team, and it is the single most useful thing this comparison
+produced.
+
+Only one pair agrees on crop type at all: Coding Bits x Megalodon at kappa +0.461 - and
+both derive their map from optical phenology, so they are not independent evidence. Every
+other pair sits between -0.111 and +0.200.
+
+### 9.2 There is no usable consensus crop map
+
+The hope in §6.3.1 was that majority voting across six teams would yield pseudo-ground-truth.
+It does not.
+
+| teams agreeing | farms | % |
+|:--|--:|--:|
+| 2 of 6 | 264 | 27.3% |
+| 3 of 6 | 410 | 42.4% |
+| 4 of 6 | 222 | 23.0% |
+| 5 of 6 | 66 | 6.8% |
+| **6 of 6** | **4** | **0.4%** |
+
+Four farms out of 966 carry unanimous agreement. And the majority label is not better than
+its members: scored by Kruskal-Wallis **effect size** (epsilon^2, which unlike raw H does
+not grow with sample size) against the two withheld sensors -
+
+| labelling | eps2 vs S2 NDVI | eps2 vs S1 VH |
+|:--|--:|--:|
+| 8bit | **0.2565** | 0.0797 |
+| Coding Bits | 0.2340 | 0.0547 |
+| DeepThinkers | 0.2236 | 0.0969 |
+| Megalodon | 0.1809 | 0.0288 |
+| **GDHTM** | 0.1699 | **0.0988** |
+| Orion | 0.1560 | 0.0383 |
+| *consensus* | *0.1657* | *0.0263* |
+
+The consensus is beaten by four of six individual maps on NDVI and by every one of them on
+Sentinel-1 VH. With pairwise kappa near 0.06, majority voting averages disagreement rather
+than accumulating evidence, and destroys signal instead of building it.
+
+**Report this as a negative result.** It is a clean, quantified answer to a question worth
+asking, and "we tried to build a consensus reference and it does not exist" is a stronger
+contribution than a hedge about label uncertainty.
+
+**Where we sit:** 5th of 6 on NDVI separation, **1st of 6 on Sentinel-1 VH**. Our agreement
+with the majority label is 51.6% overall, mid-pack (Megalodon 69.3%, Coding Bits 68.0%,
+8bit 52.9%, DeepThinkers 38.9%, Orion 29.9%).
+
+### 9.3 Our crop mix is the modal position
+
+| crop | **GDHTM** | CodingBits | 8bit | Megalodon | Orion | DeepThinkers | spread |
+|:--|--:|--:|--:|--:|--:|--:|--:|
+| Cotton | **43.22** | 44.60 | 43.06 | 48.47 | 13.69 | 39.39 | 34.8 pp |
+| Groundnut | **30.76** | 32.19 | 28.06 | 38.78 | 25.88 | 29.24 | 12.9 pp |
+| Rice | **10.60** | 10.91 | 13.49 | 8.85 | 18.39 | 16.03 | 9.5 pp |
+| Bajra | **9.45** | 9.84 | 7.73 | 3.91 | 12.90 | 9.0 pp | |
+| Maize | **5.97** | 2.46 | 7.66 | 0.00 | 29.14 | 7.12 | 29.1 pp |
+
+On cotton, groundnut and rice we sit within 1.5 pp of Coding Bits and close to 8bit and
+DeepThinkers. Orion is the outlier on cotton (13.7 against a 39-48 cluster) and on maize
+(29.1 against 0-7.7), which is the position §2.4 already argued against. Megalodon ships
+zero maize deliberately.
+
+### 9.4 Yield: what the anti-correlation actually is
+
+**This subsection corrects an earlier reading in this document.** The first pass concluded
+that our yield column was an outlier because our per-crop *ordering* is inverted. That was
+wrong, and `e5_anchors.py` disproved it.
+
+**The observation.** Pairwise Spearman on yield puts us negatively correlated with three of
+five teams (Coding Bits -0.266, 8bit -0.315, Orion -0.313), null with Megalodon (0.000)
+and DeepThinkers (-0.069). We are the only team in that position.
+
+**The wrong explanation, tested and rejected.** Our bajra anchor is 40-100% above every
+other team's, so it looked like the ordering inversion was the cause. Correcting bajra to
+the external median changes the cross-team correlations by a mean of **-0.001**. It is not
+the cause.
+
+**The right explanation.** Our yield is 82% explained by the crop label (eta^2 = 0.820), and
+the crop maps agree at chance. So the yield columns inherit the crop disagreement. Holding
+the label fixed - restricting to farms where we and they assign the *same* crop - separates
+the two:
+
+| vs team | all farms | crop labels agree | n | change |
+|:--|--:|--:|--:|--:|
+| Megalodon | +0.000 | **+0.678** | 321 | +0.678 |
+| DeepThinkers | -0.069 | **+0.751** | 166 | +0.821 |
+| Coding Bits | -0.266 | +0.019 | 351 | +0.284 |
+| Orion | -0.313 | -0.173 | 180 | +0.140 |
+| 8bit | -0.315 | -0.262 | 292 | +0.054 |
+| | | | **mean** | **+0.395** |
+
+**Conditioned on agreeing about the crop, our yield agrees strongly with the two teams whose
+method most resembles ours** - Megalodon +0.678 and DeepThinkers +0.751, both of which
+anchor on district statistics discounted by crop progress, exactly as we do. The remaining
+negatives sit with 8bit (whose shipped column has a unit problem, §9.5) and Orion (whose
+crop map is the field outlier, §9.3).
+
+So the honest statement for Round 3 is not "our yield is an outlier". It is: **our yield
+column is a good measurement carried on a bad label**, and its cross-team disagreement is
+the crop map's disagreement, not the yield model's. That is the same conclusion §7.2 of the
+report already reaches about the crop column, now shown to propagate into yield.
+
+It also raises the priority of decoupling yield from the label. Orion faced the mirror-image
+problem - their health and yield were the same number - and fixed it by adding a term no
+health component contained. Ours is the other failure mode: too much of the column is the
+label. Reducing eta^2 from 0.82 by letting the SAR carry more of the variance is the
+structural fix, and Coding Bits (0.474) and Orion (0.499) show it is achievable.
+
+### 9.4b The bajra anchor is still wrong, for its own reasons
+
+Independent of the above, the anchor does not survive comparison. Full-season t/ha, cotton
+omitted because teams quote lint and kapas interchangeably:
+
+| crop | **ours** | district base | Orion | DeepThinkers | Megalodon | ext. median | ours vs |
+|:--|--:|--:|--:|--:|--:|--:|--:|
+| **Bajra** | **2.71** | 7,022 ha | 1.79 | 1.36 | 1.89 | 1.79 | **+52%** |
+| Groundnut | 2.51 | 1,004 ha | 3.03 | 2.73 | 1.94 | 2.73 | -8% |
+| Maize | 2.31 | 40,794 ha | 3.11 | 2.03 | - | 2.57 | -10% |
+| Rice | 1.69 | 49,818 ha | 2.54 | 1.74 | 2.00 | 2.00 | -15% |
+
+Bajra is the sole outlier, and its district base is 7,022 ha - 2.5% of the five-crop area.
+Applying Megalodon's rule (a district mean is usable only where the district sows enough of
+the crop) with a declared 20,000 ha threshold flags exactly two crops: **bajra and
+groundnut**.
+
+Those are the same two crops `data_aux/SOURCES.md` already carries a **RETRACTED** section
+about, conceding the table is *"a bad prior for this village"*. We applied that retraction to
+the AREA prior and left the YIELD anchor drawn from the same rows of the same table. That
+inconsistency is ours, found without any competitor's help, and it is the cleanest argument
+for the fix.
+
+Effect of correcting bajra alone: village production 594.9 t -> **556.4 t (-6.5%)**, moving
+us from 3% above Megalodon's 578.3 t to 4% below it. Small at aggregate level, for the same
+reason the calibration error was small: this product is built from ranks and shares.
+
+**Two separate bajra defects, and only one is fixed by the anchor.** Rescaling a crop by a
+positive scalar cannot change that crop's *within-crop* rank, so REPORT §7.2's finding that
+bajra's season-integral term contradicts the witness is untouched: rho stays -0.265. The
+anchor sets the level; the witness disagreement is about the ordering inside the crop. Both
+are real; A5 addresses one.
+
+### 9.5 One observation about another team's file
+
+8bit's shipped `yield_estimate_to_date` sums to **21,566 t** over 447.5 ha, roughly 48 t/ha,
+against 578-1,268 t for the other five. Their per-crop medians run 31-71 t/ha. Their writeup
+describes the index as "scaled village-wide", so this looks like an unscaled or
+wrong-unit column in the delivered CSV rather than a method difference. Noted because it
+distorts any cross-team yield statistic that includes them, not as a criticism of their
+method - excluding them, the five-team production spread is 578 to 1,268 t, and we sit
+second-lowest at 594.9 t, within 3% of Megalodon.
+
+---
+
+## 10. Testing the claims instead of deferring to them
+
+Everything above began with something another team asserted. A shortlisted writeup is a
+hypothesis, not a result, and two of these claims would change numbers we ship. Both were
+re-tested against evidence that owes nothing to any competitor (`e6_verify_claims.py`).
+
+### 10.1 Calibration, adjudicated by the vendor's own noise floor
+
+The three arguments for the squared convention were all somebody's reading: Coding Bits
+argued from physical plausibility, Orion cited `capella-reader`, and the ESA note states a
+formula whose `sc` is ambiguous. None is independent of a human interpretation.
+
+The product metadata carries `collect.image.nesz_peak`, an **absolute** dB level Capella
+declares per scene. A real scene contains smooth dark surfaces whose return approaches the
+system noise floor, so the darkest percentiles must sit near it - never tens of dB above,
+which would mean the sensor never reaches its own noise anywhere in the scene.
+
+| date | declared NESZ | darkest 0.1%, as shipped | vs NESZ | under SF^2 | vs NESZ |
+|:--|--:|--:|--:|--:|--:|
+| 2025-06-06 | -26.13 | 0.0 | **+26.1** | -26.7 | **-0.6** |
+| 2025-06-19 | -27.76 | -1.5 | **+26.3** | -27.7 | **+0.0** |
+| 2025-08-14 | -27.97 | -1.4 | **+26.6** | -28.4 | **-0.4** |
+| 2025-10-13 | -27.35 | 0.9 | **+28.2** | -27.8 | **-0.4** |
+
+Under SF^2 the measured noise floor lands on the declared one with a mean absolute error of
+**0.35 dB, across four scenes with four different NESZ values and four different scale
+factors**. As shipped it sits 27 dB above, which is physically impossible.
+
+**The calibration finding no longer rests on any competitor claim.** It is confirmed on
+vendor metadata alone, and that is how it should be written in Round 3.
+
+*Also settled:* the GEO preview cannot adjudicate this - it is `uint8`, 0-255, a stretched
+quicklook with no radiometric meaning. That is why DeepThinkers' preview comparison gave an
+offset that reversed sign on one of four dates. Their open question has an answer, and the
+answer is that the instrument they used cannot measure the thing.
+
+### 10.2 The bajra anchor: the field is right, for a reason none of them gave
+
+Three teams quoting 1.36-1.89 t/ha against our 2.71 is a majority, not evidence. Two
+independent checks:
+
+**Our own table is not internally consistent.** Yield should equal production over area:
+
+| crop | implied kg/ha | stated kg/ha | gap |
+|:--|--:|--:|--:|
+| **Bajra** | 2,478 | **2,714** | **+9.5%** |
+| Rice | 1,833 | 1,690 | -7.8% |
+| Maize | 2,231 | 2,312 | +3.6% |
+| Groundnut | 2,490 | 2,514 | +1.0% |
+
+(Cotton's apparent -83% is the bales-to-tonnes conversion: 829,400 bales x 170 kg = 141 kt
+over 185,479 ha = 760 kg/ha lint, consistent with the stated 776.)
+
+The yield column is not derivable from the columns beside it, and bajra carries the largest
+gap of the four, in the direction that inflates our anchor. The table's own production over
+area gives **2.478 t/ha, not 2.714** - a 9% cut before any competitor number is consulted.
+
+**And the remaining gap has a mechanism.** Gujarat grows bajra in two seasons that are not
+comparable:
+
+| | grain yield |
+|:--|:--|
+| summer, irrigated | **4,000-5,000 kg/ha** (ICRISAT pearl millet manual) |
+| rainfed kharif | **1,200-1,800 kg/ha** |
+| irrigated, general | 2,500-3,500 kg/ha |
+
+Our anchor is an **annual** district figure, every season summed, and it lands at 2.5-2.7
+t/ha - exactly where a blend of high-yield summer bajra and lower rainfed kharif bajra
+should land. Every competitor figure is explicitly a **kharif** estimate, and all three sit
+inside the rainfed kharif band.
+
+Round 2 observes 6 June to 13 October 2025. That is kharif. **The anchor must be a kharif
+anchor, and ours is not.** This is a season-matching error in our own sourcing, statable
+without citing anybody.
+
+**Which other anchors carry the same exposure:**
+
+| crop | second season in Gujarat | exposure |
+|:--|:--|:--|
+| **Bajra** | summer, irrigated, 2-3x yield | **HIGH - annual mean is inflated** |
+| Maize | rabi maize, higher yield | MODERATE - same mechanism, smaller |
+| Rice | summer rice is minor | low |
+| Groundnut | ~90% kharif in Gujarat | low |
+| Cotton | kharif only | none |
+
+So **A5 is not "copy their bajra number"**. It is: source a kharif anchor for every crop,
+and check each crop for a second cropping season before using an annual district mean. That
+rule catches bajra, flags maize, and is derived from agronomy rather than from a
+competitor's table.
+
+### 10.3 One competitor idea that would have broken our pipeline
+
+Orion re-poses uniformity as **CoV excess over the L=1 speckle prediction**: at one look,
+fully developed speckle gives CoV = 1.0 exactly, so any excess is real heterogeneity. It is
+better posed than raw CoV and I had it in the backlog as item A3.
+
+It does not port to us. `prep_r2.py` resamples by **average** onto a 5 m base grid, which
+multilooks. Measured on our own farm statistics:
+
+| date | median farm CoV | implied looks |
+|:--|--:|--:|
+| 2025-06-06 | 0.431 | 5.4 |
+| 2025-06-19 | 0.476 | 4.4 |
+| 2025-08-14 | 0.488 | 4.2 |
+| 2025-10-13 | 0.469 | 4.5 |
+
+Our data is 4-5 looks, not 1. Subtracting a 1.0 baseline would make every farm's "excess"
+large and negative, and the ordering would be dominated by the looks estimate rather than by
+heterogeneity - **precisely the failure Megalodon documented and retracted**: *"a per-pixel
+estimate against a farm-level statistic drove most farms negative."*
+
+Adopting Orion's formulation verbatim would have introduced the exact bug another team had
+already published a retraction about. If we adopt it, the baseline must be our own estimated
+looks per date, not 1.0.
+
+### 10.4 Evidence grade for every recommendation in this document
+
+| grade | meaning |
+|:--|:--|
+| **OWN** | measured on our data or our metadata; no competitor claim load-bearing |
+| **MECH** | their claim, but we found and verified the mechanism independently |
+| **THEIRS** | rests on their assertion. Not established for us. Test before adopting |
+
+| item | grade | note |
+|:--|:--|:--|
+| A1 calibration = SF^2 | **OWN** | vendor NESZ, four scenes, 0.35 dB mean error (§10.1) |
+| A1 impact is small | **OWN** | full rebuild: 99.2% of labels unchanged, health rho 0.9908 |
+| A5 bajra anchor is wrong | **MECH** | our table's own internal gap + the kharif/annual season mechanism (§10.2) |
+| A6 yield over-depends on label | **OWN** | eta^2 0.820; +0.395 mean lift when the label is held fixed |
+| Uniformity is not an SNR proxy | **OWN** | rho(CV, brightness) = +0.173, opposite sign to Megalodon's |
+| Uniformity is null but load-bearing | **OWN** | 0.025 vs witnesses, yet dropping it costs 0.127 -> 0.078 |
+| Blind weights anti-correlate with information | **OWN** | Spearman(weight, informativeness) = -0.200 |
+| No usable consensus crop map | **OWN** | 4/966 unanimous; consensus loses to 4 of 6 individual maps |
+| Our crop mix is the modal position | **OWN** | within 1.5 pp of Coding Bits on three crops |
+| A3 CoV excess over L=1 | **THEIRS - and it fails** | our grid is 4-5 looks (§10.3). Do not adopt as written |
+| Quegan-Yu speckle filter | **THEIRS** | 2.4-2.8x looks claimed on their data. Never run on ours |
+| Thin-plate spline geocoding | **THEIRS** | ~8 m polynomial residual is their measurement. Ours is unmeasured |
+| Spatial hold-out for weights | **THEIRS** | sound in principle; never run on our features |
+| Plot-size de-biasing | **PARTLY OWN** | we measured rho(CV, npix) = +0.229, so the artefact is real here. The correction itself is untested |
+| 500 m grid sub-village table | **THEIRS** | presentation only, no correctness risk; the 32-point spread is their number, not ours |
+
+Nothing in the THEIRS rows should enter a Round 3 report as established. The two that would
+have changed shipped numbers are now OWN and MECH respectively, and one THEIRS row turned
+out to be actively wrong for us.
+
+---
+
+## 11. The remaining borrowed ideas, run on our own features
+
+`e7_test_theirs.py`. Three items were still graded THEIRS after §10. Two could change the
+health index, so both were tested rather than adopted.
+
+### 11.1 Plot-size de-biasing - does not transfer
+
+Coding Bits regress every feature on log(area) and remove the trend, reporting residual
+area correlation below 0.001. The artefact is genuinely present in our data too:
+
+| family | rho vs log(area) | after de-biasing |
+|:--|--:|--:|
+| `level` | +0.129 | +0.067 |
+| `growth` | -0.175 | -0.171 |
+| `uniform` | -0.234 | -0.168 |
+| `persist` | +0.247 | **+0.376** |
+
+But removing it does not help, and `persist` gets *worse* - its area dependence is not
+linear in log(area), so a linear detrend amplifies it. Against the two withheld witnesses:
+
+| index | rho vs NDVI | rho vs S1 VH |
+|:--|--:|--:|
+| shipped | **+0.127** | **+0.156** |
+| plot-size de-biased | +0.115 | +0.147 |
+
+**VERDICT: rejected for us** (-0.012 NDVI, -0.009 S1). The artefact is real; the correction
+as specified makes the index slightly worse on both witnesses. If it is revisited, the
+detrend has to be non-linear for `persist`, and that is a different method than the one
+being borrowed.
+
+### 11.2 Spatial hold-out - the method is good, and it corrects one of our own findings
+
+Coding Bits derive weights on the western half and report on the eastern. Applied to our
+four families, both directions:
+
+| weights derived on | resulting `uniform` weight | scored on | rho NDVI | vs shipped |
+|:--|--:|:--|--:|--:|
+| west half | 0.418 | east | **+0.203** | +0.185 |
+| east half | 0.441 | west | **+0.135** | +0.160 |
+
+Two things fall out.
+
+**Our blind rule consistently over-weights `uniform`.** On the full sample it assigns 0.301;
+on either half alone it assigns 0.418-0.441. `uniform` is the family with no witness signal
+(§8.2), so the rule's bias toward it strengthens as the sample shrinks - exactly what a rule
+that rewards being uncorrelated should do when noise gets noisier.
+
+**And this corrects §8.2's T4.** There I reported the shipped weighting as "best of four" on
+the full sample. It does not survive the hold-out. Mean across both directions:
+
+| weighting | mean held-out rho NDVI | mean rho S1 VH | spread between halves |
+|:--|--:|--:|--:|
+| derived on the other half | 0.169 | 0.183 | 0.068 |
+| shipped, full-sample blind | 0.172 | 0.181 | 0.025 |
+| equal | 0.166 | 0.174 | 0.004 |
+
+The three schemes sit within **0.007** of each other, while the spread *between the two
+halves* is 0.007-0.068 - an order of magnitude larger. The ranking flips by direction:
+west-derived weights beat shipped on the east, east-derived weights lose to shipped on the
+west.
+
+**The honest statement is that our health index is insensitive to the weighting choice.**
+That is a robustness result, not a vindication of the blind rule, and it is a better claim
+than the one §8.2 originally made. It also means A3 was mis-scoped: there is no weighting
+fix worth chasing, because no weighting is measurably better than any other.
+
+*(Held-out rho values are not directly comparable to §8.2's full-sample figures: the
+within-crop z-scoring is recomputed inside each half, so the scales differ. The comparison
+that matters is between schemes within a single row.)*
+
+### 11.3 Geocoding residual - still untested, and now flagged as such
+
+Coding Bits report a polynomial GCP fit leaving ~8 m residual against a 24.7 m median plot,
+which is why they moved to a thin-plate spline. Our median plot is 0.274 ha - a **52.4 m
+square** - so the geometry is comparable but not identical.
+
+Our chain resamples by average onto a 5 m base grid, so a residual of their size would be
+1.6 base pixels and would mix neighbouring fields at boundaries. We erode before sampling,
+which is the mitigation, but **the residual itself has never been measured on our fit**.
+
+**STATUS: THEIRS.** Measuring it requires the GCP fit residuals out of `prep_r2.py`'s
+geocoding step - a code change rather than an analysis. This is the one borrowed claim whose
+*premise* remains untested for our pipeline, and it should be written that way rather than
+cited as a reason to adopt splines.
+
+### 11.4 Where the borrowed ideas ended up
+
+Of the six ideas taken from other teams that could have touched our numbers:
+
+| idea | outcome |
+|:--|:--|
+| Calibration = SF^2 | **Adopted.** Confirmed on vendor NESZ alone (§10.1) |
+| Kharif-matched yield anchors | **Adopted.** Mechanism verified independently (§10.2) |
+| CoV excess over L=1 | **Rejected.** Our grid is 4-5 looks; would reproduce Megalodon's retracted bug (§10.3) |
+| Plot-size de-biasing | **Rejected.** Real artefact, but the correction makes the index worse (§11.1) |
+| Spatial hold-out | **Adopted as a method**, and it overturned one of our own conclusions (§11.2) |
+| Thin-plate spline geocoding | **Undecided.** Premise unmeasured on our chain (§11.3) |
+
+Two adopted, two rejected, one adopted as method, one still open. A shortlisted writeup is a
+hypothesis; four of these six needed testing before they could be believed, and two of them
+would have made the product worse.
+
+---
+
+## 12. The geocoding residual, finally measured
+
+§11.3 left this as the one borrowed claim whose premise was untested for us. It is now
+measured (`e8_geocoding.py`), without touching the frozen pipeline.
+
+`prep_r2.geocode()` calls `rasterio.warp.reproject(gcps=...)`, and GDAL given 225 GCPs and
+no explicit order fits an **order-3 polynomial** - the same class Coding Bits measured at
+~8 m and replaced with a thin-plate spline.
+
+**Method note.** Scoring a spline by its residual *at* the control points would be rigged:
+a TPS interpolates every control point exactly, so its error there is zero by construction
+and says nothing about accuracy anywhere else. Both are scored by **leave-one-out** - fit on
+224, predict the held-out one - which is what matters for a farm boundary sitting between
+control points.
+
+*A first run of this reported a 140 km residual for order 3. That was `lstsq` failing on a
+cubic design matrix built from raw row/col values in the tens of thousands, not a real
+result. Coordinates are centred and scaled before fitting, as GDAL does internally.*
+
+| date | poly1 | poly2 | poly3 | TPS | (median LOO error, m) |
+|:--|--:|--:|--:|--:|:--|
+| 2025-06-06 | 5.62 | **2.93** | 3.00 | **1.41** | |
+| 2025-06-19 | 7.08 | **3.39** | 3.85 | **1.99** | |
+| 2025-08-14 | 7.25 | **3.51** | 3.88 | **1.77** | |
+| 2025-10-13 | 6.60 | **2.83** | 3.38 | **1.80** | |
+
+| date | poly1 | poly2 | poly3 | TPS | (95th percentile, m) |
+|:--|--:|--:|--:|--:|:--|
+| 2025-06-06 | 16.18 | 17.69 | 15.75 | 12.10 | |
+| 2025-06-19 | 20.84 | 20.75 | 18.80 | 15.39 | |
+| 2025-08-14 | 21.55 | 22.75 | 20.15 | 15.22 | |
+| 2025-10-13 | 18.97 | 20.61 | 18.20 | 15.13 | |
+
+**Verdict, in three parts, none of which is the one their writeup implies:**
+
+1. **The premise does not transfer as stated.** Their polynomial residual was ~8 m; ours is
+   **3.6 m median** - inside one 5 m base cell, and 7% of our 52 m plot side. Our fit is
+   about twice as good as the one they rejected, so their number is not our number, and
+   "polynomial geocoding is a defect" is not a claim we can inherit.
+2. **But the spline still halves it**, 3.62 -> 1.78 m median and 18.5 -> 15.2 m at the 95th
+   percentile. The tail is where this bites: a 19 m error is **35% of a plot side**, which
+   is real boundary mixing on the worst-placed farms. Erosion before sampling is currently
+   our only guard against it.
+3. ~~**The cheapest win is not the spline at all.** Forcing **order 2** recovers 0.46 m...~~
+   **WITHDRAWN.** Mining Coding Bits' notebook turned up the comment *"gcps= alone fits a
+   2nd-order polynomial"* - so there is no order-3 default to force away from. We could not
+   verify that directly (`osgeo` is not installed; an attempted marker-warp test produced an
+   empty raster and its apparent 564 m offset was the corner of an all-zeros array, not a
+   measurement), but the question is moot: order 2 and order 3 differ by **0.07 m** on
+   held-out points and 0.35 m in-sample. No recommendation either way. See
+   `DELIVERABLE_MINING.md` §2, which also records the trap that
+   **`METHOD='GCP_TPS'` is silently ignored by GDAL - the working key is `SRC_METHOD`.**
+
+So: **adopt, but neither for their reason nor necessarily by their method.** Order 2 first
+because it is nearly free; the spline afterwards if the tail matters.
+
+**Caveat, stated.** This measures the GCP fit only. It cannot see a common-mode error that
+shifts every GCP equally - the class Megalodon's geoid bug belonged to, and precisely the
+class our own calibration error belonged to. Our absolute registration against the vendor's
+geocoded product remains a separate and still-unmeasured question.
+
+### 12.1 Final scorecard on the borrowed ideas
+
+| idea | outcome | why |
+|:--|:--|:--|
+| Calibration = SF^2 | **Adopted** | confirmed on vendor NESZ alone, 0.35 dB mean error (§10.1) |
+| Kharif-matched anchors | **Adopted** | mechanism verified independently: annual vs kharif bajra (§10.2) |
+| Spatial hold-out | **Adopted as method** | and it overturned one of our own conclusions (§11.2) |
+| Polynomial -> order 2 / spline | **Adopted, reframed** | their 8 m premise is false for us; ours is 3.6 m, but order 2 and then TPS still improve it (§12) |
+| CoV excess over L=1 | **Rejected** | our grid is 4-5 looks, not 1 (§10.3) |
+| Plot-size de-biasing | **Rejected** | artefact is real, correction makes the index worse (§11.1) |
+
+Six borrowed ideas. **Two adopted as given, two adopted only after reframing, two rejected.**
+Not one of them was safe to take on the strength of a shortlisted writeup alone.

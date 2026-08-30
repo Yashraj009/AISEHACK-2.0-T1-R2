@@ -215,7 +215,7 @@ tr.us td.team{color:var(--accent)}
 <header class="mast">
   <p class="eyebrow">ANRF AISEHack 2.0 · Round 2 · Competitive teardown</p>
   <h1>The Sokhda Six</h1>
-  <p class="standfirst">Six teams were shortlisted for measuring the same 966 farms from the same four Capella scenes. Reading the other five surfaced one defect in our own pipeline, one strong vindication of our central design choice, and twenty-two things worth stealing.</p>
+  <p class="standfirst">Six teams were shortlisted for measuring the same 966 farms from the same four Capella scenes. Reading the other five surfaced a defect in our own radiometry, a flaw in how we weight our health index, and — measured against a competitor's published labels — all five competitors' actual submissions measured against ours.</p>
   <p class="byline">
     <span>Team GDHTM</span>
     <span>29 August 2026</span>
@@ -224,8 +224,9 @@ tr.us td.team{color:var(--accent)}
 </header>
 
 <div class="verdict">
-  <h2>Headline: our radiometric calibration is wrong</h2>
-  <p>Two rival teams form brightness as <span class="mono">β₀ = SF²·|z|²</span>. We use <span class="mono">SF·|z|²</span>. Measured on our own rasters, our shipped γ⁰ sits at <strong>+7.2 to +9.3 dB</strong> — a physical impossibility for a farm field. It is a one-line fix, and our rankings mostly survive it, but the explanation in our report is incorrect.</p>
+  <h2>Headline: our radiometric calibration is wrong — and it barely matters</h2>
+  <p>Two rival teams form brightness as <span class="mono">β₀ = SF²·|z|²</span>. We use <span class="mono">SF·|z|²</span>. Measured on our own rasters, our shipped γ⁰ sits at <strong>+7.2 to +9.3 dB</strong> — a physical impossibility for a farm field.</p>
+  <p style="margin-top:12px">Rebuilding the entire submission with the correction changes <strong>8 of 966 crop labels</strong>, gives Spearman <span class="mono">0.9908</span> on health, and moves village production by <strong>0.5%</strong>. Every shipped quantity is a difference between dates or a rank within a crop — never an absolute level — and that discipline is exactly what contained our own error.</p>
 </div>
 
 <h2><span class="num">01</span>The calibration finding</h2>
@@ -272,6 +273,14 @@ tr.us td.team{color:var(--accent)}
 </ol>
 
 <div class="panel stripe-warn">
+  <p class="panel-label">Why we got it wrong — and why that improves the answer</p>
+  <p>We did not invent the unsquared form. ESA's EDAP <em>Technical Note for Capella Data Assessment</em> (Issue 1.0, p7) states verbatim:</p>
+  <p style="margin:12px 0"><span class="mono">RADAR backscatter: beta0 = sc * |pixel|², where sc is a Scale Factor</span></p>
+  <p>Our transcription was accurate. The error is one level down — <strong>identifying ESA's <span class="mono">sc</span> with the product JSON's <span class="mono">collect.image.scale_factor</span></strong>. Capella's own <code>capella-reader</code> settles it: <span class="mono">beta0_complex = SF · DN</span>, so power carries SF <em>squared</em>, meaning ESA's <span class="mono">sc</span> is the JSON field squared. Both formulas are right; only the substitution was wrong.</p>
+  <p>If a judge cites ESA at us, the answer is not an admission but a precise technical point.</p>
+</div>
+
+<div class="panel stripe-warn">
   <p class="panel-label">Corroboration from a third direction</p>
   <p>Team <strong>oindrieelmondal</strong> describe their chain as <span class="mono">DN → power → scale_factor → β₀</span> — our convention — and are the only other team reporting an unexplained absolute offset against Capella's preview product (+1.81, +0.94, +1.57, −2.00 dB). They refuse to call it resolved. Same convention, same symptom.</p>
 </div>
@@ -299,7 +308,20 @@ tr.us td.team{color:var(--accent)}
 </table>
 </div>
 
-<p><strong>Verdict.</strong> Our shipped rankings are largely robust — a defensible position. But the explanation is wrong, and the fix makes the report <em>stronger</em>: we can claim an absolute level corroborated by two independent teams instead of conceding a 17 dB discrepancy.</p>
+<h3>Measured, not reasoned: the full rebuild</h3>
+<p>The correction is one multiply per date, so the whole submission can be rebuilt without touching a raster — scale the per-date power, re-derive the temporal block, and re-run the real <code>d4_submission.main()</code> with its outputs redirected. The Round 2 submission itself stays frozen.</p>
+<div class="tw">
+<table>
+  <thead><tr><th>Quantity</th><th>Shipped vs calibrated</th></tr></thead>
+  <tbody>
+    <tr><td><code>crop_type</code></td><td><strong>958/966 unchanged (99.2%)</strong> — 8 reassignments</td></tr>
+    <tr><td><code>health_index</code></td><td>Spearman <strong>0.9908</strong>; median Δ 0.905 pts; 7 farms move &gt;100 ranks</td></tr>
+    <tr><td><code>yield_estimate_to_date</code></td><td>Spearman <strong>0.9836</strong>; median Δ 0.008 t/ha</td></tr>
+    <tr><td>village production</td><td>594.9 t → <strong>597.8 t</strong> (+0.5%)</td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>This is the strongest possible outcome.</strong> The bug is real and the product is almost insensitive to it, because nothing we ship is an absolute level. Our stated discipline contained our own error — a better sentence for the Round 3 report than never having had the bug. The lesson is Megalodon's, exactly: <em>per-date consistency cannot catch a common-mode error in your own chain.</em> All four dates were wrong by the same mechanism, so every internal cross-check passed.</p>
 
 <h2><span class="num">02</span>The vindication</h2>
 
@@ -395,10 +417,49 @@ tr.us td.team{color:var(--accent)}
 <div class="coll">
   <div class="coll-head">
     <h3>Is a uniform field a healthy field?</h3>
-    <span class="chip bad">Unresolved · our exposure</span>
+    <span class="chip good">Resolved · tested, term survives</span>
   </div>
   <p>Our <code>uniform</code> family carries <strong>the largest weight in our health index (0.301)</strong> and has the same sign as the finding Megalodon publicly retracted. Coding Bits report their uniformity term correlating −0.146 with October greenness — opposite in sign to their other three components — and near-neutral on leave-one-out. Orion side-steps the problem entirely by using CoV <em>excess over the L=1 speckle prediction</em>, which is better posed: at one look, fully developed speckle gives CoV = 1.0 exactly, so any excess is real heterogeneity.</p>
-  <p>Three of five teams report this term as neutral, negative, or retracted. Our own report already admits it fails on an independent date. <strong>This is the highest-priority item after the calibration fix.</strong></p>
+  <p>Three of five teams report this term as neutral, negative, or retracted. Our own report already admits it fails on an independent date — so I tested it.</p>
+
+  <h4>What the test found</h4>
+  <p><strong>We do not have Megalodon's artefact.</strong> Theirs was variance rising as a farm nears the noise floor, so dim farms read as non-uniform — ρ(CV, brightness) negative. Ours is <span class="mono">+0.173</span>, the opposite sign. But ρ(CV, pixel count) is <span class="mono">+0.229</span>, which is the <em>Coding Bits</em> artefact instead: larger plots read as more variable.</p>
+  <p><strong>The term is null against both witnesses</strong> — ρ = −0.030 vs Sentinel-2 NDVI, −0.020 vs Sentinel-1 VH (+0.084 and +0.051 with brightness partialled out).</p>
+
+  <div class="panel stripe-bad" style="margin-top:20px">
+    <p class="panel-label">The real finding is one level up</p>
+    <p>Our weights are <span class="mono">w<sub>k</sub> ∝ 1/Σ<sub>j</sub>|ρ(k,j)|</span> — each family rewarded for being <em>uncorrelated with the others</em>. The rule is genuinely blind to every witness, which is why our report defends it. But independence is not information, and <strong>a family carrying only noise correlates with nothing</strong>, so the rule hands it the largest weight.</p>
+    <div class="tw" style="margin:14px 0 0;border:0;background:transparent">
+    <table>
+      <thead><tr><th>Family</th><th class="num">Shipped weight</th><th class="num">Mean |ρ| vs witnesses</th></tr></thead>
+      <tbody>
+        <tr><td><code>growth</code></td><td class="num">0.283</td><td class="num">0.285</td></tr>
+        <tr><td><code>persist</code></td><td class="num">0.228</td><td class="num">0.221</td></tr>
+        <tr><td><code>level</code></td><td class="num">0.189</td><td class="num">0.214</td></tr>
+        <tr><td><code>uniform</code></td><td class="num"><strong>0.301</strong></td><td class="num"><strong>0.025</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-top:14px">Spearman(weight, informativeness) = <strong>−0.200</strong>. The rule is mildly <em>anti</em>-correlated with how informative a family actually is.</p>
+  </div>
+
+  <div class="panel stripe-good">
+    <p class="panel-label">And yet removing it makes the index worse</p>
+    <div class="tw" style="margin:0;border:0;background:transparent">
+    <table>
+      <thead><tr><th>Weighting (all still blind)</th><th class="num">ρ vs NDVI</th><th class="num">ρ vs S1 VH</th></tr></thead>
+      <tbody>
+        <tr class="us"><td class="team">shipped</td><td class="num">+0.127</td><td class="num">+0.156</td></tr>
+        <tr><td>equal</td><td class="num">+0.122</td><td class="num">+0.151</td></tr>
+        <tr><td>drop uniform, rest equal</td><td class="num">+0.078</td><td class="num">+0.133</td></tr>
+        <tr><td>drop uniform, rest as shipped</td><td class="num">+0.086</td><td class="num">+0.136</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-top:14px">The shipped weighting is best of the four, on both witnesses. <code>uniform</code> earns its place as a <strong>decorrelator, not a measurement</strong> — <code>level</code> and <code>persist</code> are both brightness-like and partly redundant, so re-weighting toward them adds correlation without adding information.</p>
+  </div>
+
+  <p><strong>Revised action.</strong> Not "drop or reweight". Re-pose the term as Orion does (CoV excess over the L=1 speckle prediction), de-bias for plot size, and <em>report the decorrelator argument explicitly</em> rather than letting the weight look like a claim that uniformity means health. Coding Bits kept theirs at 0.20 after measuring it near-neutral; Orion kept theirs at 0.20. Three teams independently retain a near-neutral uniformity term — we are not the outlier, we simply weight ours highest and had not measured why.</p>
 </div>
 
 <div class="coll">
@@ -420,7 +481,296 @@ tr.us td.team{color:var(--accent)}
   <p>Same 447.5 ha. We and Megalodon agree within 3% on independent pipelines, both anchoring on district statistics discounted by crop progress. Much of the spread is crop mix rather than the yield model — Orion assigns 130 ha to maize where we assign 27. Being one of two teams in the low cluster is a defensible position and worth stating.</p>
 </div>
 
-<h2><span class="num">05</span>Where we stand</h2>
+<h2><span class="num">05</span>All six, side by side</h2>
+
+<p class="lede">Every shortlisted team's deliverable, same schema, same <code>farm_id</code> 1&ndash;966. Directly comparable.</p>
+
+<div class="panel stripe-good">
+  <p class="panel-label">The structural result</p>
+  <div class="tw" style="margin:0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>Column</th><th class="num">Agreement across the six teams</th></tr></thead>
+    <tbody>
+      <tr><td>crop type</td><td class="num">mean pairwise &kappa; <strong>+0.060</strong> &mdash; chance</td></tr>
+      <tr class="us"><td class="team">health index</td><td class="num">mean pairwise &rho; <strong>+0.337</strong></td></tr>
+      <tr><td>yield to date</td><td class="num">mean pairwise &rho; <strong>+0.073</strong> &mdash; chance</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px"><strong>Six independent pipelines agree on health, and not on crop type or yield.</strong> That is a statement about the problem, not about any one team &mdash; and it is the most useful thing this comparison produced. Only one pair agrees on crop type at all (Coding Bits &times; Megalodon, &kappa; +0.461), and both derive their map from optical phenology, so they are not independent evidence.</p>
+</div>
+
+<h3>There is no usable consensus crop map</h3>
+<p>The hope was that majority voting across six teams would produce pseudo-ground-truth. It does not. <strong>Four farms out of 966</strong> carry unanimous agreement; 30.2% reach 4-of-6.</p>
+<p>And the majority label is not better than its members. Scored by Kruskal&ndash;Wallis <em>effect size</em> (&epsilon;&sup2;, which unlike raw H does not grow with sample size) against the two withheld sensors:</p>
+<div class="tw">
+<table>
+  <thead><tr><th>Labelling</th><th class="num">&epsilon;&sup2; vs S2 NDVI</th><th class="num">&epsilon;&sup2; vs S1 VH</th></tr></thead>
+  <tbody>
+    <tr><td>8bit</td><td class="num"><strong>0.2565</strong></td><td class="num">0.0797</td></tr>
+    <tr><td>Coding Bits</td><td class="num">0.2340</td><td class="num">0.0547</td></tr>
+    <tr><td>DeepThinkers</td><td class="num">0.2236</td><td class="num">0.0969</td></tr>
+    <tr><td>Megalodon</td><td class="num">0.1809</td><td class="num">0.0288</td></tr>
+    <tr class="us"><td class="team">GDHTM</td><td class="num">0.1699</td><td class="num"><strong>0.0988</strong></td></tr>
+    <tr><td>Orion</td><td class="num">0.1560</td><td class="num">0.0383</td></tr>
+    <tr><td><em>consensus</em></td><td class="num"><em>0.1657</em></td><td class="num"><em>0.0263</em></td></tr>
+  </tbody>
+</table>
+</div>
+<p>The consensus is beaten by four of six maps on NDVI and by <em>every</em> one on Sentinel-1 VH. With pairwise &kappa; near 0.06, majority voting averages disagreement rather than accumulating evidence &mdash; it destroys signal instead of building it. <strong>Report it as a negative result:</strong> "we tried to build a consensus reference and it does not exist" is a stronger contribution than a hedge about label uncertainty.</p>
+<p>We rank 5th of 6 on NDVI separation and <strong>1st of 6 on Sentinel-1 VH</strong>.</p>
+
+<h3>Our crop mix is the modal position</h3>
+<div class="tw">
+<table>
+  <thead><tr><th>Crop</th><th class="num">GDHTM</th><th class="num">Coding Bits</th><th class="num">8bit</th><th class="num">Megalodon</th><th class="num">Orion</th><th class="num">DeepThink</th></tr></thead>
+  <tbody>
+    <tr><td>Cotton</td><td class="num"><strong>43.22</strong></td><td class="num">44.60</td><td class="num">43.06</td><td class="num">48.47</td><td class="num">13.69</td><td class="num">39.39</td></tr>
+    <tr><td>Groundnut</td><td class="num"><strong>30.76</strong></td><td class="num">32.19</td><td class="num">28.06</td><td class="num">38.78</td><td class="num">25.88</td><td class="num">29.24</td></tr>
+    <tr><td>Rice</td><td class="num"><strong>10.60</strong></td><td class="num">10.91</td><td class="num">13.49</td><td class="num">8.85</td><td class="num">18.39</td><td class="num">16.03</td></tr>
+    <tr><td>Bajra</td><td class="num"><strong>9.45</strong></td><td class="num">9.84</td><td class="num">7.73</td><td class="num">3.91</td><td class="num">12.90</td><td class="num">8.22</td></tr>
+    <tr><td>Maize</td><td class="num"><strong>5.97</strong></td><td class="num">2.46</td><td class="num">7.66</td><td class="num">0.00</td><td class="num">29.14</td><td class="num">7.12</td></tr>
+  </tbody>
+</table>
+</div>
+<p>On cotton, groundnut and rice we sit within 1.5 pp of Coding Bits. Orion is the outlier on cotton (13.7 against a 39&ndash;48 cluster) and maize (29.1 against 0&ndash;7.7) &mdash; the position &sect;02 already argued against.</p>
+
+<h2><span class="num">06</span>Yield: a good measurement on a bad label</h2>
+
+<p class="lede">One column puts us on the wrong side of the field. My first explanation for it was wrong, and testing it produced a better answer.</p>
+
+<p>Pairwise Spearman on yield puts us <strong>negatively</strong> correlated with three of five teams (Coding Bits &minus;0.266, 8bit &minus;0.315, Orion &minus;0.313). We are the only team there.</p>
+
+<div class="panel stripe-warn">
+  <p class="panel-label">The wrong explanation, tested and rejected</p>
+  <p>Our bajra anchor is 40&ndash;100% above every other team's, so the obvious read was that our inverted per-crop ordering caused it. Correcting bajra to the external median changes the cross-team correlations by a mean of <strong>&minus;0.001</strong>. Not the cause.</p>
+</div>
+
+<div class="panel stripe-good">
+  <p class="panel-label">The right explanation</p>
+  <p>Our yield is 82% explained by the crop label (&eta;&sup2; = 0.820), and the crop maps agree at chance. So the yield columns inherit the crop disagreement. Holding the label fixed separates the two:</p>
+  <div class="tw" style="margin:14px 0 0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>vs team</th><th class="num">all farms</th><th class="num">crop labels agree</th><th class="num">n</th></tr></thead>
+    <tbody>
+      <tr><td>Megalodon</td><td class="num">+0.000</td><td class="num"><strong>+0.678</strong></td><td class="num">321</td></tr>
+      <tr><td>DeepThinkers</td><td class="num">&minus;0.069</td><td class="num"><strong>+0.751</strong></td><td class="num">166</td></tr>
+      <tr><td>Coding Bits</td><td class="num">&minus;0.266</td><td class="num">+0.019</td><td class="num">351</td></tr>
+      <tr><td>Orion</td><td class="num">&minus;0.313</td><td class="num">&minus;0.173</td><td class="num">180</td></tr>
+      <tr><td>8bit</td><td class="num">&minus;0.315</td><td class="num">&minus;0.262</td><td class="num">292</td></tr>
+      <tr class="us"><td class="team">mean change</td><td class="num"></td><td class="num"><strong>+0.395</strong></td><td class="num"></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px">Conditioned on agreeing about the crop, our yield agrees strongly with the two teams whose method most resembles ours &mdash; both anchor on district statistics discounted by crop progress, exactly as we do. The remaining negatives are 8bit (unit problem in their shipped column) and Orion (whose crop map is the field outlier).</p>
+</div>
+
+<p>The honest statement for Round 3 is not "our yield is an outlier". It is: <strong>our yield column is a good measurement carried on a bad label</strong>, and its cross-team disagreement is the crop map's, not the yield model's. Orion faced the mirror-image problem &mdash; their health and yield were the same number. Ours is the other failure mode: too much of the column is the label.</p>
+
+<h3>The bajra anchor is still wrong, for its own reasons</h3>
+<div class="tw">
+<table>
+  <thead><tr><th>Full-season t/ha</th><th class="num">OURS</th><th class="num">district base</th><th class="num">Orion</th><th class="num">DeepThink</th><th class="num">Megalodon</th><th class="num">ours vs median</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Bajra</strong></td><td class="num"><strong>2.71</strong></td><td class="num">7,022 ha</td><td class="num">1.79</td><td class="num">1.36</td><td class="num">1.89</td><td class="num"><strong>+52%</strong></td></tr>
+    <tr><td>Groundnut</td><td class="num">2.51</td><td class="num">1,004 ha</td><td class="num">3.03</td><td class="num">2.73</td><td class="num">1.94</td><td class="num">&minus;8%</td></tr>
+    <tr><td>Maize</td><td class="num">2.31</td><td class="num">40,794 ha</td><td class="num">3.11</td><td class="num">2.03</td><td class="num">&mdash;</td><td class="num">&minus;10%</td></tr>
+    <tr><td>Rice</td><td class="num">1.69</td><td class="num">49,818 ha</td><td class="num">2.54</td><td class="num">1.74</td><td class="num">2.00</td><td class="num">&minus;15%</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Bajra is the sole outlier, off a base of 2.5% of the district's five-crop area. Megalodon's rule &mdash; a district mean is usable only where the district sows enough of the crop &mdash; with a declared 20,000 ha threshold flags exactly <strong>bajra and groundnut</strong>.</p>
+
+<div class="panel stripe-bad">
+  <p class="panel-label">The argument that needs no competitor at all</p>
+  <p>Those are the same two crops our own <code>data_aux/SOURCES.md</code> already carries a <strong>RETRACTED</strong> section about, conceding the table is <em>"a bad prior for this village"</em>. We applied that retraction to the <strong>area</strong> prior and left the <strong>yield</strong> anchor drawn from the same rows of the same table. That inconsistency is ours, found without any competitor's help.</p>
+  <p style="margin-top:10px">Correcting bajra alone: village production 594.9 &rarr; <strong>556.4 t</strong> (&minus;6.5%), moving us from 3% above Megalodon to 4% below. Small at aggregate level &mdash; again because this product is built from ranks and shares.</p>
+  <p style="margin-top:10px"><strong>Two separate bajra defects; the anchor fixes one.</strong> Rescaling a crop by a positive scalar cannot change its within-crop rank, so our report's finding that bajra's season-integral contradicts the witness is untouched &mdash; &rho; stays &minus;0.265. The anchor sets the level; the witness disagreement is about ordering inside the crop.</p>
+</div>
+
+<h2><span class="num">07</span>Testing their claims, not trusting them</h2>
+
+<p class="lede">Everything above began with something another team asserted. A shortlisted writeup is a hypothesis, not a result &mdash; and two of these claims would change numbers we ship.</p>
+
+<h3>Calibration, adjudicated by the vendor's own noise floor</h3>
+<p>The three arguments for the squared convention were all somebody's reading: Coding Bits argued from plausibility, Orion cited <code>capella-reader</code>, ESA states a formula whose <span class="mono">sc</span> is ambiguous. So I went to a number Capella itself put in the product: <code>nesz_peak</code>, an absolute dB noise floor, declared per scene.</p>
+<p>A real scene contains smooth dark surfaces whose return approaches the system noise floor. The darkest percentiles must sit near it &mdash; never tens of dB above, which would mean the sensor never reaches its own noise anywhere.</p>
+<div class="tw">
+<table>
+  <thead><tr><th>Date</th><th class="num">declared NESZ</th><th class="num">darkest 0.1% as shipped</th><th class="num">vs NESZ</th><th class="num">under SF&sup2;</th><th class="num">vs NESZ</th></tr></thead>
+  <tbody>
+    <tr><td>2025-06-06</td><td class="num">&minus;26.13</td><td class="num">0.0</td><td class="num"><strong>+26.1</strong></td><td class="num">&minus;26.7</td><td class="num"><strong>&minus;0.6</strong></td></tr>
+    <tr><td>2025-06-19</td><td class="num">&minus;27.76</td><td class="num">&minus;1.5</td><td class="num"><strong>+26.3</strong></td><td class="num">&minus;27.7</td><td class="num"><strong>+0.0</strong></td></tr>
+    <tr><td>2025-08-14</td><td class="num">&minus;27.97</td><td class="num">&minus;1.4</td><td class="num"><strong>+26.6</strong></td><td class="num">&minus;28.4</td><td class="num"><strong>&minus;0.4</strong></td></tr>
+    <tr><td>2025-10-13</td><td class="num">&minus;27.35</td><td class="num">0.9</td><td class="num"><strong>+28.2</strong></td><td class="num">&minus;27.8</td><td class="num"><strong>&minus;0.4</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<p>Under SF&sup2; the measured floor lands on the declared one with a mean absolute error of <strong>0.35 dB, across four scenes with four different NESZ values and four different scale factors</strong>. <strong>The calibration finding no longer rests on any competitor claim.</strong></p>
+<p>Also settled: the GEO preview cannot adjudicate this &mdash; it is <code>uint8</code>, 0&ndash;255, a stretched quicklook with no radiometric meaning. That is why DeepThinkers' preview comparison gave an offset that reversed sign on one of four dates. Their open question has an answer: the instrument they used cannot measure the thing.</p>
+
+<h3>The bajra anchor: they are right, for a reason none of them gave</h3>
+<p>Three teams quoting 1.36&ndash;1.89 t/ha against our 2.71 is a majority, not evidence. Two independent checks.</p>
+<p><strong>Our own table is not internally consistent.</strong> Yield should equal production over area. Bajra's implied value is <strong>2,478 kg/ha against the 2,714 we ship</strong> &mdash; the largest gap of the four non-cotton crops, in the direction that inflates our anchor. A 9% cut before any competitor number is consulted.</p>
+<p><strong>And the remaining gap has a mechanism.</strong> Gujarat grows bajra in two non-comparable seasons:</p>
+<div class="tw">
+<table>
+  <thead><tr><th>Season</th><th class="num">grain yield</th></tr></thead>
+  <tbody>
+    <tr><td>summer, irrigated</td><td class="num"><strong>4,000&ndash;5,000 kg/ha</strong></td></tr>
+    <tr><td>rainfed kharif</td><td class="num"><strong>1,200&ndash;1,800 kg/ha</strong></td></tr>
+    <tr><td>irrigated, general</td><td class="num">2,500&ndash;3,500 kg/ha</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Our anchor is an <strong>annual</strong> district figure &mdash; every season summed &mdash; and it lands exactly where a blend of the two should. Every competitor figure is explicitly <strong>kharif</strong>, and all three sit inside the rainfed kharif band. Round 2 observes 6 June to 13 October. That is kharif.</p>
+<p>So <strong>A5 is not "copy their bajra number"</strong>. It is: source a kharif anchor for every crop, and check each crop for a second cropping season before using an annual district mean. That rule catches bajra, flags maize, and comes from agronomy rather than a competitor's table.</p>
+
+<div class="panel stripe-bad">
+  <p class="panel-label">One of their ideas would have broken our pipeline</p>
+  <p>Orion re-poses uniformity as <strong>CoV excess over the L=1 speckle prediction</strong> &mdash; at one look, fully developed speckle gives CoV = 1.0 exactly. Better posed than raw CoV, and I had it in the backlog as A3.</p>
+  <p style="margin-top:10px">It does not port. Our <code>prep_r2</code> resamples by average onto a 5 m grid, which multilooks. Measured on our own farms, median CoV is 0.43&ndash;0.49 &mdash; <strong>4 to 5 looks, not 1</strong>. Subtracting a 1.0 baseline would drive every farm's "excess" large and negative, with the ordering dominated by the looks estimate rather than heterogeneity.</p>
+  <p style="margin-top:10px">That is <em>precisely</em> the failure Megalodon documented and retracted: <em>"a per-pixel estimate against a farm-level statistic drove most farms negative."</em> Adopting Orion's formulation verbatim would have introduced the exact bug another team had already published a retraction about.</p>
+</div>
+
+<h3>Evidence grade for every recommendation here</h3>
+<div class="tw">
+<table>
+  <thead><tr><th>Item</th><th>Grade</th><th>Basis</th></tr></thead>
+  <tbody>
+    <tr><td>A1 calibration = SF&sup2;</td><td><span class="chip good">Own</span></td><td>vendor NESZ, 4 scenes, 0.35 dB mean error</td></tr>
+    <tr><td>A1 impact is small</td><td><span class="chip good">Own</span></td><td>full rebuild: 99.2% labels unchanged</td></tr>
+    <tr><td>A5 bajra anchor wrong</td><td><span class="chip good">Mechanism</span></td><td>our table's internal gap + kharif/annual season</td></tr>
+    <tr><td>A6 yield over-depends on label</td><td><span class="chip good">Own</span></td><td>&eta;&sup2; 0.820; +0.395 lift holding label fixed</td></tr>
+    <tr><td>Uniformity not an SNR proxy</td><td><span class="chip good">Own</span></td><td>&rho;(CV, brightness) +0.173, opposite sign</td></tr>
+    <tr><td>Blind weights anti-correlate with information</td><td><span class="chip good">Own</span></td><td>Spearman &minus;0.200</td></tr>
+    <tr><td>No usable consensus map</td><td><span class="chip good">Own</span></td><td>4/966 unanimous</td></tr>
+    <tr><td>A3 CoV excess over L=1</td><td><span class="chip bad">Theirs &mdash; fails</span></td><td>our grid is 4&ndash;5 looks. Do not adopt as written</td></tr>
+    <tr><td>Quegan&ndash;Yu speckle filter</td><td><span class="chip warn">Theirs</span></td><td>2.4&ndash;2.8&times; looks claimed on <em>their</em> data</td></tr>
+    <tr><td>Thin-plate spline geocoding</td><td><span class="chip warn">Theirs</span></td><td>their ~8 m residual; ours is unmeasured</td></tr>
+    <tr><td>Spatial hold-out for weights</td><td><span class="chip warn">Theirs</span></td><td>sound in principle; never run on our features</td></tr>
+    <tr><td>Plot-size de-biasing</td><td><span class="chip neutral">Partly own</span></td><td>&rho;(CV, npix) = +0.229 here; the correction is untested</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Nothing in a <em>Theirs</em> row should enter a Round 3 report as established. The two that would have changed shipped numbers are now <em>Own</em> and <em>Mechanism</em>; one <em>Theirs</em> row turned out to be actively wrong for us.</p>
+
+<h2><span class="num">08</span>The rest, run on our own features</h2>
+
+<p class="lede">Three ideas were still graded <em>Theirs</em>. Two could change the health index, so both were tested rather than adopted &mdash; and one of them overturned a conclusion of mine.</p>
+
+<h3>Plot-size de-biasing &mdash; rejected</h3>
+<p>The artefact is genuinely present here: our families correlate &minus;0.234 to +0.247 with log(plot area). But removing it doesn't help, and <code>persist</code> gets <em>worse</em> (+0.247 &rarr; +0.376) because its area dependence isn't linear in log(area), so a linear detrend amplifies it.</p>
+<div class="tw">
+<table>
+  <thead><tr><th>Index</th><th class="num">&rho; vs NDVI</th><th class="num">&rho; vs S1 VH</th></tr></thead>
+  <tbody>
+    <tr class="us"><td class="team">shipped</td><td class="num"><strong>+0.127</strong></td><td class="num"><strong>+0.156</strong></td></tr>
+    <tr><td>plot-size de-biased</td><td class="num">+0.115</td><td class="num">+0.147</td></tr>
+  </tbody>
+</table>
+</div>
+<p>The artefact is real; the correction as specified makes the index slightly worse on both witnesses. Revisiting it would need a non-linear detrend for <code>persist</code> &mdash; a different method than the one being borrowed.</p>
+
+<h3>Spatial hold-out &mdash; good method, and it corrects me</h3>
+<div class="tw">
+<table>
+  <thead><tr><th>Weights derived on</th><th class="num">resulting <code>uniform</code> weight</th><th>scored on</th><th class="num">&rho; NDVI</th><th class="num">vs shipped</th></tr></thead>
+  <tbody>
+    <tr><td>west half</td><td class="num">0.418</td><td>east</td><td class="num"><strong>+0.203</strong></td><td class="num">+0.185</td></tr>
+    <tr><td>east half</td><td class="num">0.441</td><td>west</td><td class="num"><strong>+0.135</strong></td><td class="num">+0.160</td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>Our blind rule consistently over-weights <code>uniform</code></strong> &mdash; 0.301 on the full sample, 0.418&ndash;0.441 on either half alone. It is the family with no witness signal, and the rule's bias toward it strengthens as the sample shrinks, which is exactly what a rule rewarding uncorrelatedness does when noise gets noisier.</p>
+
+<div class="panel stripe-warn">
+  <p class="panel-label">Correction to &sect;04</p>
+  <p>Earlier I reported the shipped weighting as "best of four" on the full sample. <strong>It does not survive the hold-out.</strong> Mean across both directions:</p>
+  <div class="tw" style="margin:14px 0 0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>Weighting</th><th class="num">mean held-out &rho; NDVI</th><th class="num">mean &rho; S1 VH</th><th class="num">spread between halves</th></tr></thead>
+    <tbody>
+      <tr><td>derived on the other half</td><td class="num">0.169</td><td class="num">0.183</td><td class="num">0.068</td></tr>
+      <tr><td>shipped, full-sample blind</td><td class="num">0.172</td><td class="num">0.181</td><td class="num">0.025</td></tr>
+      <tr><td>equal</td><td class="num">0.166</td><td class="num">0.174</td><td class="num">0.004</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px">The three schemes sit within <strong>0.007</strong> of each other while the spread <em>between halves</em> is 0.007&ndash;0.068 &mdash; an order of magnitude larger. The ranking flips by direction.</p>
+  <p style="margin-top:10px"><strong>Our health index is insensitive to the weighting choice.</strong> That is a robustness result, not a vindication of the blind rule &mdash; and a better claim than the one I made before. It also means A3 was mis-scoped: there is no weighting fix worth chasing.</p>
+</div>
+
+<h3>Geocoding residual &mdash; still untested, and flagged as such</h3>
+<p>Coding Bits report ~8 m polynomial residual against a 24.7 m median plot. Ours is 0.274 ha &mdash; a <strong>52.4 m square</strong> &mdash; so comparable geometry, but <strong>our own residual has never been measured</strong>. Extracting it needs the GCP fit residuals out of <code>prep_r2.py</code>, a code change rather than an analysis. This is the one borrowed claim whose <em>premise</em> is untested for us, and it should be written that way rather than cited as a reason to adopt splines.</p>
+
+<div class="panel stripe-good">
+  <p class="panel-label">Where the six borrowed ideas ended up</p>
+  <div class="tw" style="margin:0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>Idea</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>Calibration = SF&sup2;</td><td><span class="chip good">Adopted</span> confirmed on vendor NESZ alone</td></tr>
+      <tr><td>Kharif-matched yield anchors</td><td><span class="chip good">Adopted</span> mechanism verified independently</td></tr>
+      <tr><td>Spatial hold-out</td><td><span class="chip good">Adopted as method</span> overturned one of our own conclusions</td></tr>
+      <tr><td>CoV excess over L=1</td><td><span class="chip bad">Rejected</span> our grid is 4&ndash;5 looks</td></tr>
+      <tr><td>Plot-size de-biasing</td><td><span class="chip bad">Rejected</span> real artefact, correction makes it worse</td></tr>
+      <tr><td>Thin-plate spline geocoding</td><td><span class="chip warn">Undecided</span> premise unmeasured on our chain</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px">Four of six needed testing before they could be believed, and <strong>two would have made the product worse.</strong></p>
+</div>
+
+<h2><span class="num">09</span>The geocoding residual, finally measured</h2>
+
+<p class="lede">The last borrowed claim whose premise we had never tested. It turns out to be false for us &mdash; and the fix is still worth doing, for a different reason.</p>
+
+<p><code>prep_r2.geocode()</code> calls <code>reproject(gcps=...)</code>, and GDAL with 225 GCPs fits an <strong>order-3 polynomial</strong> &mdash; the class Coding Bits measured at ~8 m and replaced with a spline.</p>
+
+<p><strong>Method note.</strong> Scoring a spline by its residual <em>at</em> the control points would be rigged &mdash; a TPS interpolates every one exactly, so its error there is zero by construction. Both are scored <strong>leave-one-out</strong>, which is what matters for a farm boundary sitting between control points.</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Date</th><th class="num">poly1</th><th class="num">poly2</th><th class="num">poly3</th><th class="num">TPS</th></tr></thead>
+  <tbody>
+    <tr><td>2025-06-06</td><td class="num">5.62</td><td class="num"><strong>2.93</strong></td><td class="num">3.00</td><td class="num"><strong>1.41</strong></td></tr>
+    <tr><td>2025-06-19</td><td class="num">7.08</td><td class="num"><strong>3.39</strong></td><td class="num">3.85</td><td class="num"><strong>1.99</strong></td></tr>
+    <tr><td>2025-08-14</td><td class="num">7.25</td><td class="num"><strong>3.51</strong></td><td class="num">3.88</td><td class="num"><strong>1.77</strong></td></tr>
+    <tr><td>2025-10-13</td><td class="num">6.60</td><td class="num"><strong>2.83</strong></td><td class="num">3.38</td><td class="num"><strong>1.80</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<p><em>Median leave-one-out error in metres. 95th percentiles run 15.8&ndash;20.2 m for the polynomials and 12.1&ndash;15.4 m for the spline.</em></p>
+
+<div class="panel stripe-warn">
+  <p class="panel-label">Verdict &mdash; three parts, none of them their argument</p>
+  <p><strong>1. The premise does not transfer.</strong> Their polynomial residual was ~8 m; ours is <strong>3.6 m median</strong> &mdash; inside one 5 m base cell, 7% of our 52 m plot side. Our fit is about twice as good as the one they rejected, so "polynomial geocoding is a defect" is not a claim we can inherit.</p>
+  <p style="margin-top:10px"><strong>2. But the spline still halves it</strong>, 3.62 &rarr; 1.78 m median, 18.5 &rarr; 15.2 m at p95. The tail is where it bites: a 19 m error is <strong>35% of a plot side</strong> &mdash; real boundary mixing on the worst-placed farms, with erosion as our only current guard.</p>
+  <p style="margin-top:10px"><strong>3. The cheapest win isn't the spline.</strong> Forcing <strong>order 2</strong> recovers 0.46 m for a one-argument change, on every date, because GDAL's automatic order-3 selection is <em>overfitting</em> our GCP lattice. A cubic is worse than a quadratic here on held-out points.</p>
+</div>
+
+<p><strong>Caveat.</strong> This measures the GCP fit only. It cannot see a common-mode error shifting every GCP equally &mdash; the class Megalodon's geoid bug belonged to, and exactly the class our own calibration error belonged to. Absolute registration against the vendor's geocoded product is a separate, still-unmeasured question.</p>
+
+<div class="panel stripe-good">
+  <p class="panel-label">Final scorecard on the six borrowed ideas</p>
+  <div class="tw" style="margin:0;border:0;background:transparent">
+  <table>
+    <thead><tr><th>Idea</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>Calibration = SF&sup2;</td><td><span class="chip good">Adopted</span></td></tr>
+      <tr><td>Kharif-matched anchors</td><td><span class="chip good">Adopted</span></td></tr>
+      <tr><td>Spatial hold-out</td><td><span class="chip good">Adopted as method</span></td></tr>
+      <tr><td>Polynomial &rarr; order 2 / spline</td><td><span class="chip neutral">Adopted, reframed</span></td></tr>
+      <tr><td>CoV excess over L=1</td><td><span class="chip bad">Rejected</span></td></tr>
+      <tr><td>Plot-size de-biasing</td><td><span class="chip bad">Rejected</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:14px">Two adopted as given, two adopted only after reframing, two rejected. <strong>Not one was safe to take on the strength of a shortlisted writeup alone.</strong></p>
+</div>
+
+<h2><span class="num">10</span>Where we stand</h2>
 
 <h3>Ahead</h3>
 <ul>
@@ -459,7 +809,7 @@ tr.us td.team{color:var(--accent)}
   <li><strong>No sub-village product.</strong> Our village table is one row. Orion's 500 m grid found 32 points of health spread hidden behind theirs.</li>
 </ol>
 
-<h2><span class="num">06</span>The backlog</h2>
+<h2><span class="num">11</span>The backlog</h2>
 
 <p class="lede">Ranked by rubric impact divided by effort. Tier A blocks everything downstream of it.</p>
 
@@ -492,7 +842,7 @@ tr.us td.team{color:var(--accent)}
   <li><strong>Orion's decision to drop the Round 1 shares.</strong> The evidence runs against them.</li>
 </ul>
 
-<h2><span class="num">07</span>Round 3 preparation</h2>
+<h2><span class="num">12</span>Round 3 preparation</h2>
 
 <h3>What the shortlist reveals about the scoring</h3>
 <p>All six shortlisted writeups share five traits. That is not coincidence — it is the scoring function:</p>
@@ -536,7 +886,7 @@ tr.us td.team{color:var(--accent)}
 <h3>The highest-value action outside the code</h3>
 <div class="panel stripe-good">
   <p><strong>Consensus pseudo-ground-truth.</strong> Six teams labelled the <em>same</em> 966 farms. Where four or more agree, that is the closest thing to labels that will ever exist for Sokhda — and it would let us measure our crop column against something external for the first time.</p>
-  <p><strong>This is partially executable today.</strong> oindrieelmondal published their submission notebook and both datasets publicly. One competitor CSV in hand converts our κ = 0.103 self-criticism into a two-way agreement measurement. Ask the other four; several may share.</p>
+  <p><strong>Answered — see §05.</strong> All five competitor submissions were compared. There is no usable consensus: 4 farms of 966 carry unanimous agreement, and the majority label separates the withheld sensors <em>worse</em> than four of the six individual maps. The consensus reference does not exist, and that is the finding.</p>
 </div>
 
 <h3>Other uses for this material</h3>
@@ -546,7 +896,7 @@ tr.us td.team{color:var(--accent)}
   <li><strong>Anchor reconciliation.</strong> Four teams, four different yield anchors and a 2.1× production spread. Orion's note that Indian statistics quote the same crop three ways — with their cotton lint→kapas conversion at 34% ginning outturn — is the standard to match.</li>
 </ul>
 
-<h2><span class="num">08</span>Order of work</h2>
+<h2><span class="num">13</span>Order of work</h2>
 <ol>
   <li><strong>A1 + A2</strong> — calibration fix and report correction. Everything sits downstream of a correct radiometry.</li>
   <li><strong>A3</strong> — the uniformity term. Largest weight, weakest evidence, one public retraction against it.</li>
@@ -559,8 +909,8 @@ tr.us td.team{color:var(--accent)}
 <p class="foot">
   Team GDHTM · ANRF AISEHack 2.0 Round 2<br>
   Sources: five competitor writeups as published on Kaggle, 29 August 2026.<br>
-  Every figure attributed to GDHTM was recomputed from the shipped artefacts, not quoted from the report.<br>
-  Full working: <span class="mono">internal/research/COMPETITOR_ANALYSIS_R2.md</span>
+  Every figure attributed to GDHTM was recomputed from the shipped artefacts, not quoted from the report.<br>Experiments in <span class="mono">post-r2/experiments/</span>. The Round 2 submission is frozen and untouched.<br>
+  Full working: <span class="mono">post-r2/COMPETITOR_ANALYSIS_R2.md</span>
 </p>
 
 </div>

@@ -22,3 +22,22 @@ upload/
 # build_documents.py's sync_docs_figures()), so this copy is redundant with it.
 results/cache/
 results/figures/
+
+# post-r2 experiment scratch. All regenerable by post-r2/experiments/*.py:
+#  - e3's download/ is 41 MB of a COMPETITOR's published kernel output (rasters,
+#    parquet, figures). Their work, not ours, and re-fetchable with the Kaggle CLI.
+#    The derived comparison we actually cite (crop_agreement.csv) is kept.
+#  - e1's stage/ is a full parallel rebuild of the submission under the corrected
+#    calibration. Regenerable, and must never be mistaken for the shipped file.
+post-r2/results/e3_consensus/download/
+post-r2/results/e1_calibration/stage/
+
+# The five competitors' Round 2 deliverables, kept locally as read-only analysis inputs.
+# 22 MB of other teams' notebooks, reports and figures. They are published work, but
+# redistributing them from our public repo is the team's call, not a default -- and the
+# experiments name their source so anyone can re-obtain them. Flip this line if the team
+# decides to vendor them.
+post-r2/writeups_submissions/
+
+# raw paged API responses, regenerable from data.gov.in with e10
+post-r2/results/e10_kharif_anchors/vad_*.json

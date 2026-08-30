@@ -1,0 +1,97 @@
+==============================================================================
+TEST 1  CALIBRATION, ADJUDICATED BY THE VENDOR'S OWN NOISE FLOOR
+==============================================================================
+  The GEO preview cannot settle this: it is uint8, 0-255, a stretched quicklook
+  with no radiometric meaning. (DeepThinkers compared against it and got an
+  offset that reversed sign on one of four dates -- that is the reason why.)
+
+  `collect.image.nesz_peak` is different: a vendor-declared ABSOLUTE dB level.
+  Physics: a scene contains smooth dark surfaces whose return approaches the
+  system noise floor, so the darkest percentiles must sit near it -- never tens
+  of dB above, which would mean the sensor never reaches its own noise anywhere.
+
+  date        NESZ dB  darkest 0.1%   vs NESZ    under SF^2   vs NESZ
+  20250606     -26.13           0.0     +26.1         -26.7      -0.6
+  20250619     -27.76          -1.5     +26.3         -27.7      +0.0
+  20250814     -27.97          -1.4     +26.6         -28.4      -0.4
+  20251013     -27.35           0.9     +28.2         -27.8      -0.4
+
+  As shipped, the noise floor sits +26.8 dB above the declared NESZ.
+  Under SF^2 it lands on it, mean absolute error 0.36 dB, on FOUR scenes
+  with four different NESZ values and four different scale factors.
+
+  VERDICT: the squared convention is confirmed on vendor metadata alone. No
+  competitor claim, and no reading of the ESA note, is load-bearing here.
+
+==============================================================================
+TEST 2  THE BAJRA ANCHOR -- is the field right, and for what reason?
+==============================================================================
+  2a. Is our own source table internally consistent?
+     crop         implied kg/ha    stated      gap
+     Cotton               4,472       776      n/a   production is in BALES, 829,400 x 170 kg = 141 kt
+     Rice                 1,833     1,690    -7.8%
+     Maize                2,231     2,312    +3.6%
+     Bajra                2,478     2,714    +9.5%
+     Groundnut            2,490     2,514    +1.0%
+
+     The yield column is not derivable from the area and production columns
+     beside it. Bajra carries the largest gap of the four non-cotton crops,
+     +9.5%, in the direction that inflates our anchor. The table's own
+     production/area gives bajra 2.478 t/ha, not the 2.714 we ship -- a 9% cut
+     before any competitor number is consulted.
+
+  2b. Is there a mechanism that explains the remaining gap?
+     Ours 2.48-2.71 t/ha. Theirs: Orion 1.79, Megalodon 1.89, DeepThinkers 1.36.
+     Still a factor of ~1.5 apart, so one side is measuring something else.
+
+     Gujarat grows bajra in TWO seasons, and they are not comparable:
+       summer, irrigated   4,000-5,000 kg/ha   (ICRISAT pearl millet manual)
+       rainfed kharif      1,200-1,800 kg/ha   (12-18 quintals/ha)
+       irrigated general   2,500-3,500 kg/ha
+
+     Our anchor is an ANNUAL district figure -- every season summed. It lands at
+     2.5-2.7 t/ha, exactly where a blend of high-yield summer bajra and lower
+     rainfed kharif bajra should land. Every competitor figure is explicitly a
+     KHARIF estimate, and all three sit inside the rainfed kharif band.
+
+     Round 2 observes 6 Jun - 13 Oct 2025. That is kharif. The anchor must be a
+     kharif anchor.
+
+     VERDICT: the field is right, but not because three teams agree -- because
+     our figure answers a different question than the one we asked it. This is
+     a season-matching error in our own sourcing, and we can state it that way
+     without citing anybody.
+
+  2c. Which other anchors carry the same exposure?
+     crop       2nd season in Gujarat?      exposure
+     Bajra      summer, irrigated, 2-3x     HIGH -- annual mean is inflated
+     Maize      rabi maize, higher yield    MODERATE -- same mechanism, smaller
+     Rice       summer rice is minor        low
+     Groundnut  ~90% kharif in Gujarat      low
+     Cotton     kharif only                 none
+
+     So the fix is not 'copy their bajra number'. It is: source a KHARIF anchor
+     for every crop, and check each crop for a second cropping season before
+     using an annual district mean. That rule catches bajra and flags maize,
+     and it is derived from agronomy rather than from a competitor's table.
+
+==============================================================================
+WHAT REMAINS UNTESTED, AND MUST NOT BE TREATED AS ESTABLISHED
+==============================================================================
+  - Quegan-Yu multitemporal speckle filter  [Coding Bits]
+      2.4-2.8x looks claimed, on THEIR data. Never run on ours.
+  - Thin-plate spline geocoding  [Coding Bits]
+      ~8 m polynomial residual claimed. Our GCP fit's residual is unmeasured.
+  - Spatial hold-out for weight selection  [Coding Bits]
+      Sound in principle; never run on our features.
+  - CoV excess over the L=1 speckle prediction  [Orion]
+      Better posed than raw CoV, but our grid is multilooked, so L=1 does not hold.
+  - 500 m grid sub-village table  [Orion]
+      Presentation, no correctness risk, but the 32-point spread is THEIR number.
+  - Plot-size de-biasing  [Coding Bits]
+      PARTLY tested: we measured rho(CV, npix) = +0.229 ourselves, so the artefact
+
+  is real in our data. The correction itself is still untested.
+
+  None of these should enter a Round 3 report as established until run on our
+  own features. A shortlisted writeup is a hypothesis, not a result.

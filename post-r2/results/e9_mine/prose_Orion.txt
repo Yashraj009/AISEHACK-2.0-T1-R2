@@ -1,0 +1,319 @@
+# SAR Crop Health & Yield Estimation — Sokhda, Vadodara
+
+**ANRF AISEHack 2.0, Round 2 (GalaxEye).** Four Capella X-band stripmap SLC acquisitions
+(HH, 6 Jun / 19 Jun / 14 Aug / 13 Oct 2025) to a per-farm health index and a yield accrued
+to date, for all 966 farms of Sokhda.
+
+---
+
+## What this notebook does, in one paragraph
+
+The delivered data is **raw single-look complex** — uncalibrated, in slant-range geometry,
+with no CRS. Nothing can be measured from it until it is radiometrically calibrated and
+geocoded, so that is Phase 1, and three acceptance gates block everything downstream until
+the result is verified against an independent geometric reference. The unit of analysis is
+then the **farm polygon**, not the pixel: a median Sokhda farm is 0.27 ha, so it holds
+~2,100 one-metre pixels and averaging drops single-look speckle from ±5.6 dB to **0.094 dB**.
+That is what makes a four-date trajectory readable per field. On top of that: a two-tier
+crop classification, a four-component health index, and a yield-to-date estimate anchored to
+published district statistics.
+
+## Three things worth a judge's attention
+
+1. **The sign of the backscatter-to-biomass relationship was measured, not assumed — and the
+   assumption would have been backwards.** The cross-date levels look like an attenuating
+   canopy (14 Aug, peak canopy, is the *darkest* date despite the wettest soil). A same-day
+   comparison against Sentinel-2 on 13 October says the opposite: `corr(NDVI, gamma0) =
+   +0.533`, monotonic in NDVI. Differencing June against October, which cancels every
+   time-invariant property of a field, gives **+0.673**. Had this been assumed, the health
+   index would have been inverted. (Both are printed in the run log below, not asserted.)
+2. **The promised `round1_crop_classification.csv` is absent from the distributed data.**
+   The Kaggle file listing returns 31 files and none is a CSV. Labels are therefore derived,
+   and reported in two confidence tiers rather than as five equally-trustworthy classes.
+3. **Every claim has an internal gate defined before the run.** There is no leaderboard in
+   Round 2 to A/B against, so physical plausibility, cross-date consistency and external
+   corroboration replace it — and negative results are reported, not quietly dropped. The
+   headline correlation is scored against a **reserved** optical scene no design decision saw,
+   every feature's expected sign is declared as a constant before the reference is opened (with
+   a negative control), and the index is scored against five progressively simpler baselines —
+   which say the four-component machinery adds −0.008 over the single idea underneath it.
+
+---
+
+## Environment
+## The pipeline source
+
+Each module is written to `src/` exactly as it exists in the repository, then executed. Nothing is precomputed and nothing is hidden.
+### `src/geocode.py`
+
+**Phase 1 — calibration and geocoding.** Reads the `CInt16` SLC, forms `beta0 = |I+jQ|^2 * scale_factor^2`, converts to `sigma0 = beta0*sin(theta)` with the per-column incidence angle, subtracts the NESZ polynomial in the linear domain, forms `gamma0 = sigma0/cos(theta)`, and geocodes with `gdal.Warp(rpc=True, errorThreshold=0)` onto a single shared 1 m EPSG:32643 grid. The per-scene terrain height and the co-registration shifts are constants derived in `coreg_calib.py` and explained there.
+### `src/coreg_calib.py`
+
+**Solving the geometry.** The terrain height is fitted per scene against Capella's own geocoded preview, and the residual date-to-date shifts are solved on our own products. Both are needed because the vendor's separately-tasked collects are not mutually co-registered.
+### `src/gates.py`
+
+**Phase 1 acceptance gates — blocking.** There is no leaderboard in Round 2, so a geocoding error has no external signal to reveal it. These gates are the substitute, and the pipeline refuses to compute farm statistics if any of them fails.
+### `src/farm_features.py`
+
+**Phase 2 — farm-level features.** Polygons are eroded before sampling to drop mixed edge pixels; every farm gets a row, with an explicit validity policy and spatial imputation for the farms the radar swath never covered.
+### `src/s2_ndvi.py`
+
+**Sentinel-2 — the one measurement that sets a sign, and then validates.** Sentinel-2 imaged the AOI on 2025-10-13, the exact date of the T4 Capella collect. This is the only step that needs a network; results are cached.
+### `src/crop_type.py`
+
+**Phase 3 — crop type, two tiers.** The promised `round1_crop_classification.csv` is not in the distributed data, so labels are derived here. Rice and cotton earn threshold-rule labels; the rest is allocated openly and flagged low-confidence.
+### `src/health_index.py`
+
+**Phase 4 — the health index.** Four physically-motivated components, rank-normalised within crop cohort. No optical data enters it.
+### `src/yield_estimate.py`
+
+**Phase 5 — yield accrued to 13 October.** Published reference yields modulated by a bounded health response and a phenological-completeness term.
+### `src/submit.py`
+
+**Phase 6 — village aggregation and the schema gate.** Area-weighted in hectares; every schema violation raises. A single-village study area makes the required village table one row, so the within-village 500 m breakdown is where the spatial variation is reported.
+### `src/feature_audit.py`
+
+**The audit — what does each term actually measure?** Every gate before this one tests the *pipeline*; none can see a term that runs correctly and measures the wrong thing. Expected signs are declared as a module constant before any optical data is read, with June soil wetting carried as an explicit negative control.
+### `src/benchmark.py`
+
+**Does it beat a trivial single-date average?** The rubric asks; asserting an answer is not evidence. Five progressively simpler indices scored identically against the same reserved optical reference, on three statistics rather than one.
+### `src/figures.py`
+
+**Figures** for the media gallery, drawn from the delivered artefacts.
+### `src/pipeline.py`
+
+**The driver.** One entry point, explicit order, blocking gates.
+## Run
+## Figures
+---
+
+## Result
+
+| | |
+|---|---|
+| farms processed | **966 / 966** (894 measured, 71 spatially imputed, 1 interpolated) |
+| village | Sokhda, `village_id` = **22** (from the shapefiles; the dummy's `1` is a placeholder) |
+| area | 447.5 ha |
+| production accrued to 13 Oct | **1001.6 t**, 2.24 t/ha area-weighted |
+| health index vs **reserved** Sentinel-2 NDVI (18 Oct, read by nothing upstream) | **+0.356** overall (n = 919); positive within every crop |
+| health index vs the audit scene (13 Oct, which set the sign) | +0.411 — the 0.055 gap is the selection effect |
+
+## Limitations, stated plainly
+
+- **Crop type is the weak link, and it is labelled as such.** Rice and cotton separate on
+  physical signatures and are 100% stable across every clustering configuration tested.
+  Maize, bajra and groundnut do not separate in single-polarisation HH — three independent
+  assignment schemes disagreed about them every time. They are allocated on a measured
+  vegetation-persistence axis with district area shares setting the cut points, and every
+  row carries `crop_confidence`. 31.6% of the area holds a high-confidence label.
+  The Sentinel-2 step quantifies exactly how little tier 2 carries: the labels explain
+  **~19%** of raw NDVI variance but **~0.2%** of NDVI variance residualised against the
+  γ⁰ axis that assigned them (F = 0.65, p = 0.52), while the tier-1 control on the same
+  test passes (F = 13.1, p = 3.7 × 10⁻⁴). Tier 2 is a partition of the ranking axis and
+  nothing more, and the control passing is what makes that a measurement rather than a
+  blunt instrument. Exact values are printed in the run log above; the third decimal moves
+  between GDAL versions because the two Sentinel-2 tiles are mosaicked at the seam.
+- **The health index is within-crop relative.** Each cohort mean is 50 by construction, so
+  it ranks fields against their peers rather than crops against each other. Absolute
+  differences between crops live in the yield step, where `Y_ref` differs per crop.
+- **The scene is close to noise-limited at pixel level** — the median pixel sits only
+  4.6–7.9 dB above the NESZ floor. This is an argument for farm-level analysis, not against
+  the data, and it is why speckle statistics are reported per farm.
+
+SAR Crop Health & Yield Estimation — Sokhda,
+Vadodara
+ANRF AISEHack 2.0, Round 2 (GalaxEye). Four Capella X-band stripmap SLC
+acquisitions (HH; 6 Jun, 19 Jun, 14 Aug, 13 Oct 2025) → per-farm crop type, health index (0–
+100) and yield accrued to date, for all 966 farms of Sokhda (village_id 22), 447.5 ha.
+Notebook — raw SLC to submission.csv, nothing precomputed:
+https://www.kaggle.com/code/sumit1703/project-orion
+1. The decision that shapes everything: the farm, not the pixel
+The delivered SAR is raw single-look complex — uncalibrated, slant-range, no CRS. At one
+look speckle gives CoV = 1.0, i.e. ±5.6 dB per pixel — far larger than any difference between
+crops, so per pixel this data cannot support a health statement.
+The given farm polygons change that. A median farm is 0.27 ha — ~2,100 pixels in its eroded
+core at 1 m sampling — and speckle averages down as 4.34/√N, from ±5.6 dB to 0.094 dB: a 60-
+fold noise reduction, with no resolution claim. Measured per 16 × 16 block, CoV is 0.99–1.03
+and ENL 0.94–1.02 across the four dates — looks = 1, and nothing pre-smoothed the data.
+Risk shifts from speckle to geometry: a 0.27 ha field is a 52 m square, which is why Phase 1 is
+gated.
+2. Phase 1 — calibration, geocoding, three blocking gates
+beta0 = |I+jQ|²·scale_factor² → sigma0 = beta0·sin θ (per-column incidence) → NESZ
+subtracted in the linear domain → gamma0 = sigma0/cos θ → gdal.Warp(rpc=True,
+errorThreshold=0.0) onto one shared 1 m EPSG:32643 grid. Two problems were solved rather
+than assumed away.
+Terrain height. Geocoding at Capella's focusing surface (−21.53 m) left 5.7 m of
+misregistration at θ = 35.2° and 7.1 m at θ = 28.7° — a ratio of 1.25 against the 1.28 that 1/tan θ
+predicts for a height error. Fitting height per scene gives −17.15 / −17.61 / −17.62 / −17.41 m:
+four scenes, three incidence angles, agreeing to 0.47 m and matching geodesy (≈ −17 m
+ellipsoidal).
+The vendor's products are not mutually co-registered. After the height fit each date sat
+within 0.2 m of its own vendor preview, yet T2 remained 5.3 m from T1 — and preview-against-
+preview reproduces it (4.29 m). That is Capella's absolute geolocation error between separately-
+tasked collects, inside their ~5 m CE90. The stack is registered to a T1 master before any farm is
+sampled.
+Round 2 has no leaderboard, so a geocoding error has no external signal to reveal it. Three
+gates replace it and block the pipeline: G1 footprint IoU against the vendor's geocoded preview
+(0.996–0.999), G2 co-registration ≤ 2 m (worst date 1.33 m), G3 radiometry, whose sharpest
+test is a cross-date median spread of 1.79 dB from raw scale factors spanning 4.8 dB. Two
+integrity asserts fire here: each scene's STAC datetime must match its folder, and the four
+geocoded products must be distinct rasters — the 19 June folder ships a duplicate of the 6 June
+SLC, which a filename glob would load twice with nothing raising.
+
+Every farm gets a row: 894 measured, 1 interpolated on day-of-year, and 71 never covered by the
+swath filled from their 8 nearest valid neighbours and flagged.
+3. Crop type — and the promised carry-forward file
+The round1_crop_classification.csv described on the Data page is not in the
+distributed data — the Kaggle file listing returns 31 files, none a CSV, so it is absent server-
+side, not a download failure. Round 1's output survives only as village-level hectares, never per-
+farm labels, and its log records those shares as its least stable output, so no prior is carried
+forward. Labels are derived here and reported in two confidence tiers, not as five equally
+trustworthy classes.
+Consensus k-means (9 clusters, 20 seeds, co-association agreement) runs on the incidence-
+matched dates only: an earlier T1→T2 "emergence" slope produced a 31%-of-village cluster that
+was soil moisture confounded with the stack's largest geometry change (T1 35.24° against 28.7°).
+Tier 1 — explicit physical thresholds. Rice: ~5 dB above every other cluster at peak canopy,
+falling into October — once tillering starts over standing water the stem–surface double bounce
+is strong at HH. Cotton: the only cluster whose backscatter rises 14 Aug → 13 Oct, by +2.76 dB
+against ≤ +1.18 dB elsewhere — the only one of the five still growing in October.
+Tier 2 — allocated and flagged. Maize, bajra and groundnut do not separate in single-pol
+HH: three independent assignment schemes disagreed every time, and in each, whichever crop
+the rule reached last absorbed the residual. The remainder is ranked on γ⁰ at 13 October
+ascending — "still standing on the collect date" — with district-proportional cut points, bajra
+off the field by late September and groundnut lifted Oct–Nov. NDVI orders the three cohorts
+identically (Kruskal–Wallis H = 136.9, p = 1.9 × 10⁻³⁰).
+The caveat is measured, not conceded. NDVI correlates +0.533 with γ⁰_T4, which is the
+ranking axis, so testing tier-2 labels on T4 tests the rule that produced them. The non-circular
+test regresses NDVI on γ⁰_T4 and runs a one-way ANOVA on the residual. Tier 2 (n = 713)
+explains ~19% of raw NDVI variance and ~0.2% of the residual (F = 0.65, p = 0.52):
+the labels partition the ranking axis and carry nothing beyond it. The tier-1 control
+moves the other way — Rice and Cotton have near-identical mean NDVI yet separate cleanly
+once γ⁰ is removed (F = 13.1, p = 3.7 × 10⁻⁴), which is what makes the tier-2 null a measurement
+rather than a blunt instrument.
+Tier-1 labels are 100% stable across n_clusters ∈ {7, 9, 11} and n_seeds ∈ {5, 20, 40}; 31.6%
+of area carries a high-confidence label and every row carries crop_confidence. A physical non-
+crop screen (any-date mean > −10 dB, or CoV > 2.0) removes 37 parcels before clustering,
+labelled from neighbours rather than dropped.
+4. The measurement that could have inverted the deliverable
+The cross-date levels look like an attenuating canopy: over non-rice farms, 19 June (wet bare
+soil) sits at −18.9 dB while 14 August (peak canopy, soil still wet) is the darkest date at −21.2
+dB. Read that way, more canopy means less γ⁰ and the health index's canopy term flips sign.
+Sentinel-2 imaged the AOI on 2025-10-13, the exact date of the T4 collect (0.1% cloud,
+tiles 43QBE + 43QCE mosaicked, 100% of the AOI SCL-valid, 919 crop farms with clean cores):
+
+NDVI 13 Oct vs γ⁰ 13 Oct, +0.533 pearson / +0.518 spearman · vs γ⁰ 19 Jun, −0.146 / −0.203 ·
+ΔNDVI vs Δγ⁰, Jun → Oct, +0.673 / +0.594.
+The relationship is monotonic across NDVI quintiles. Greener means brighter. The
+differenced pair is decisive: differencing cancels every time-invariant property of a field —
+roughness, tillage, drainage, geometry — yet is the strongest of the three at +6.10 dB per NDVI
+unit, which no static property could do. The levels mislead because 19 June vs 14 August
+compares two soil states as well as two canopy states.
+Optical data sets this one sign and thereafter only validates — Capella stays primary per rule
+2.6.a. Because this scene was consulted for a design decision, it is retired from the validation role
+in §5.
+5. Health index (0–100)
+Four components, rank-normalised within crop cohort: a healthy paddy and a healthy
+groundnut do not share a backscatter level, so a global scale ranks crops, not fields.
+1. Canopy development — γ⁰_T3 − γ⁰_T2, a difference against the field's own bare-soil
+state eight weeks earlier, so soil texture, roughness and slope cancel.
+2. Trajectory conformity — distance from the cohort's median four-date shape after
+removing each farm's level; penalises late emergence and early senescence.
+3. Within-field uniformity — CoV excess over the speckle prediction. At L = 1 speckle
+gives CoV = 1.0 exactly, so any excess is real heterogeneity. This component exists
+only because the boundary is given.
+4. Senescence timing — γ⁰_T4 − γ⁰_T3; a field still holding canopy in mid-October has
+accrued more growth than one that collapsed in September.
+Weights 0.35 / 0.30 / 0.20 / 0.15, exposed as constants. Component cross-correlations peak at
+|r| = 0.143 — four distinct measurements, not one restated four ways.
+The index is validated on a scene no design decision ever saw. The 13 October scene
+sets the regime sign and the tier-2 axis, so it cannot also be the independent test; 18 October is
+reserved and read by nothing upstream. Against it, with no optical data in the index: +0.356
+pearson, n = 919 — Rice +0.603 [+0.483, +0.697], Groundnut +0.367, Cotton +0.162
+[−0.045, +0.348], bootstrap 95% CIs. The audit scene reads +0.411; the 0.055 gap is the
+size of the selection effect. Cotton's interval spans zero on both scenes — the crop
+label is high-confidence, the health ranking for it is not.
+Every feature's expected sign was pre-registered before the reference was read, with
+June soil wetting carried as a negative control. It scores −0.053 on standing crops against the
+index's +0.377. Three features violate their declaration, the substantive one being h_trajectory
+at +0.036 against a declared +1 — the conformity component carries 0.30 of the index and
+is null on standing crops. It was not reweighted: no term is fitted to the reference, and
+honouring that is what keeps the reserved scene a test. Reported as a finding.
+Against a trivial baseline, scored identically on the reserved scene: single-date γ⁰ at peak
+canopy 0.296, the shipped index 0.377. Differencing against the field's own June state is worth
++0.089 of that; choosing the reference per farm adds +0.012, and the four components −0.008
+— so the gain is one idea, not the machinery. The index is spatially structured, not speckle:
+
+Moran's I +0.256 (permutation z = +16.6) against an optical ceiling of +0.203 — exceeding that
+ceiling is an open question, not a win.
+6. Yield accrued to 13 October, and village aggregation
+The brief asks for yield "as observed through October 13, not a final harvest forecast":
+yield_to_date = Y_ref(crop) · f(health) · a(accumulation) · g(crop). f is bounded to
+0.55–1.45, centred so the cohort-median field scores its published reference — the index is a
+rank, not a ratio. g is the fraction of the crop's calendar realised by 13 October, and is what
+makes the answer to date.
+a exists because the two submitted columns were measured to be one number: within-crop
+rho(health, yield) was exactly 1.000. a is the season integral of each field's signed departure
+from its own bare-soil reference — a quantity no health component contains, and the Monteith
+analogue for a yield. Bounded to ±0.20, cohort median exactly 1.0. Result: rho falls to 0.928,
+and yield ranks fields better than health against the reserved scene in every crop (Rice +0.702 vs
++0.603).
+crop
+Y_ref t/ha (basis)
+g
+t/ha, area-wt
+ha
+production t
+Bajra
+1.79 (grain)
+1.00
+1.69
+57.7
+97.7
+Cotton
+2.45 (kapas)
+0.45
+1.08
+61.3
+66.0
+Groundnut
+3.03 (pods)
+0.85
+2.46
+115.8
+285.5
+Maize
+3.11 (grain)
+0.95
+2.79
+130.4
+363.8
+Rice
+2.54 (paddy)
+0.88
+2.29
+82.3
+188.6
+All
+2.24
+447.5
+1001.6
+Anchors are Gujarat's First Advance Estimates for kharif 2024-25, Vadodara district figures
+overriding where they exist. Indian statistics quote the same crop three ways, so the table states
+the basis per crop; cotton lint was converted to kapas at a 34% ginning outturn.
+Aggregation is area-weighted in hectares, not per farm (median 0.27 ha, max 3.49).
+Production is the true sum Σ(yield × area); area-weighted health is 46.9 overall. A single-
+village study area makes the required village table one row, carrying no spatial information, so
+the same arithmetic is also reported over 46 sub-zones of 500 m covering 946 farms: health
+spreads 30.8 to 62.8 across them against that one village figure of 46.9. submission.csv
+carries exactly the five required columns for all 966 farms and passes a hard schema gate.
+village_id = 22, from the shapefiles rather than the dummy's placeholder 1.
+7. Limitations
+Crop type is the weak link and is labelled as such. Rice and cotton are defensible;
+maize, bajra and groundnut are an allocation on a measured axis, not a classification.
+Farm averaging removed the noise barrier, not the information barrier of single-pol HH.
+Y_ref is a district statistic, not a measurement of this village. The SAR modulates
+it rather than deriving it, so absolute yields inherit whatever bias those figures carry.
+Every number here is from the shipped Kaggle run and printed in its log. The
+one moving part is Sentinel-2, where GDAL versions disagree on ~0.1% of SCL pixels at
+the two-tile mosaic seam; the reserved block is byte-identical on Kaggle and locally,
+correlations and CIs alike.

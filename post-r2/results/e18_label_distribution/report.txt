@@ -1,0 +1,106 @@
+==============================================================================
+THE POSTERIOR THAT ALREADY EXISTS
+==============================================================================
+  966 farms carry a full 5-class posterior in results/d4_debug.csv
+  median max probability 0.409; 69.4% of farms have NO class above 0.5
+  median normalised entropy 0.867 (0 = certain, 1 = uniform)
+  The deliverable ships the argmax of this and discards the rest.
+
+==============================================================================
+T1  IS THE POSTERIOR CALIBRATED? (against two independent sensors)
+==============================================================================
+  proxy for 'our label is right': backed by at least one independent sensor
+  (956 farms; 57.5% backed)
+
+  p_assigned bin         n   mean p   % backed     gap
+  Q1                   192    0.280      56.8%  +28.7pp
+  Q2                   192    0.345      41.7%   +7.2pp
+  Q3                   190    0.409      45.8%   +4.9pp
+  Q4                   191    0.513      62.3%  +11.0pp
+  Q5                   191    0.799      81.2%   +1.3pp
+
+  POOLED rho(p_assigned, backed) = +0.206  p = 1.33e-10
+
+  WITHIN CROP -- the pooled number is confounded, because cotton is both the crop we
+  are most confident about and the only one the sensors can see (e17).
+  crop             n      rho          p   mean p   % backed
+  Rice            86   -0.143      0.189    0.493       8.1%
+  Cotton         449   +0.095     0.0441    0.538      94.2%
+  Maize           54   +0.168      0.225    0.433       7.4%
+  Bajra          147   +0.154     0.0633    0.394      12.2%
+  Groundnut      220   +0.049      0.469    0.378      44.5%
+
+  A calibrated posterior needs the gap column near zero AND a positive within-crop
+  rho. Ordering matters more than level here: the proxy is noisy, so a systematic
+  offset is expected, but the RANKING should still hold if the posterior means
+  anything.
+
+==============================================================================
+T2  DOES LABEL ENTROPY PREDICT WITNESS DISAGREEMENT? (e11's open prediction)
+==============================================================================
+  e11 measured sampling-noise SE against the same target and got rho +0.052, p 0.12 --
+  null. Its conclusion was that the dominant error is the crop label, not pixel count.
+  That conclusion predicts THIS test comes out positive. It is falsifiable and this
+  is the falsification attempt.
+
+  entropy quintile         n  mean entropy  mean |rank gap|
+  Q1 (certain)          192         0.373           0.3385
+  Q2                    191         0.758           0.2939
+  Q3                    191         0.866           0.2857
+  Q4                    191         0.922           0.2902
+  Q5 (uncertain)        191         0.966           0.2964
+
+  rho(label entropy, |rank gap| WITHIN crop)     = -0.021  p = 0.516
+
+  DESIGN FLAW IN THE ABOVE, and the variant that fixes it. Both ranks are taken
+  within the SAME crop cohort, so if a farm's label is wrong it is ranked against the
+  wrong cohort on BOTH sides and the error largely cancels. That makes the test
+  under-powered by construction. Re-running with GLOBAL ranks, where a label error
+  cannot cancel:
+  rho(label entropy, |rank gap| GLOBAL)          = +0.033  p = 0.311
+  e11's sampling-SE result on the same target        = +0.052   p = 0.12
+
+  NULL: e11's inference is NOT confirmed. If neither sampling noise nor label
+  entropy predicts witness disagreement, the dominant error is in neither, and
+  D-2's interval would be honest about the wrong quantity.
+
+==============================================================================
+T3  DOES PROPAGATING THE POSTERIOR MOVE THE VILLAGE TOTAL?
+==============================================================================
+                                      t/ha median   village t
+  as shipped (argmax)                       1.414       594.9
+  expectation over the posterior            1.582       670.9
+
+  change in village total: +12.8%
+  A large move would mean this is not quantifying the answer, it is changing it --
+  and the R1 official MSE of 11.071 is the only external check on the aggregate.
+
+==============================================================================
+T4  WHERE THE LABEL UNCERTAINTY LANDS
+==============================================================================
+  crop             n  median yield   median SD  SD/yield  mean entropy
+  Rice            86         1.635       0.543      0.33         0.738
+  Cotton         455         0.344       0.775      2.25         0.699
+  Maize           55         2.181       0.752      0.34         0.798
+  Bajra          149         2.572       0.633      0.25         0.861
+  Groundnut      221         1.863       0.713      0.38         0.886
+
+  village-level: 54.4% of the total, if farm label errors were perfectly correlated (worst case)
+                 2.6% if independent (best case)
+
+==============================================================================
+T5  CONTROL -- does a CORRUPTED posterior score the same?
+==============================================================================
+  sharpened (T=0.5)     mean p 0.619   rho(p, backed) +0.217  p = 1.25e-11
+  as shipped (T=1)      mean p 0.470   rho(p, backed) +0.206  p = 1.33e-10
+  flattened (T=3)       mean p 0.303   rho(p, backed) +0.193  p = 1.72e-09
+  uniform               mean p 0.200   rho(p, backed) +nan  p = nan
+
+  The T=1 row MUST reproduce T1's pooled rho exactly -- that is what makes this a
+  control rather than a second measurement, and an earlier version of this script
+  failed it (positional indexing into a merge that had dropped 10 farms).
+  Temperature scaling barely moves rho because it leaves each farm's ARGMAX alone;
+  it shifts the ordering of p_assigned only slightly, since renormalising depends on
+  the whole vector. So rho is a statement about RANKING and says nothing about
+  whether the LEVELS are calibrated -- which T1's +28.7pp gap in Q1 already denies.
+  The uniform row is the true null: no ordering left to correlate.

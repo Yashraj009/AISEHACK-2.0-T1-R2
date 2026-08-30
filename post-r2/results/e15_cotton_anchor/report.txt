@@ -1,0 +1,95 @@
+==============================================================================
+T1  IS THE APY TABLE INTERNALLY CONSISTENT? (needs no outside information)
+==============================================================================
+  crop           area ha  production  yield kg/ha   implied   ratio
+  Cotton          185479      829400          776      4472    5.76
+  Rice             49818       91300         1690      1833    1.08
+  Maize            40794       91000         2312      2231    0.96
+  Bajra             7022       17400         2714      2478    0.91
+  Groundnut         1004        2500         2514      2490    0.99
+
+  Four crops sit at ratio 0.91-1.08. Cotton sits at 5.76.
+  Reading cotton production as BALES of 170 kg instead of tonnes:
+    829400 bales x 170 kg / 185479 ha = 760 kg/ha vs stated 776 (ratio 0.98)
+
+  ESTABLISHED: the cotton row is bales-of-lint while the other four are tonnes of
+  grain or pod. One column, two unit systems. That is a defect regardless of which
+  convention the deliverable should ultimately use.
+  Seed cotton (kapas) equivalent at 34% ginning outturn: 2282 kg/ha = 2.28 t/ha
+
+==============================================================================
+T2  DOES OUR PIPELINE REPRODUCE EACH ANCHOR? (unit problem vs completion term)
+==============================================================================
+  crop            n  our median  apy t/ha  ours/apy
+  Bajra         149       2.572     2.714     0.948
+  Cotton        455       0.344     0.776     0.443
+  Groundnut     221       1.863     2.514     0.741
+  Maize          55       2.181     2.312     0.943
+  Rice           86       1.635     1.690     0.967
+
+  Cotton's 0.44 against 0.94-0.97 elsewhere is NOT the unit question -- it is the
+  completion term, and it is correct: cotton is long-duration and still standing on
+  13 October, so a 'to date' yield SHOULD be well under the full-season anchor.
+  The unit question is entirely about the 776 kg/ha the ratio is taken against.
+
+==============================================================================
+T3  THE HOST DUMMY AS A RANGE ORACLE -- AND THE CONTROL THAT VALIDATES IT
+==============================================================================
+  crop          ours med  ours max  host min  host med  host max  overlap
+  Bajra            2.572     3.528      1.24      2.01      2.98     True
+  Cotton           0.344     0.605      1.51      2.58      3.48    False
+  Groundnut        1.863     2.737      1.51      2.63      3.99     True
+  Maize            2.181     3.006      4.05      6.78      9.00    False
+  Rice             1.635     2.181      3.52      5.23      6.95    False
+
+  THE CONTROL. If non-overlap with the host dummy proved a unit error, it would have
+  to prove it ONLY for cotton. It does not:
+    crops failing to overlap the host dummy: Cotton, Maize, Rice
+  Maize and Rice are anchored to the real district figure and are not in dispute, so
+  a test that condemns them is not a unit oracle. The host dummy is generated data
+  and is simply not calibrated to Vadodara district for ANY crop.
+
+  >>> T3 IS DISCARDED AS EVIDENCE. Recorded because stopping here would have
+      'proved' the cotton hypothesis with a test that fails its own control.
+
+==============================================================================
+T4  WHAT THE OTHER FIVE SHORTLISTED TEAMS SHIPPED FOR COTTON
+==============================================================================
+  team              cotton med  rice med  bajra med   reading
+  8_bits                48.350    70.940     38.835   different unit entirely (not t/ha)
+  coding_bits            2.430     5.155      1.990   SEED COTTON (kapas) scale
+  deep_thinkers          0.470     1.620      1.300   LINT scale
+  megalodon              0.660     1.600      1.795   LINT scale
+  project_orion          1.124     2.409      1.884   LINT scale
+  OURS                   0.344     1.635      2.572   LINT scale
+
+  The field is SPLIT. There is no consensus to borrow, which is the same conclusion
+  e4 reached on crop labels (six-team kappa 0.060) -- competitor agreement is not
+  available as evidence here.
+
+==============================================================================
+T5  CROSS-CROP ORDERING -- a dummy can be wrong on level and right on order
+==============================================================================
+  crop          host med  apy lint  apy kapas
+  Bajra             2.01     2.714      2.714
+  Cotton            2.58     0.776      2.282
+  Groundnut         2.63     2.514      2.514
+  Maize             6.78     2.312      2.312
+  Rice              5.23     1.690      1.690
+
+  Spearman(host order, APY as LINT)  = -0.300  p = 0.624
+  Spearman(host order, APY as KAPAS) = -0.500  p = 0.391
+
+  With only 5 crops neither correlation can reach significance, so this is reported
+  as a direction and not as a result. It cannot carry a decision on its own.
+
+==============================================================================
+T6  VILLAGE-TOTAL SENSITIVITY -- the size of the decision, on the record
+==============================================================================
+  village production as shipped               594.9 t
+    of which cotton                            76.6 t  (12.9% on 455 farms, 43.2% of area)
+  if cotton were restated as seed cotton      743.6 t  (+25.0% on the village total)
+
+  A 2.9x change on 47% of farms is not a tweak. It moves the single headline number
+  in the deliverable, so it needs evidence that decides -- and T3 was discarded, T4
+  is split, and T5 cannot reach significance on five points.

@@ -1,0 +1,60 @@
+Per-farm uncertainty from speckle physics, and whether it is calibrated.
+
+extracted pixel samples for 885 farms at 20251013
+
+==============================================================================
+T1  SPLIT-HALF -- measure our own sampling noise with no model and no witness
+==============================================================================
+  Each farm's pixels are split into two random halves and the mean computed from
+  each. Theory: the half-to-half difference has SD = sqrt(2) x SE(full mean),
+  and SE(full mean) = cv/sqrt(N). Nothing here is fitted.
+
+  farms with >=8 usable pixels: 885
+  quantity                              median      p10      p90
+  predicted half-split SD               0.1069   0.0505   0.2092
+  observed half-split SD                0.1016   0.0482   0.2117
+  observed / predicted                   0.966    0.802    1.140
+
+  Spearman(predicted, observed) across farms = +0.9663
+  VERDICT: CALIBRATED
+
+  A ratio near 1.0 means the physics predicts our own noise without tuning. This is
+  the check that can fail, and it is reported whichever way it comes out.
+
+==============================================================================
+T2  DOES PREDICTED UNCERTAINTY PREDICT DISAGREEMENT WITH A WITHHELD SENSOR?
+==============================================================================
+  n = 885 farms with a witness value and a usable pixel sample
+
+  predicted-SE quintile        n   median SE   mean |rank gap|
+  Q1 (most precise)          177      0.0253            0.3028
+  Q2                         177      0.0367            0.2872
+  Q3                         177      0.0535            0.2745
+  Q4                         177      0.0716            0.2786
+  Q5                         177      0.1046            0.3381
+
+  Spearman(predicted SE, |rank gap|) = +0.0524   p = 0.12
+  A positive, significant value means the uncertainty is INFORMATIVE: farms we
+  flag as imprecise really do agree less with a sensor we never read.
+
+  Note the ceiling: witness disagreement contains our noise AND the fact that NDVI
+  is a different physical quantity. So the correlation cannot reach 1, and its
+  absolute size is not the result -- the sign, significance and monotonicity are.
+
+==============================================================================
+T3  WHAT IT WOULD MEAN FOR THE DELIVERABLE
+==============================================================================
+  Rough propagation of the measured feature-level SE onto the 0-100 index
+  (a fractional SE on linear power is ~4.34*se dB; the index spans ~25 points/dB
+  within a crop cohort):
+
+  health_index uncertainty, points       median      p90      max
+                                           5.81    11.35    49.97
+
+  59.2% of farms carry more than 5 index points of sampling uncertainty
+  on a 0-100 scale, purely from how few pixels they contain. Reporting a single
+  number for those farms and for a 1,200-pixel farm treats them as equally known.
+
+  This is a scoping figure, not a shipped column: the constant 25 pts/dB is an
+  approximation of the index transform, and the full propagation should run the
+  Monte Carlo through d4_submission rather than a linear factor.

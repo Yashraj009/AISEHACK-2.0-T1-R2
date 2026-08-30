@@ -1119,3 +1119,42 @@
 {"t": "2026-08-28T15:34:16", "stage": "check_submission_pack", "status": "PASS"}
 {"t": "2026-08-28T15:34:17", "stage": "d11.start"}
 {"t": "2026-08-28T15:34:17", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T00:43:57", "stage": "d4.start"}
+{"t": "2026-08-29T00:43:57", "stage": "d4.prior", "Rice": 0.1061, "Cotton": 0.43, "Maize": 0.0599, "Bajra": 0.0943, "Groundnut": 0.3097}
+{"t": "2026-08-29T00:43:57", "stage": "d4.prior_bias", "Rice": -0.704, "Cotton": 0.343, "Maize": -0.269, "Bajra": -0.119, "Groundnut": 0.329}
+{"t": "2026-08-29T00:43:57", "stage": "d4.weights", "level": 0.188, "growth": 0.287, "uniform": 0.296, "persist": 0.23, "source": "decorrelation", "drift": false}
+{"t": "2026-08-29T00:43:57", "stage": "d4.impute", "method": "knn5_same_crop", "n_imputed": 52, "n_spatial": 52}
+{"t": "2026-08-29T00:43:57", "stage": "d4.schema", "status": "PASS", "rows": 966, "max_yield_t_ha": 3.528}
+{"t": "2026-08-29T00:43:57", "stage": "d4.done", "rows": 966, "rfi": 19, "imputed": 52}
+{"t": "2026-08-29T00:48:07", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T00:48:08", "stage": "d11.start"}
+{"t": "2026-08-29T00:48:08", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T01:29:57", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T01:29:58", "stage": "d11.start"}
+{"t": "2026-08-29T01:29:58", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T09:52:11", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T09:52:12", "stage": "d11.start"}
+{"t": "2026-08-29T09:52:12", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T10:04:20", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T10:04:21", "stage": "d11.start"}
+{"t": "2026-08-29T10:04:21", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T10:09:46", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T10:09:47", "stage": "d11.start"}
+{"t": "2026-08-29T10:09:47", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T10:09:48", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-29T10:18:54", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T10:18:55", "stage": "d11.start"}
+{"t": "2026-08-29T10:18:55", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T10:18:56", "stage": "check_submission_pack", "status": "PASS"}
+{"t": "2026-08-29T15:55:13", "stage": "d11.start"}
+{"t": "2026-08-29T15:55:13", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T16:17:39", "stage": "check_writeup", "status": "PASS"}
+{"t": "2026-08-29T16:17:39", "stage": "d11.start"}
+{"t": "2026-08-29T16:17:40", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T16:30:19", "stage": "d11.start"}
+{"t": "2026-08-29T16:30:19", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T16:50:08", "stage": "d11.start"}
+{"t": "2026-08-29T16:50:09", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T17:03:36", "stage": "d11.start"}
+{"t": "2026-08-29T17:03:37", "stage": "d11.done", "checks": 19, "failed": 0, "status": "READY"}
+{"t": "2026-08-29T20:22:49", "stage": "gt.sample", "n": 100, "per_crop": 20, "seed": 20260806}

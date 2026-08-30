@@ -1,0 +1,72 @@
+# Megalodon: farm health and yield from Capella X-band SAR
+
+**Sokhda village, Vadodara · 966 farms · AISEHack 2.0 Round 2**
+
+This notebook executes the same source files used to build our submitted CSV. Four Capella HH SLC
+acquisitions are the primary measurement. Sentinel-1, Sentinel-2, weather, soil and district crop
+statistics have narrower roles: validation, sensitivity checks and the absolute yield prior. They
+do not enter the farm health score.
+
+The notebook starts from the complex SLCs. It calibrates and geocodes them, applies the Round 1 crop
+rules, builds a crop-relative health index, estimates yield realised by 13 October 2025, and writes
+all 966 required rows. The dummy CSV is used only as a schema reference.
+## 1. Locate the two input datasets
+
+On Kaggle, attach the competition dataset and the private/public Megalodon auxiliary dataset. The
+cell below finds files by content rather than relying on Kaggle's chosen mount names. Locally it
+uses the self-contained `Phase2_Sub` folder. Nothing is downloaded while the notebook runs.
+## 2. What the four scenes imply
+
+The scene metadata decides several processing choices. The calibration scale varies by 1.73× and
+incidence by 6.6°, so one global conversion would manufacture a temporal trend. Platform positions
+differ by 9.3–87.5 km, ruling out repeat-pass X-band InSAR. We instead use calibrated intensity and
+single-acquisition split-spectrum coherence, then test whether that coherence adds information.
+## 3. Execute the frozen pipeline
+
+The target grid is 1.5 m because the median farm is only 0.274 ha. This does not create new
+independent looks; it lets us erode mixed boundaries and preserve within-field structure. Each SLC
+is converted from complex DN to beta-nought using its metadata scale factor, converted to
+sigma-nought with incidence angle, and RPC-geocoded with the ellipsoidal DEM. The four dates are
+co-registered and the whole stack is aligned to farm interiors by maximizing the fraction of
+backscatter variance explained by farm identity.
+
+Farm health is deliberately simple. Within each crop-calendar class, **L** is canopy level at the
+relevant peak and **V** is the rise from the two-date June baseline. Robust within-class z-scores are
+combined with equal weight. Texture, coherence and soil were tested but did not improve held-out
+sensor agreement, so they remain diagnostics rather than score components.
+## 4. Submission gates and village result
+
+`yield_estimate_to_date` is t/ha realised by the last acquisition, not a harvest forecast. The
+absolute level is anchored to post-2014 Vadodara Kharif area/production statistics. Cotton is
+converted from 170 kg lint bales to seed cotton and assigned 35% season progress on 13 October;
+early crops use 95% and rice 85%. Health only redistributes yield within a crop and is normalized to
+leave that crop's area-weighted mean at one.
+## 5. Evidence, not ground truth
+
+No measured farm yields or field health labels were supplied. We therefore do not call proxy
+agreement accuracy. On the common 291-farm cohort (farms at least 0.5 ha, both references present,
+health not imputed), the submitted health ranks correlate within crop at **0.746 with Sentinel-1
+VH** and **0.616 with crop-timed Sentinel-2 NDVI**. Sentinel-1 is independent of the score.
+Sentinel-2 is only semi-independent because November NDVI appears in the carried-forward crop rules.
+
+A within-crop permutation null, acquisition jackknife, spatial residual test and coordinate-bias
+checks guard against an attractive-looking spatial gradient. Sixty-two farms without enough dates
+receive the within-class median and are explicitly flagged in the detailed output.
+## 6. Maps and final files
+
+The maps show every supplied farm polygon. Health is crop-relative: a score of 70 means strong
+relative condition among farms on the same crop calendar, not 70% of some measured biological
+maximum. Yield inherits the uncertainty of the district reference and harvest-progress assumptions;
+the 30-year weather and APY sensitivity analysis puts the village total around 460–697 t for a
+conservative one-standard-deviation season envelope.
+## What we would not claim
+
+- The yield values are estimates anchored to district statistics, not field measurements.
+- Optical agreement is corroboration, not a label set; the Sentinel-2 check is semi-independent.
+- The five permitted crop names omit important Vadodara crops. We preserve the Round 1 carry-forward
+  in `crop_type` and keep a district diagnostic only in the detailed file.
+- Small and edge-covered farms are noisier. Confidence and imputation flags travel with the detailed
+  output even though the required five-column CSV has no place for them.
+
+Those limits are why the release includes the full experiment trail and the exact code behind every
+number rather than a model-accuracy headline.

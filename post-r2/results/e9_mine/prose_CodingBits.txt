@@ -1,0 +1,226 @@
+
+ANRF AISEHack 2.0 Round 2 SAR Crop Health & Yield
+Estimation - Report By Team Coding Bits
+Zenisha Devani1, Rohan Thakar1, Charmi Padh1, Prem Raichura1, Dhrupalsinh
+Solanki1
+1Department of Computer Engineering, LDRP Institute of Technology and Research, Kadi Sarva Vishwavidyalaya,
+Gandhinagar, Gujarat, India
+1. Dataset & Findings
+The task is to estimate crop health and yield-to-date for every farm in Sokhda village, Vadodara, using Synthetic
+Aperture Radar. SAR is the right sensor for this problem: the kharif season runs through the monsoon, when
+cloud creates optical time series full of gaps, and SAR sees through cloud because it supplies its own illumination.
+The data comprises of 4 Capella X-band Single Look Complex (SLC) acquisitions 6 June, 19 June, 14 August
+and 13 October 2025 with a cadastral layer of 966 farm polygons covering 447.5 ha and the village boundary.
+All four are single-polarisation (HH), with incidence angles from 28.7◦to 35.2◦; scene geometry, scale factor
+and noise floor follow the product definitions in [1]. Sokhda is the same village analysed in Round 1 and carries
+the same identifier in the shapefile, so the crop areas established there are carried forward as a quantitative
+constraint on crop assignment. Round 1 delivered areas rather than plot counts, so the areas are treated as
+measurements and the implied counts as an assumption. Sentinel-2 imagery [2] is used only as an independent
+reference, never as an input to the submitted columns.
+Figure 1 shows the farm geometry against the sensor resolution. This matters because X-band uses a wavelength
+of roughly 3cm, which penetrates a canopy only slightly [3], so the return describes the top of the crop and the
+soil roughness beneath it rather than total biomass. With a median plot of 0.27 ha, the first question is whether
+a field contains enough independent radar cells to measure at all. As the right panel of Figure 1 shows, even
+small plots span many cells at the 2.94 m processing grid.
+Figure 1. Farm geometry and its relationship to sensor resolution. The village holds 966 digitised plots covering 38% of
+its area, with a median plot of 0.27ha. The right panel places plot width against the 2.94m processing grid.
+Four properties of the imagery affect any measurement built on it, and each is handled explicitly. First, the
+supplied 8-bit preview pushes 30-37% of farm pixels onto a single value, and the proportion differs between dates,
+so all processing uses the raw SLC. Second, the village sits near the edge of the radar swath, and plots crossing
+that edge return an elevated signal that varies between dates; 99-100% of the small-sample and temporal-jump
+flags fall on these same plots, so one geometric cause explains three apparent problems. Third, mean backscatter
+rises with plot area on all four dates (r up to +0.27), so every feature is corrected for size. Fourth, a single
+bright object inside a boundary a metal roof or a vehicle shifts that field’s mean by as much as 19 dB.
+2. Methodology
+The pipeline consists of five stages: calibration and geocoding, speckle suppression, per-farm feature extraction,
+crop assignment, and computation of the two output indices.
+2.1 Calibration, geocoding and speckle suppression
+The raw product stores complex amplitude A. Backscatter follows standard calibration practice [4]:
+σ0 = (scale_factor · |A|)2 · sin θ
+(1)
+1
+
+A competing reading treats the scale factor as already being power. Applying both to the same scene settles it:
+the alternative places the brightest pixel at +46.9dB, unreachable for farmland, while (1) gives +20.2dB with a
+median field at −20.2dB. Geocoding uses a thin-plate spline [5] over 225 control points rather than the low-order
+polynomial that the control points alone imply, which leaves about 8 m of error against a median plot 24.7m
+across. Speckle is then suppressed with the Quegan–Yu multitemporal filter [6], which combines the same pixel
+across all N = 4 dates:
+ˆIk(p) = mk(p) · 1
+N
+N
+X
+j=1
+Ij(p)
+mj(p)
+(2)
+where mk is the local spatial mean on date k. Because the correction acts across dates rather than across space,
+spatial detail is preserved and every plot keeps all of its cells unlike the classical spatial filter [7], where averaging
+across a 0.27ha plot would erase the field. Measured gain: 2.4–2.8× effective looks. The shared ratio in (2) raises
+agreement between dates by roughly 0.25, so all persistence metrics are computed on unfiltered data.
+2.2 Per-farm features
+Each farm is summarised by the median of its pixels, since one bright object shifts a mean by up to 19dB. Mean
+backscatter also rises with plot area, so every feature x is corrected against log-area A by ordinary least squares
+and the trend removed:
+x′
+i = xi −(a ln Ai + b) + x
+(3)
+This reduces the residual correlation with plot size below 0.001 on all four dates. Features cover brightness
+per date, within-field variability, seasonal trajectory shape, and August-to-October change. All 966 plots are
+retained; 883 are unflagged for geometry and sampling.
+2.3 Crop assignment
+Round 1 area totals are imposed as a hard constraint, and plots are ordered by November Sentinel-2 greenness
+[2, 8] cotton is picked October to January, so it stays green when the other crops are bare. Clustering was
+tested and rejected: silhouette falls from 0.525 at two groups to 0.154 at five, and clusters carry no labels
+identifying which is cotton. Rice adds a difficulty no processing removes, since its X-band signature is the flooded
+transplanting stage [9] and no acquisition falls in that window.
+Matching area alone leaves plot count unconstrained, which produced one-hectare maize fields in a village whose
+median plot is 0.27ha. The allocator therefore scores every plot-crop pair with two controls, a price pc driving
+area and a size preference γc driving count:
+si,c = Li,c + pc + γc z(ln Ai)
+(4)
+with Li,c the optical preference. Prices and preferences are updated until area error falls below 1% and count
+error below 12%; every crop lands within 0.50ha of target while also matching its implied plot count.
+2.4 Crop Health Index and Yield to date
+Four terms are standardised within crop and combined on a logistic scale, so a cotton field is compared only
+against cotton:
+CHI =
+100
+1 + e−S ,
+S = 0.60 V + 0.20 U + 0.10 P + 0.10 W
+(5)
+V (Vigour) is October backscatter; U (Uniformity) is negated within-field variability; P (Conformity) is distance
+from the crop’s typical seasonal path, following the temporal profiles of [10]; W (Wetness) is the negated rain
+response on 19 June. The Wetness term rests on canopy attenuation [11]: a closed canopy shields the soil, so a
+covered field barely reacts to rainfall while bare soil reacts strongly, making the response an inverse measure of
+early canopy cover. Three weights are physical priors; only W was chosen from data, on a spatial hold-out where
+the western half selects and the eastern half reports. The west prefers 0.45, but that improves the held-out half
+by only 0.0006, so 0.10 is retained.
+Yield reflects the whole season, so the driver integrates backscatter in linear power the radar counterpart
+of season-integrated greenness [12]. The driver and final estimate are:
+D =
+100
+1 + exp[−((1 −w) zc(σ0
+AUC) + w logit(CHI/100))]
+(6)
+Yi = Yref,c ·
+
+0.6 + 0.8 · Di
+100
+
+(7)
+2
+
+The mixing weight w was set under the same hold-out and resolved to w = 0 across the entire range, so yield
+rests on integrated backscatter alone and shares no term with CHI. Yref,c is the midpoint of the published range
+for crop c, and estimates are clipped into that range; only 0.5% of plots reach a boundary.
+3. Results
+Table 1 gives the village-level result. As table 1 shows, crop areas reproduce the Round 1 totals to within 0.50
+ha while also matching the implied plot counts, and total production is estimated at 1,268 t. Figure 2 presents
+the two submitted deliverables at farm level.
+Table 1. Village-level summary. Health is area-weighted within crop; yield is the area-weighted mean of the per-plot
+estimate.
+Crop
+Plots
+Area (ha)
+Mean CHI
+Yield (t/ha)
+Production (t)
+Cotton
+431
+199.61
+52.5
+2.48
+494.3
+Groundnut
+311
+144.07
+47.4
+2.62
+377.6
+Rice
+106
+48.83
+48.3
+4.85
+237.0
+Bajra
+95
+44.03
+48.2
+2.15
+94.8
+Maize
+23
+10.99
+45.8
+5.84
+64.2
+Total
+966
+447.53
+49.8
+—
+1,268
+(a) Crop Health Index. Scores are standardised within crop, so
+each field is ranked against others of the same crop.
+(b) Yield estimate to date, anchored on the published per-crop
+ranges.
+Figure 2. The two submitted farm-level deliverables for Sokhda village.
+No ground truth exists for these fields, so validity is established against Sentinel-2 [2], which enters neither
+submitted column, and against nulls built to be difficult to beat. Backscatter agrees with October NDVI [8]
+at ρ = +0.622 across 879 plots, rising to +0.742 on plots above 0.8ha, and a five-fold out-of-sample model
+predicts greenness on unseen plots at R2 = 0.621. As Figure 3 shows, agreement improves with plot size, which
+is what speckle theory predicts [3], because larger fields contain more independent looks. Removing the optical
+features entirely and rebuilding the map from radar alone separates November greenness at H = 115 against a
+constraint-only null of 12; the resulting classification is shown in Figure 4. The per-plot label confidence was
+tested against that same radar-only map, and agreement rises across confidence quartiles from 30.6% to 61.2%.
+The yield driver scores +0.540 against integrated NDVI, +0.219 better than the health index alone.
+Figure 3. Validation summary: agreement against plot size, out-of-sample prediction of an independent sensor, the
+radar-only crop map against a constraint-only null, and the persistence of within-field patchiness measured on unfiltered
+data.
+3
+
+Figure 4. Crop classification. Areas match the Round 1 totals to within 0.50 ha while also matching the implied plot
+counts.
+Rice does not separate on August-to-October retention (∆= −0.033 dB, p = 0.36), so its 106 plots rest on the
+area constraint alone. The Uniformity term correlates −0.146 with greenness; leave-one-out analysis places its
+contribution at +0.017, inside the ±0.02 noise band, and it is retained on persistence measured on unfiltered
+data.
+References
+[1] Capella Space, SAR Imagery Products Guide.
+Application: SLC geometry, scale factor, incidence angle, and noise-floor definitions.
+[2] European Space Agency (ESA), Copernicus Sentinel-2 Mission — Earth Search STAC API.
+Application: Independent optical reference used for validation and crop-assignment ordering.
+[3] F. T. Ulaby, R. K. Moore, and A. K. Fung, Microwave Remote Sensing: Active and Passive, Artech House,
+1981–1986.
+Application: Backscatter behaviour, surface roughness, and soil-moisture sensitivity, including wavelength-
+dependent penetration.
+[4] A. Freeman, “SAR calibration: An overview,” IEEE Transactions on Geoscience and Remote Sensing, 1992.
+Application: Radiometric calibration principles, including noise-equivalent sigma-zero.
+[5] F. L. Bookstein, “Principal warps: Thin-plate splines and the decomposition of deformations,” IEEE
+Transactions on Pattern Analysis and Machine Intelligence, 1989.
+Application: Thin-plate spline interpolation, applied to geocoding over the supplied control points.
+[6] S. Quegan and J. J. Yu, “Filtering of multichannel SAR images,” IEEE Transactions on Geoscience and
+Remote Sensing, 2001.
+Application: Multitemporal speckle filtering; basis for suppressing speckle without spatial averaging.
+[7] J.-S. Lee, “Digital image enhancement and noise filtering by use of local statistics,” IEEE Transactions on
+Pattern Analysis and Machine Intelligence, 1980.
+Application: Spatial speckle filtering; reference approach against which the multitemporal method was
+evaluated for smallholding-scale plots.
+[8] C. J. Tucker, “Red and photographic infrared linear combinations for monitoring vegetation,” Remote
+Sensing of Environment, 1979.
+Application: NDVI formulation, used as an independent optical validation reference.
+[9] T. Le Toan et al., “Rice crop mapping and monitoring using ERS-1 data based on experiment and modelling
+results,” IEEE Transactions on Geoscience and Remote Sensing, 1997.
+Application: Rice transplanting signature; basis for scoping rice separability to acquisition timing.
+[10] A. Veloso et al., “Understanding the temporal behavior of crops using Sentinel-1 and Sentinel-2-like data
+for agricultural applications,” Remote Sensing of Environment, 2017.
+Application: Crop-specific temporal backscatter profiles, informing the Conformity term and retention-
+based group separation.
+[11] E. P. W. Attema and F. T. Ulaby, “Vegetation modeled as a water cloud,” Radio Science, 1978.
+Application: Canopy attenuation of the soil contribution; physical basis of the Wetness term.
+[12] I. Becker-Reshef et al., “A generalized regression-based model for forecasting winter wheat yields,” Remote
+Sensing of Environment, 2010.
+Application: Season-integrated greenness as a yield predictor; the optical analogue of the yield driver.
+4

@@ -1,0 +1,41 @@
+==========================================================================
+T1  Does CV track brightness?  (the signal-to-noise-proxy signature)
+==========================================================================
+  rho(CV, gamma0_dB)        = +0.173   p = 1.35e-07
+     negative => dim farms are the 'non-uniform' ones, i.e. SNR is in the term
+  rho(CV, pixel count)      = +0.229   p = 2.27e-12
+     Coding Bits found backscatter rising with plot area (r up to +0.27) purely
+     because larger samples are better determined. Same artefact class.
+
+==========================================================================
+T2  Does uniform survive partialling brightness out?  (Megalodon's test)
+==========================================================================
+  witness                      raw rho   partial rho      n
+  Sentinel-2 NDVI 13 Oct        -0.030        +0.084    907
+  Sentinel-1 VH                 -0.020        +0.051    907
+
+  Megalodon: raw -0.53 (published), corrected +0.02, and +0.43 for structure
+  once brightness is partialled out -- a full sign reversal.
+
+==========================================================================
+T3  Within crop, where our index actually scores
+==========================================================================
+  crop           n   raw rho   partial rho
+  Bajra        147    -0.027        +0.020
+  Cotton       401    +0.035        +0.092
+  Groundnut    220    +0.187        +0.167
+  Maize         53    +0.121        +0.153
+  Rice          86    -0.198        -0.065
+
+==========================================================================
+T4  Would a different -- still blind -- weighting do better?
+==========================================================================
+  scheme                            rho vs NDVI  rho vs S1 VH
+  shipped (blind, 1/sum|rho|)            +0.127        +0.156
+  equal                                  +0.122        +0.151
+  drop uniform, rest equal               +0.078        +0.133
+  drop uniform, rest as shipped          +0.086        +0.136
+
+  Every scheme above is blind: none reads a witness to set a weight.
+  The comparison is reported, not used to pick -- picking on this table
+  is exactly what would stop the witnesses being independent.

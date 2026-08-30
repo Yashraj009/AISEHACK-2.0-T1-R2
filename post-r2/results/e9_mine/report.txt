@@ -1,0 +1,337 @@
+==============================================================================
+SOURCE INVENTORY
+==============================================================================
+  8bit          code  122,953 chars   prose+pdf   38,989 chars
+  CodingBits    code  135,090 chars   prose+pdf   13,051 chars
+  Megalodon     code    6,301 chars   prose+pdf    4,853 chars
+  Orion         code  213,137 chars   prose+pdf   20,881 chars
+
+==============================================================================
+X1  LIBRARY CENSUS -- what does real work in their code that we do not use
+==============================================================================
+  package                 teams   who
+  scipy                       3   8bit,CodingBits,Orion
+  numpy                       3   8bit,CodingBits,Orion
+  matplotlib                  3   8bit,CodingBits,Orion
+  pandas                      3   8bit,Megalodon,Orion
+  geopandas                   2   8bit,CodingBits
+  __future__                  2   8bit,Orion   <- WE DO NOT USE THIS
+  rasterio                    2   8bit,CodingBits
+  sklearn                     2   CodingBits,Orion
+  IPython                     2   Megalodon,Orion   <- WE DO NOT USE THIS
+  pyproj                      1   8bit
+  requests                    1   CodingBits   <- WE DO NOT USE THIS
+  aise_sar                    1   Megalodon   <- WE DO NOT USE THIS
+  packaging                   1   Orion   <- WE DO NOT USE THIS
+  submit                      1   Orion   <- WE DO NOT USE THIS
+  it                          1   Orion   <- WE DO NOT USE THIS
+  osgeo                       1   Orion   <- WE DO NOT USE THIS
+  argparse                    1   Orion
+  figures                     1   Orion   <- WE DO NOT USE THIS
+  s2_ndvi                     1   Orion   <- WE DO NOT USE THIS
+  coreg_calib                 1   Orion   <- WE DO NOT USE THIS
+  health_index                1   Orion   <- WE DO NOT USE THIS
+  gates                       1   Orion   <- WE DO NOT USE THIS
+  pipeline                    1   Orion   <- WE DO NOT USE THIS
+  crop_type                   1   Orion   <- WE DO NOT USE THIS
+  yield_estimate              1   Orion   <- WE DO NOT USE THIS
+  farm_features               1   Orion   <- WE DO NOT USE THIS
+  geocode                     1   Orion   <- WE DO NOT USE THIS
+  benchmark                   1   Orion   <- WE DO NOT USE THIS
+  feature_audit               1   Orion   <- WE DO NOT USE THIS
+
+  20 packages appear in competitor pipelines and not in ours.
+  Each is either a capability we lack or a dependency they did not need.
+
+==============================================================================
+X2  EXTERNAL DATA -- every dataset, endpoint and product they touched
+==============================================================================
+  --- STAC / catalog ---
+    stack                                                          8bit,CodingBits,Megalodon,Orion
+    STAC                                                           8bit,CodingBits,Orion
+    earth-search.aws.element84.com/v1/search                       CodingBits,Orion
+    stack.                                                         Orion
+    stac                                                           Orion
+    stack_lines                                                    Orion
+    planetarycomputer.microsoft.com/api/stac/v1/search             8bit
+    planetarycomputer.microsoft.com/api/sas/v1/sign                8bit
+    earth-search.aws.element84.com/v1                              CodingBits
+    stack_lines.append                                             Orion
+
+  --- Sentinel ---
+    S2                                                             8bit,CodingBits,Orion
+    sentinel-2                                                     8bit,CodingBits,Orion
+    SENTINEL-2                                                     8bit,Orion
+    S2_COVERAGE                                                    Orion
+    S2_CACHE                                                       CodingBits
+    sentinel2_validation                                           8bit
+    S2_FROM_CACHE                                                  CodingBits
+    sentinel2                                                      8bit
+    S10                                                            CodingBits
+    sentinel-cogs                                                  Orion
+    S2_cells_approx                                                CodingBits
+
+  --- Copernicus DEM ---
+    copernicus                                                     8bit
+
+  --- weather ---
+    NASA POWER                                                     8bit
+    open-meteo                                                     CodingBits
+
+  --- govt statistics ---
+    APY                                                            Megalodon
+    advance estimates                                              Orion
+
+  --- urls ---
+    https://earth-search.aws.element84.com/v1/search               CodingBits,Orion
+    https://copernicus-dem-30m.s3.amazonaws.com/                   8bit
+    https://planetarycomputer.microsoft.com/api/stac/v1/search     8bit
+    https://planetarycomputer.microsoft.com/api/sas/v1/sign?href=  8bit
+    https://power.larc.nasa.gov/api/temporal/daily/point           8bit
+    https://earth-search.aws.element84.com/v1                      CodingBits
+    https://archive-api.open-meteo.com/v1/archive                  CodingBits
+    https://www.kaggle.com/code/sumit1703/project-orion            Orion
+
+==============================================================================
+X3  CONSTANT HUNT -- named numeric constants, by team
+==============================================================================
+  Module-level ALL_CAPS assignments and dict literals of numbers: the parameters a
+  team chose. Where several converge on a value we set differently, that is a prior
+  worth testing; where they all differ, the parameter probably does not matter.
+
+  --- 8bit ---
+    FARMS                        = _find('*Farms.shp')
+    VILLAGE                      = _find('*Village.shp')
+    DATA                         = os.path.dirname(os.path.dirname(_slc))
+    ROOT                         = '/kaggle/working' if os.path.isdir('/kaggle/working') else os.path.abspath('.')
+    WORK                         = os.path.join(ROOT, 'work'); os.makedirs(WORK, exist_ok=True)
+    OUT                          = os.path.join(ROOT, 'output'); os.makedirs(OUT, exist_ok=True)
+    FIGDIR                       = os.path.join(OUT, 'figures'); os.makedirs(FIGDIR, exist_ok=True)
+    C_LIGHT                      = 299_792_458.0
+    UTM43N                       = "EPSG:32643"
+    WGS84                        = "EPSG:4326"
+    ECEF                         = "EPSG:4978"
+    PIX                          = 1.5          # target ground sampling (m). Native: 0.74 m azimuth, 1.9-2.7 m ground range.
+    BUFFER                       = 300.0     # m of context around the village, for masks and coregistration
+    DEM_URL                      = ("https://copernicus-dem-30m.s3.amazonaws.com/"
+    DEM_LOCAL                    = os.path.join(WORK, "copdem_N22E073.tif")
+    COH_WIN                      = 11          # boxcar window for coherence estimation (slant pixels)
+    WIN                          = 9          # coherence estimation window, slant pixels
+    GAP                          = 0.10       # fraction of the occupied band left between the two sub-bands
+    DATES                        = ["2025-06-06", "2025-06-19", "2025-08-14", "2025-10-13"]
+    BASE                         = "2025-06-06"          # pre-monsoon bare-soil reference
+    EROSION_M                    = 2.5
+    DRY_BASE                     = "2025-06-06"      # pre-monsoon bare soil, 35.24 deg  (descriptive only)
+    SOW                          = "2025-06-19"           # monsoon onset / sowing,  28.77 deg  \ identical
+    PEAK                         = "2025-08-14"          # peak vegetative,         28.69 deg  / geometry
+    LATE                         = "2025-10-13"          # maturity / harvest,      31.53 deg
+    DATES                        = [DRY_BASE, SOW, PEAK, LATE]
+    CROPS                        = ["Rice", "Cotton", "Maize", "Bajra", "Groundnut"]
+    ROUND1_SOKHDA_HA             = {"Rice": 44.5929, "Cotton": 136.0298, "Maize": 25.8033,
+    TEMPLATES                    = {
+    EXPECTED_RETENTION_DB        = {"Rice": +0.3, "Cotton": +1.4, "Maize": -0.6,
+    RETENTION_TOLERANCE_DB       = 2.0
+    DATES                        = ["2025-06-06", "2025-06-19", "2025-08-14", "2025-10-13"]
+    STAC                         = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
+    SIGN                         = "https://planetarycomputer.microsoft.com/api/sas/v1/sign?href="
+    FIGDIR                       = os.path.join(ROOT, "output", "figures")
+    DATES                        = ["2025-06-06", "2025-06-19", "2025-08-14", "2025-10-13"]
+    CROPS                        = ["Rice", "Cotton", "Maize", "Bajra", "Groundnut"]
+    CROP_COLORS                  = {"Rice": "#2A9D8F", "Cotton": "#E76F51", "Maize": "#E9C46A",
+    INK                          = "#1d2023"
+    MUTED                        = "#6b7280"
+    GRID                         = "#e5e7eb"
+    HEALTH_CMAP                  = LinearSegmentedColormap.from_list(
+    REQUIRED                     = ['village_id', 'farm_id', 'crop_type', 'health_index', 'yield_estimate_to_date']
+
+  --- CodingBits ---
+    CROPS                        = ["Cotton", "Groundnut", "Rice", "Bajra", "Maize"]
+    CROP_COLOR                   = dict(zip(CROPS, ["#0072B2", "#D55E00", "#009E73", "#E69F00", "#CC79A7"]))
+    DATES                        = ["0606", "0619", "0814", "1013"]
+    DRY                          = ["0606", "0814", "1013"]
+    EXTRA                        = {}   # ledger of measured side-facts, written by several stages, printed at the end
+    RHO_NOISE                    = .02
+    DLAB                         = {"0606": "6 Jun", "0619": "19 Jun", "0814": "14 Aug", "1013": "13 Oct"}
+    DCOL                         = dict(zip(DATES, ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]))
+    BLUE                         = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
+    CM_HEALTH                    = LinearSegmentedColormap.from_list(
+    CM_YIELD                     = LinearSegmentedColormap.from_list(
+    OUT                          = "/kaggle/working" if os.path.isdir("/kaggle/working") else "."
+    FIGS                         = []
+    SKIP                         = {"site-packages", "dist-packages", "node_modules", "__pycache__",
+    IDX                          = {}
+    STEMS                        = {"0606": "20250606072501_20250606072506", "0619": "20250619021410_20250619021415",
+    SLC                          = {k: A1("CAPELLA_C14_SM_SLC_HH_%s.tif" % s) for k, s in STEMS.items()}
+    META                         = {k: json.load(open(A1("CAPELLA_C14_SM_SLC_HH_%s.json" % s)))["properties"] for k, s in STEMS.items()}
+    INC                          = {k: float(META[k]["view:incidence_angle"]) for k in DATES}
+    NET                          = False
+    SUB_VID                      = 1
+    LAB                          = rasterize(((g, int(f)) for g, f in zip(farms.geometry, farms["FID"])),
+    LAB10                        = rasterize(((g, int(f)) for g, f in zip(farms.geometry, farms["FID"])),
+    BBOX84                       = list(transform_bounds(UTM, 4326, *rasterio.transform.array_bounds(H, W, T)))
+    RAW                          = {}
+    SIG                          = {k: loc[k]*Rm for k in DATES}
+    ENL_GAIN                     = [r[2]/r[1] for r in enl_rows if r[1]]   # audited by Stage 10
+    CAL_ALT_DB                   = float(_alt_max)                       # audited by Stage 10
+    FLAGS                        = ["flag_partial_swath", "flag_small", "flag_edge", "flag_temporal"]
+    RAIN_6H                      = np.nan
+    SCLG                         = {4, 5, 6, 7}
+    S2_CACHE                     = "s2_ndvi_cache.csv"
+    S2_FROM_CACHE                = bool(globals().get("S2_FROM_CACHE", False))
+    HAVE_S2                      = bool(NET or S2_FROM_CACHE)
+    CROP_MAP_OK                  = bool(HAVE_S2) and _medmar > .05
+    DRY                          = ["0606", "0814", "1013"]
+    W_WET                        = .10          # PHYSICS PRIOR - deliberately not the sweep's argmax; see below
+    CHI                          = 100/(1+np.exp(-S))
+    ABL_FULL                     = _r0 = _rn(_base)   # ABL_* names are read by Stage 10 and never reused
+    DRY                          = ["0606", "0814", "1013"]   # 19 June excluded (rain)
+    YREF                         = {"Rice": 5.2, "Maize": 6.5, "Groundnut": 2.7, "Cotton": 2.5, "Bajra": 2.1}
+    ENV                          = {"Rice": (3.52, 6.95), "Maize": (4.05, 9.00), "Groundnut": (1.51, 3.99),
+    SEASON                       = {"Bajra": "complete", "Maize": "complete", "Groundnut": "complete",
+    W_HEALTH                     = .35
+    W_AUC                        = 1-W_HEALTH
+    ... truncated
+
+  --- Megalodon ---
+    KAGGLE_INPUT                 = Path("/kaggle/input")
+    ON_KAGGLE                    = KAGGLE_INPUT.exists()
+    PIPELINE_PYTHON              = None
+
+  --- Orion ---
+    COMPETITION                  = "anrf-aise-hack-2-0-round-2-sar-crop-health-yield-estimation"
+    DATA_DIR                     = _data_dir()
+    SCENES                       = [
+    AOI_BOUNDS                   = (307325.0, 2478716.0, 313231.0, 2483430.0)  # xmin, ymin, xmax, ymax
+    PIXEL_SIZE                   = 1.0
+    TARGET_EPSG                  = 32643
+    RPC_HEIGHTS                  = {"T1": -17.15, "T2": -17.61, "T3": -17.62, "T4": -17.41}
+    RPC_HEIGHT                   = -21.534135818481445  # focusing surface; retained for the calibration sweep
+    COREG_SHIFT_EN               = {
+    ROWS_PER_BLOCK               = 2048
+    FIT_WINDOW                   = (308500.0, 2479600.0, 312000.0, 2482600.0)
+    COREG_TOLERANCE_M            = 2.0
+    BRIGHT_TAIL_MIN_DB           = 15.0   # X-band urban corner reflectors
+    NESZ_MARGIN_DB               = 3.0        # median must clear the noise floor by this much
+    CROSS_DATE_SPREAD_MAX_DB     = 3.0
+    FARM_SHP                     = _find_shp("Sokhda_Farms.shp")
+    VILLAGE_SHP                  = _find_shp("Sokhda_Village.shp")
+    ERODE_MAX_M                  = 4.0
+    ERODE_FRACTION               = 0.25
+    MIN_CORE_PX                  = 60          # below this the farm-mean is too noisy to trust on its own
+    MIN_DATE_COVERAGE            = 0.50  # a date counts for a farm only above this valid-pixel fraction
+    MIN_VALID_DATES              = 3       # Round 1's confirmed relaxed-validity rule
+    IMPUTE_NEIGHBOURS            = 8     # spatial fill for farms the radar swath never covered
+    DATE_ORDER                   = [code for _, code, _ in SCENES]
+    DOY                          = {"T1": 157, "T2": 170, "T3": 226, "T4": 286}  # 2025-06-06 / 06-19 / 08-14 / 10-13
+    BLOCK_ROWS                   = 512
+    STAC                         = "https://earth-search.aws.element84.com/v1/search"
+    COLLECTION                   = "sentinel-2-l2a"
+    WINDOWS                      = {
+    SCL_KEEP                     = (4, 5, 6, 7)
+    MIN_S2_COVERAGE              = 0.60
+    MIN_AOI_VALID                = 0.80
+    CROPS                        = ["Rice", "Cotton", "Maize", "Bajra", "Groundnut"]
+    DATES                        = ["T1", "T2", "T3", "T4"]
+    N_CLUSTERS                   = 9
+    N_SEEDS                      = 20
+    RANDOM_STATE                 = 20260730
+    IMPUTE_NEIGHBOURS            = 8
+    FEATURES                     = ["level_T3", "d23", "d34", "curv234", "range234", "cov_T3"]
+    OUTLIER_MAX_DB               = -10.0
+    OUTLIER_MAX_COV              = 2.0
+    CROP_MIX_REFERENCE           = {"Rice": 0.26, "Cotton": 0.32, "Maize": 0.18, "Bajra": 0.08,
+    RICE_LEVEL_Z                 = 1.0     # peak-canopy level well above every other cluster
+    RICE_D34_Z                   = 0.0       # and falling into October (drained, harvested)
+    COTTON_D34_Z                 = 1.0     # the only crop still standing on 13 October
+    ... truncated
+
+==============================================================================
+X4  ABANDONED WORK -- what they tried and did not ship
+==============================================================================
+  --- 8bit ---
+    [prose            ] discarded as a
+    [prose            ] rejected, and the reason is worth stating precisely because it is not the
+    [prose            ] rejected (contradictory)")
+    [prose            ] did not convert it.
+
+  --- CodingBits ---
+    [commented-out code] # gcps= alone fits a 2nd-order polynomial. SRC_METHOD='GCP_TPS' interpolates every GCP;
+    [commented-out code] # METHOD='GCP_TPS' is accepted and silently IGNORED by GDAL.
+    [commented-out code] # ours = sf^2|A|^2 sin(th), so the competing convention is RAW/sf.
+    [commented-out code] # CHI = .60 Vigour + .20 Uniformity + .10 Conformity + .10 Wetness, standardised WITHIN crop.
+    [commented-out code] # default upper-right put this legend hard against the panel edge, where it collided
+    [commented-out code] # from, so any number in this notebook can be traced to the plot it came from.
+    [marker           ] NOTE: mean plot size is %.3f ha for EVERY crop by construction - pinning both area and"
+    [marker           ] NOTE: k=5 scores %.3f, close to the best k (%d at %.3f). These features do"
+    [marker           ] NOTE: clip WITHOUT fillna, so a missing component stays missing and can be excluded from
+    [marker           ] NOTE: the optimum sits at the edge of the grid - the sweep spans 0 to 1, so this")
+    [marker           ] Hack 2.0 · Round 2", fontsize=11.5, color=MUTED, ha="right", va="center")
+    [marker           ] Hack 2.0 Round 2",
+    [prose            ] rejected alternative peaks at"] = "%+.1f dB" % _alt_max
+    [prose            ] did not replicate, reported anyway.
+    [prose            ] Not used in the submitted crop map - every test above runs on the radar-only map.")
+
+  --- Megalodon ---
+    [prose            ] failed with exit code {completed.returncode}")
+
+  --- Orion ---
+    [commented-out code] # defeats it by building the filename from the folder stem rather than globbing, but
+    [commented-out code] # canopy = +(gamma0_T3 - gamma0_T2): canopy grown over the field's own June soil
+    [commented-out code] # uniformity = -(CoV_T3 - 1.0), i.e. higher is more uniform. Declared +1 on the
+    [commented-out code] # senescence = +(gamma0_T4 - gamma0_T3): a field still holding canopy in mid-October
+    [commented-out code] # label=False: this figure builds its own legend below, and `ax.legend` replaces rather
+    [marker           ] hack-2-0-round-2-sar-crop-health-yield-estimation"
+    [marker           ] note: CoV = std/mean of *linear* power. For fully-developed speckle at L looks the expected
+    [marker           ] NOTE: this control was originally written expecting June to be nearly "
+    [marker           ] NOTE: no reserved scene cleared the gate, so this audit runs against the")
+    [alt version      ] def label_information_test
+    [prose            ] rejected the 10 Jun scene at 21.3% tile cloud without
+    [prose            ] not used to assign):")
+    [prose            ] not used" is a measurement rather than a memory.
+    [prose            ] failed early.
+    [prose            ] failed; refusing to compute farm statistics "
+
+==============================================================================
+X5  METHOD SURFACE -- every function they define
+==============================================================================
+  --- 8bit (77 functions) ---
+    _find, _iso_to_epoch, _rpc_basis, apply, beta0_to_gamma0, calibrate_beta0, coeff, coherence, coherence_bias_floor, cols, coregister_offset, critical_baseline, db, design, estimate_enl, fetch_dem, fig_cover, fig_crop_map, fig_crop_validation, fig_geometry, fig_optical_blackout, fig_sar_composite, fig_standalone_map, fig_trajectories, fig_uniformity, fig_validation, fig_village, fig_visual_proof, fit_coreg_polynomial, forward, geocode, geometry, get_json, glcm_features, incidence_angle, incidence_centre, load, load_chip, load_scenes, main, make_dem_sampler, map_axis, occupied_band, orthogonalise, pct, perpendicular_baseline, radiometry, rainfall, read_slc, refine, resample_complex, rows, rpc_forward, rpc_geolocation_rmse, s2_availability, sample, sat_position, scale_factor, sentinel2, slc_window_for_grid
+
+  --- CodingBits (32 functions) ---
+    _alloc, _cvmap, _draw_crops, _drv, _get, _h_rr, _idx_w, _mk, _mkidx, _partial, _rn, _tint, _wc, _zc_alt, _zc_y, blk, chip, debias, design, draw_farms, enl, fstat, grid, mapaxes, moran, on_grid, savefig, show_db, wavg, wide_map, z10, zc
+
+  --- Megalodon (0 functions) ---
+    
+
+  --- Orion (100 functions) ---
+    _cache_path, _colorbar_with_histogram, _column, _data_dir, _draw_choropleth, _draw_ndvi, _draw_trajectories, _draw_village, _edges, _find_shp, _flag_imputed, _footer, _grouped, _map_axes, _north_arrow, _ogr_mem_driver, _parabolic, _phase, _rank01, _reference_window, _rings, _root, _rss_mb, _scale_bar, _score, _slc_path, _stats_box, _transform_to_utm, _utm_srs, _verdict, _warp_window, accumulated_canopy, allocate_tier2, assign_tier1, audit, build, build_slant_gamma0, centred_factor, choropleth, cluster_profile, components, consensus_labels, cover, crop_map, derive_features, estimate, eta2, farm_patches, fetch_native, fingerprint, fit_height, g1, g3, incidence_per_column, index_within_cohort, label_information_test, load_farms, load_meta, morans_i, ndvi_for_date
+
+  ours: 123 functions across src/
+
+==============================================================================
+WHAT TO CHASE, from this pass alone
+==============================================================================
+  Packages in their pipelines and not in ours:
+    __future__           used by 2 team(s): 8bit,Orion
+    IPython              used by 2 team(s): Megalodon,Orion
+    requests             used by 1 team(s): CodingBits
+    aise_sar             used by 1 team(s): Megalodon
+    packaging            used by 1 team(s): Orion
+    submit               used by 1 team(s): Orion
+    it                   used by 1 team(s): Orion
+    osgeo                used by 1 team(s): Orion
+    figures              used by 1 team(s): Orion
+    s2_ndvi              used by 1 team(s): Orion
+    coreg_calib          used by 1 team(s): Orion
+    health_index         used by 1 team(s): Orion
+    gates                used by 1 team(s): Orion
+    pipeline             used by 1 team(s): Orion
+    crop_type            used by 1 team(s): Orion
+    yield_estimate       used by 1 team(s): Orion
+    farm_features        used by 1 team(s): Orion
+    geocode              used by 1 team(s): Orion
+    benchmark            used by 1 team(s): Orion
+    feature_audit        used by 1 team(s): Orion
+
+  Nothing above is adopted here. Each is a hypothesis for the next experiment,
+  and gets tested on our own data before it is believed.

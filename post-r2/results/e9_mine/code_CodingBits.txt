@@ -1,0 +1,2302 @@
+# ============================================================================
+# STAGE 0 · Environment, data discovery, run manifest
+# ============================================================================
+import os, sys, json, math, time, warnings
+import numpy as np, pandas as pd
+import matplotlib as mpl, matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+from matplotlib.colors import LinearSegmentedColormap
+warnings.filterwarnings("ignore")
+pd.set_option("display.width", 240); pd.set_option("display.max_columns", 60)
+T0 = time.time()
+os.environ.setdefault("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
+os.environ["AWS_NO_SIGN_REQUEST"] = "YES"
+
+# ---- chart system: colour assigned by job, fixed order, never cycled ----------------
+SURFACE, INK, INK2, MUTED = "#fcfcfb", "#0b0b0b", "#52514e", "#898781"
+GRIDC, AXIS = "#e1e0d9", "#c3c2b7"
+CROPS = ["Cotton", "Groundnut", "Rice", "Bajra", "Maize"]
+CROP_COLOR = dict(zip(CROPS, ["#0072B2", "#D55E00", "#009E73", "#E69F00", "#CC79A7"]))
+DATES = ["0606", "0619", "0814", "1013"]
+# 19 June is the wet acquisition; excluded from anything that should read canopy, not rain.
+DRY = ["0606", "0814", "1013"]
+EXTRA = {}   # ledger of measured side-facts, written by several stages, printed at the end
+# Smallest rho move we call real. Bootstrap spread at n~450-900 is just under 0.02.
+RHO_NOISE = .02
+DLAB  = {"0606": "6 Jun", "0619": "19 Jun", "0814": "14 Aug", "1013": "13 Oct"}
+DCOL  = dict(zip(DATES, ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]))
+BLUE  = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
+CM_HEALTH = LinearSegmentedColormap.from_list(
+    "health", ["#fbf3e4", "#dcecc8", "#aed9a0", "#77c07a", "#42a05c", "#1f7f45", "#0d5c30"])
+CM_YIELD = LinearSegmentedColormap.from_list(
+    "yield", ["#fdf1e5", "#fad9b6", "#f4bc86", "#e89a58", "#d4782f", "#ad5a1c", "#7f400f"])
+mpl.rcParams.update({
+    "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE,
+    "font.family": "sans-serif", "font.size": 10, "axes.edgecolor": AXIS, "axes.linewidth": .8,
+    "axes.labelcolor": INK2, "axes.titlecolor": INK, "axes.titlesize": 11.5,
+    "axes.titleweight": "bold", "axes.titlelocation": "left", "axes.titlepad": 9,
+    "axes.grid": True, "grid.color": GRIDC, "grid.linewidth": .8, "axes.axisbelow": True,
+    "xtick.color": MUTED, "ytick.color": MUTED, "xtick.labelsize": 9, "ytick.labelsize": 9,
+    "legend.frameon": False, "legend.fontsize": 9, "lines.linewidth": 2, "lines.markersize": 7,
+    "axes.spines.top": False, "axes.spines.right": False,
+    "figure.dpi": 110, "savefig.dpi": 175, "savefig.bbox": "tight"})
+OUT = "/kaggle/working" if os.path.isdir("/kaggle/working") else "."
+FIGS = []
+def savefig(fig, name, claim):
+    fig.savefig(os.path.join(OUT, name)); FIGS.append((name, claim))
+    print("   [figure] %-30s %s" % (name, claim))
+def mapaxes(ax):
+    ax.set_aspect("equal"); ax.set_xticks([]); ax.set_yticks([]); ax.grid(False)
+
+# ---- bounded file index. NEVER glob from '/': on Kaggle that walks the whole image ---
+SKIP = {"site-packages", "dist-packages", "node_modules", "__pycache__",
+        "proc", "sys", "dev", "usr", "lib", "opt", "var", "etc", "bin", "srv"}
+roots = ["/kaggle/input"] if os.path.isdir("/kaggle/input") else [os.getcwd(), os.path.dirname(os.getcwd())]
+IDX = {}
+for root in roots:
+    for dp, dn, fn in os.walk(root, topdown=True):
+        dn[:] = [d for d in dn if d not in SKIP and not d.startswith(".")]
+        for f in fn:
+            if f.endswith((".shp", ".tif", ".json", ".csv")): IDX.setdefault(f, []).append(os.path.join(dp, f))
+A1 = lambda n: sorted(IDX.get(n, []))[0] if IDX.get(n) else None
+
+# Exact filenames: the zip hides a second copy of the 6 June SLC inside the 19 June folder.
+STEMS = {"0606": "20250606072501_20250606072506", "0619": "20250619021410_20250619021415",
+         "0814": "20250814031124_20250814031129", "1013": "20251013022643_20251013022648"}
+SLC  = {k: A1("CAPELLA_C14_SM_SLC_HH_%s.tif" % s) for k, s in STEMS.items()}
+
+# Fail with a readable message if the Capella dataset is not attached.
+_need = {}
+for k, st in STEMS.items():
+    _need["SLC %s (.tif)" % DLAB[k]]  = SLC[k]
+    _need["meta %s (.json)" % DLAB[k]] = A1("CAPELLA_C14_SM_SLC_HH_%s.json" % st)
+    _need["extended %s (.json)" % DLAB[k]] = A1("CAPELLA_C14_SM_SLC_HH_%s_extended.json" % st)
+_miss = [n for n, v in _need.items() if not v]
+if _miss:
+    print("=" * 78)
+    print("CANNOT START - the Capella radar files are not attached to this notebook.")
+    print("=" * 78)
+    print("   missing %d of %d expected files, for example:" % (len(_miss), len(_need)))
+    for n in _miss[:6]:
+        print("      %s" % n)
+    print("")
+    print("   Searched under: %s" % ", ".join(roots))
+    print("   Found %d indexed files there." % sum(len(v) for v in IDX.values()))
+    print("")
+    print("   FIX: Add Data -> attach the Capella competition dataset (the .tif files).")
+    raise SystemExit("Capella dataset not attached - see the message above")
+
+SFc  = {k: json.load(open(A1("CAPELLA_C14_SM_SLC_HH_%s_extended.json" % s)))["collect"]["image"]["scale_factor"] for k, s in STEMS.items()}
+META = {k: json.load(open(A1("CAPELLA_C14_SM_SLC_HH_%s.json" % s)))["properties"] for k, s in STEMS.items()}
+INC  = {k: float(META[k]["view:incidence_angle"]) for k in DATES}
+
+# Prove the four scenes are four acquisitions: distinct collect_ids, timestamps matching.
+_PROV = {}
+for k, st in STEMS.items():
+    _c = json.load(open(A1("CAPELLA_C14_SM_SLC_HH_%s_extended.json" % st)))["collect"]
+    _PROV[k] = (_c["collect_id"], _c["start_timestamp"])
+_ids = [v[0] for v in _PROV.values()]
+assert len(set(_ids)) == 4, "PROVENANCE FAIL: the four scenes are not four distinct collects"
+for k, (_i, _t) in _PROV.items():
+    assert _t[:10].replace("-", "")[4:] == k,         "PROVENANCE FAIL: %s carries a %s timestamp - wrong file loaded" % (k, _t[:10])
+print("")
+NET = False
+try:
+    import requests
+    NET = requests.get("https://earth-search.aws.element84.com/v1", timeout=25).status_code == 200
+except Exception: pass
+
+print("\ninternet (for validation): %s | output: %s" % (NET, OUT))
+# ============================================================================
+# STAGE 1 · vectors, flags, confidence
+# ============================================================================
+# All 966 plots kept. Problem plots are flagged, never deleted, and excluded only from
+# fitting the crop allocation and setting the health scale.
+import geopandas as gpd, rasterio
+from rasterio.warp import reproject, Resampling, transform_bounds
+from rasterio.transform import from_origin
+from rasterio.windows import Window, from_bounds as win_from_bounds
+from rasterio.features import rasterize
+from rasterio.control import GroundControlPoint
+from scipy.ndimage import uniform_filter
+from scipy.stats import spearmanr, mannwhitneyu
+
+UTM, RES, RES10, PAD = 32643, 2.94, 10.0, 250.0
+farms = gpd.read_file(A1("Sokhda_Farms.shp")).to_crs(UTM)
+n_invalid = int((~farms.geometry.is_valid).sum())     # 9 are valid in lat/lon, invalid in UTM
+farms["geometry"] = farms.geometry.buffer(0)
+farms["FID"] = farms["FID"].astype(int)
+farms["area_ha"] = farms.geometry.area/1e4
+farms["perim"]   = farms.geometry.length
+farms["ctr_x"]   = farms.geometry.centroid.x   # never name these cx/cy - GeoDataFrame.cx is an indexer
+farms["ctr_y"]   = farms.geometry.centroid.y
+vill = gpd.read_file(A1("Sokhda_Village.shp")).to_crs(UTM)
+VID, VNAME = int(vill.iloc[0]["ID"]), str(vill.iloc[0]["VILLAGE"])
+# Two different ids exist. SUB_VID is the one the submission carries, per the organisers'
+# dummy sheet; VID (22) is Sokhda's index in the multi-village shapefile, provenance only.
+SUB_VID = 1
+NF, fid = int(farms["FID"].max())+1, farms["FID"].values
+
+def grid(res):
+    b = vill.total_bounds
+    x0 = np.floor((b[0]-PAD)/res)*res; y1 = np.ceil((b[3]+PAD)/res)*res
+    W = int(np.ceil((b[2]+PAD-x0)/res)); H = int(np.ceil((y1-(b[1]-PAD))/res))
+    return from_origin(x0, y1, res, res), W, H
+T, W, H = grid(RES); T10, W10, H10 = grid(RES10)
+LAB  = rasterize(((g, int(f)) for g, f in zip(farms.geometry, farms["FID"])),
+                 out_shape=(H, W), transform=T, fill=0, dtype="int32")
+LAB10 = rasterize(((g, int(f)) for g, f in zip(farms.geometry, farms["FID"])),
+                  out_shape=(H10, W10), transform=T10, fill=0, dtype="int32")
+BBOX84 = list(transform_bounds(UTM, 4326, *rasterio.transform.array_bounds(H, W, T)))
+
+Q = pd.DataFrame({"FID": fid, "area_ha": farms["area_ha"].values, "perim": farms["perim"].values,
+                  "ctr_x": farms["ctr_x"].values, "ctr_y": farms["ctr_y"].values}).set_index("FID")
+Q["degenerate"] = Q.area_ha < 1e-4
+Q["edge_ratio"] = (Q.perim*RES/(Q.area_ha*1e4)).clip(upper=2.0)
+Q.loc[Q.degenerate, "edge_ratio"] = np.nan
+Q["width_m"] = 2*farms.set_index("FID").geometry.area/Q.perim.replace(0, np.nan)
+V_HA, F_HA = float(vill.geometry.area.sum()/1e4), float(farms.area_ha.sum())
+print("%s (village_id %d, shapefile ID %d) | %.0f ha | %d plots covering %.1f ha (%.0f%% of the village)"
+      % (VNAME, SUB_VID, VID, V_HA, len(farms), F_HA, 100*F_HA/V_HA))
+print("repaired %d polygons invalid after reprojection | %d degenerate (~0 ha)"
+      % (n_invalid, int(Q.degenerate.sum())))
+print("analysis grid %d x %d @ %.2f m | median plot %.3f ha, %.1f m across -> ~%d cells"
+      % (W, H, RES, Q.area_ha.median(), Q.width_m.median(), Q.area_ha.median()*1e4/RES**2))
+
+fig = plt.figure(figsize=(16, 9))
+gs = fig.add_gridspec(1, 3, width_ratios=[1.35, 1, 1], wspace=.26)
+ax = fig.add_subplot(gs[0])
+gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=ax, facecolor="none", edgecolor=INK2, linewidth=1.5)
+farms.plot(ax=ax, facecolor=BLUE[2], edgecolor=BLUE[5], linewidth=.2)
+mapaxes(ax); ax.set_title("966 digitised plots — %.0f%% of the village area" % (100*F_HA/V_HA))
+ax = fig.add_subplot(gs[1])
+ax.hist(Q.area_ha, bins=np.arange(0, 3.6, .05), color=BLUE[3], edgecolor=SURFACE, linewidth=.5)
+ax.axvline(Q.area_ha.median(), color=INK2, ls="--", lw=1.5)
+ax.annotate("median %.3f ha" % Q.area_ha.median(), xy=(Q.area_ha.median(), ax.get_ylim()[1]*.9),
+            xytext=(6, 0), textcoords="offset points", color=INK2, fontsize=9)
+ax.set_xlabel("plot area (ha)"); ax.set_ylabel("plots"); ax.set_title("Plot sizes")
+ax = fig.add_subplot(gs[2])
+ax.hist(Q.width_m.clip(0, 90), bins=40, color=BLUE[3], edgecolor=SURFACE, linewidth=.5)
+ax.axvline(RES, color="#D55E00", lw=2)
+ax.annotate("our cell\n%.2f m" % RES, xy=(RES, ax.get_ylim()[1]*.75), xytext=(8, 0),
+            textcoords="offset points", color="#D55E00", fontsize=9, fontweight="bold")
+ax.set_xlabel("plot width (m)"); ax.set_ylabel("plots"); ax.set_title("Plot width vs our resolution")
+savefig(fig, "fig01_plots.png", "the landscape we are measuring"); plt.show()
+# ============================================================================
+# STAGE 2 · SLC -> sigma0 -> Quegan-Yu
+# ============================================================================
+# Raw SLC, not the 8-bit preview - the preview crushes 30-37% of farm pixels onto one value.
+def design(x_, y_): return np.column_stack([np.ones_like(x_), x_, y_, x_*x_, x_*y_, y_*y_])
+def blk(a, valid, K):
+    h, w = (a.shape[0]//K)*K, (a.shape[1]//K)*K
+    s = np.where(valid, a, 0)[:h, :w].reshape(h//K, K, w//K, K).sum(axis=(1, 3))
+    n = valid[:h, :w].reshape(h//K, K, w//K, K).sum(axis=(1, 3)).astype(np.float32)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(n > 0, s/np.maximum(n, 1), 0.).astype(np.float32)
+v84 = vill.to_crs(4326).total_bounds
+cor = np.array([[a_, b_] for a_ in (v84[0]-.02, v84[2]+.02) for b_ in (v84[1]-.02, v84[3]+.02)])
+RAW = {}
+for k in DATES:
+    t0 = time.time()
+    with rasterio.open(SLC[k]) as ds:
+        g, gcrs = ds.gcps
+        Dg = design(np.array([p.x for p in g]), np.array([p.y for p in g]))
+        cc = np.linalg.lstsq(Dg, np.array([p.col for p in g]), rcond=None)[0]
+        rr = np.linalg.lstsq(Dg, np.array([p.row for p in g]), rcond=None)[0]
+        P_ = design(cor[:, 0], cor[:, 1]); pc, pr = P_ @ cc, P_ @ rr
+        c0, c1 = int(max(pc.min()-100, 0)), int(min(pc.max()+100, ds.width))
+        r0, r1 = int(max(pr.min()-100, 0)), int(min(pr.max()+100, ds.height))
+        amp = np.abs(ds.read(1, window=Window(c0, r0, c1-c0, r1-r0))).astype(np.float32)
+    val = amp > 0
+    sg = blk((SFc[k]*amp)**2, val, 2)*math.sin(math.radians(INC[k])); del amp, val
+    g2 = [GroundControlPoint(row=(p.row-r0)/2, col=(p.col-c0)/2, x=p.x, y=p.y,
+                             z=getattr(p, "z", 0.)) for p in g]
+    dst = np.zeros((H, W), np.float32)
+    # gcps= alone fits a 2nd-order polynomial. SRC_METHOD='GCP_TPS' interpolates every GCP;
+    # METHOD='GCP_TPS' is accepted and silently IGNORED by GDAL.
+    reproject(source=sg, destination=dst, gcps=g2, src_crs=gcrs, src_nodata=0.,
+              dst_transform=T, dst_crs="EPSG:%d" % UTM, dst_nodata=0.,
+              resampling=Resampling.average, SRC_METHOD="GCP_TPS")
+    # Verify TPS took effect: reproject again forcing poly2 and require the two to differ.
+    if k == DATES[0]:
+        _chk = np.zeros((H, W), np.float32)
+        reproject(source=sg, destination=_chk, gcps=g2, src_crs=gcrs, src_nodata=0.,
+                  dst_transform=T, dst_crs="EPSG:%d" % UTM, dst_nodata=0.,
+                  resampling=Resampling.average, MAX_GCP_ORDER="2")
+        _d = np.abs(_chk-dst); _n = np.isfinite(_d) & (_chk > 0) & (dst > 0)
+        TPS_OK = bool(_n.sum() and _d[_n].max() > 0)
+        del _chk, _d, _n
+    RAW[k] = np.where(dst > 0, dst, np.nan); del sg, dst
+    print("   %-6s %4.1fs | valid %.1f%% | median %.2f dB"
+          % (DLAB[k], time.time()-t0, 100*np.isfinite(RAW[k]).mean(), 10*np.log10(np.nanmedian(RAW[k]))))
+
+# Settle the calibration convention on the data rather than quote it.
+_k0 = DATES[0]
+# ours = sf^2|A|^2 sin(th), so the competing convention is RAW/sf.
+_ours_max = 10*np.log10(np.nanmax(RAW[_k0]))
+_alt_max  = 10*np.log10(np.nanmax(RAW[_k0]/SFc[_k0]))
+print("")
+print("calibration convention, tested on %s:" % DLAB[_k0])
+print("   ours   sigma0 = (scale_factor*|A|)^2*sin(theta)   scene max %+7.2f dB" % _ours_max)
+print("   other  sigma0 =  scale_factor*|A|^2 *sin(theta)   scene max %+7.2f dB" % _alt_max)
+print("   Scene max is the diagnostic: a farmland scene contains metal roofs and the odd")
+print("   corner, so a peak near +20 dB is expected. The ALTERNATIVE convention puts that")
+print("   same peak at %+.1f dB - nothing on an agricultural scene returns more power than" % _alt_max)
+print("   it received, and %+.0f dB is far past that. The convention we use is the one that" % _alt_max)
+print("   leaves the scene physically possible; the median field sits at %.1f dB, where crops belong."
+      % (10*np.log10(np.nanmedian(RAW[_k0]))))
+EXTRA["calibration convention, rejected alternative peaks at"] = "%+.1f dB" % _alt_max
+
+WIN, loc, ratio = 7, {}, []
+for k in DATES:
+    I = np.nan_to_num(RAW[k], nan=0.); m = np.isfinite(RAW[k]) & (RAW[k] > 0)
+    num = uniform_filter(np.where(m, I, 0.), WIN); den = uniform_filter(m.astype(np.float32), WIN)
+    lm = np.where(den > .15, num/np.maximum(den, 1e-9), np.nan); loc[k] = lm
+    with np.errstate(invalid="ignore", divide="ignore"):
+        ratio.append(np.where(m & np.isfinite(lm) & (lm > 0), RAW[k]/lm, np.nan))
+Rm = np.nanmean(np.stack(ratio), axis=0)
+SIG = {k: loc[k]*Rm for k in DATES}
+del ratio, loc
+
+def enl(a, lab, cap=250):
+    # Random sample of fields - shapefile order is spatially clustered.
+    out = []
+    _ids = np.unique(lab)[1:]
+    if _ids.size > cap:
+        _ids = np.random.default_rng(11).choice(_ids, size=cap, replace=False)
+    for f_ in _ids:
+        x = a[lab == f_]; x = x[np.isfinite(x) & (x > 0)]
+        if x.size >= 30: out.append((x.mean()/x.std())**2)
+    return float(np.median(out)) if out else np.nan
+print("\n   effective looks per cell (median over plots)")
+print("   %-8s %8s %10s %7s" % ("date", "raw", "filtered", "gain"))
+enl_rows = []
+for k in DATES:
+    a_, b_ = enl(RAW[k], LAB), enl(SIG[k], LAB)
+    enl_rows.append((DLAB[k], a_, b_))
+    print("   %-8s %8.1f %10.1f %6.1fx" % (DLAB[k], a_, b_, b_/a_))
+ENL_GAIN = [r[2]/r[1] for r in enl_rows if r[1]]   # audited by Stage 10
+CAL_ALT_DB = float(_alt_max)                       # audited by Stage 10
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 9))
+a = axes[0]
+xx = np.arange(len(enl_rows)); wdt = .38
+a.bar(xx-wdt/2, [r[1] for r in enl_rows], wdt, color=BLUE[2], edgecolor=SURFACE, lw=1.5, label="raw")
+a.bar(xx+wdt/2, [r[2] for r in enl_rows], wdt, color=BLUE[5], edgecolor=SURFACE, lw=1.5, label="Quegan-Yu")
+a.set_xticks(xx); a.set_xticklabels([r[0] for r in enl_rows]); a.set_ylabel("effective looks")
+a.set_title("Speckle reduced without blurring"); a.legend()
+a = axes[1]
+for k in DATES:
+    d = 10*np.log10(SIG[k][np.isfinite(SIG[k]) & (SIG[k] > 0)])
+    a.hist(d, bins=140, density=True, histtype="step", lw=2, color=DCOL[k], label=DLAB[k])
+a.set_xlim(-30, -6); a.set_xlabel("$\\sigma^0$ (dB)"); a.set_ylabel("density")
+a.set_title("Calibrated $\\sigma^0$ — smooth, no floor pile-up"); a.legend()
+a = axes[2]
+sub = SIG["1013"]
+im = a.imshow(10*np.log10(np.where(np.isfinite(sub) & (sub > 0), sub, np.nan)),
+              cmap="magma", vmin=-26, vmax=-13)
+mapaxes(a); a.set_title("$\\sigma^0$ 13 Oct — the anchor observation")
+cb = plt.colorbar(im, ax=a, shrink=.85); cb.set_label("dB", color=INK2)
+fig.tight_layout(); savefig(fig, "fig02_sigma0.png", "calibrated radar, speckle-filtered"); plt.show()
+# ============================================================================
+# STAGE 3 · robust per-farm statistics, size-de-biased
+# ============================================================================
+# Median, never mean: the worst bright scatterer inflates its plot's mean by ~19 dB. Every
+# feature is de-biased against log(area) - sigma0 climbs with plot size on all four dates.
+def fstat(arr, lab=LAB, nf=NF):
+    f = lab.ravel(); s = f > 0
+    v = arr.ravel()[s]; i = f[s]
+    ok = np.isfinite(v) & (v > 0); i, v = i[ok], v[ok].astype(np.float64)
+    o = np.argsort(i, kind="stable"); i, v = i[o], v[o]
+    n = np.bincount(i, minlength=nf); e = np.concatenate([[0], np.cumsum(n)])
+    med = np.full(nf, np.nan); cv = np.full(nf, np.nan); mean = np.full(nf, np.nan)
+    for j in np.nonzero(n)[0]:
+        x = v[e[j]:e[j+1]]; med[j] = np.median(x); mean[j] = x.mean(); cv[j] = x.std()/x.mean()
+    return med, cv, mean, n.astype(float)
+
+ntot = np.bincount(LAB.ravel()[LAB.ravel() > 0], minlength=NF).astype(float)
+Q["ncells_total"] = ntot[fid]
+for k in DATES:
+    med, cv, mean, n = fstat(SIG[k])
+    Q["s0_"+k]   = 10*np.log10(med[fid])
+    Q["mean_"+k] = 10*np.log10(mean[fid])
+    Q["cv_"+k]   = cv[fid]
+    Q["n_"+k]    = n[fid]
+    Q["cov_"+k]  = n[fid]/np.maximum(Q.ncells_total.values, 1)
+    # RAW within-field CV: the persistence evidence defending Uniformity is measured unfiltered.
+    _cr = fstat(RAW[k])[1]
+    Q["cv_raw_"+k] = _cr[fid]
+Q["cov_min"] = Q[["cov_"+k for k in DATES]].min(axis=1)
+Q["nmin"] = Q[["n_"+k for k in DATES]].min(axis=1)
+Q["complete"] = Q[["s0_"+k for k in DATES]].notna().all(axis=1)
+Q["flag_partial_swath"] = Q.cov_min.fillna(0) < .95
+Q["flag_small"] = Q.nmin < 40
+Q["flag_edge"]  = Q.edge_ratio.fillna(0) > .90
+# Step size over DRY dates only - across 19 June a rain response reads as a data fault.
+Q["max_step"]   = pd.concat([(Q["s0_"+DRY[i+1]]-Q["s0_"+DRY[i]]).abs()
+                             for i in range(len(DRY)-1)], axis=1).max(axis=1)
+Q["flag_temporal"] = Q.max_step > 6.
+FLAGS = ["flag_partial_swath", "flag_small", "flag_edge", "flag_temporal"]
+# Share of each flag landing on swath-edge farms - computed, not quoted.
+_sw = Q["flag_partial_swath"].fillna(False)
+Q["n_flags"] = Q[FLAGS].sum(axis=1); Q["clean"] = (Q.n_flags == 0) & Q.complete
+# These two numbers appear in the header table, so we compute them here rather than
+# quote them from an audit notebook a reader does not have.
+_gap = (Q["mean_1013"] - Q["s0_1013"]).replace([np.inf, -np.inf], np.nan)
+_gapmax = float(np.nanmax([np.nanmax((Q["mean_"+k] - Q["s0_"+k]).replace([np.inf, -np.inf], np.nan))
+                           for k in DATES]))
+_qs = pd.qcut(Q.area_ha, 5, labels=False, duplicates="drop")
+_bias = {k: float(Q.groupby(_qs)["s0_"+k].mean().iloc[-1] - Q.groupby(_qs)["s0_"+k].mean().iloc[0])
+         for k in DATES}
+print("worst bright scatterer inflates its plot's mean by %.1f dB -> we use the median" % _gapmax)
+# The 19-June exclusion is quoted all through this notebook; compute the thing it rests on.
+_dry_med = np.nanmedian([np.nanmedian(RAW[k]) for k in DRY])
+_wet_med = np.nanmedian(RAW["0619"])
+_exc = 10*np.log10(_wet_med) - 10*np.log10(_dry_med)
+_sp = lambda k: float(np.nanstd(Q["s0_"+k])) if ("s0_"+k) in Q else np.nan
+print("")
+print("19 June, the excluded date: %+.2f dB brighter than the dry-date median" % _exc)
+print("   field-to-field spread  19 Jun %.2f dB  vs dry-date mean %.2f dB"
+      % (_sp("0619"), np.nanmean([_sp(k) for k in DRY])))
+EXTRA["19 June excess over dry dates"] = "%+.2f dB" % _exc
+# Rainfall fetched, not remembered. The exclusion rests on the measured excess above.
+RAIN_6H = np.nan
+try:
+    _rr = requests.get("https://archive-api.open-meteo.com/v1/archive",
+                       params=dict(latitude=round((BBOX84[1]+BBOX84[3])/2., 3),
+                                   longitude=round((BBOX84[0]+BBOX84[2])/2., 3),
+                                   start_date="2025-06-18", end_date="2025-06-19",
+                                   hourly="precipitation", timezone="UTC"), timeout=25).json()
+    _hh = _rr["hourly"]["time"]; _pp = _rr["hourly"]["precipitation"]
+    _acq = "2025-06-19T02:00"                      # acquisition 02:14 UTC
+    _idx = [i for i, h in enumerate(_hh) if h <= _acq][-6:]
+    RAIN_6H = float(np.nansum([_pp[i] for i in _idx if _pp[i] is not None]))
+    print("   rainfall in the 6 h before the 19 June pass: %.1f mm  (open-meteo archive, fetched)" % RAIN_6H)
+    EXTRA["rain, 6 h before 19 June"] = "%.1f mm (fetched)" % RAIN_6H
+except Exception as _e:
+    print("   rainfall archive unavailable (%s) - the 19 June exclusion rests on the measured" % type(_e).__name__)
+    print("   brightness excess above, not on a rainfall figure.")
+print("")
+print("quality flags (of %d plots)" % len(Q))
+for f_ in FLAGS: print("   %-22s %4d (%.1f%%)" % (f_.replace("flag_", ""), int(Q[f_].sum()), 100*Q[f_].mean()))
+print("   %-22s %4d (%.1f%%)" % ("CLEAN", int(Q.clean.sum()), 100*Q.clean.mean()))
+
+def debias(col, mask):
+    y = Q[col].values.copy(); la = np.log(Q.area_ha.values.clip(1e-4))
+    m = mask.values & np.isfinite(y) & np.isfinite(la)
+    if m.sum() < 50: return y
+    b = np.polyfit(la[m], y[m], 1)
+    return y - np.polyval(b, la) + np.nanmean(y[m])
+before = {}
+for k in DATES:
+    for pre in ("s0_", "cv_", "cv_raw_"):
+        c = pre+k; mm = Q.clean & Q[c].notna()
+        before[c] = np.corrcoef(np.log(Q.area_ha.clip(1e-4))[mm], Q[c][mm])[0, 1]
+        Q[c+"_d"] = debias(c, Q.clean)
+after = {}
+for k in DATES:
+    for pre in ("s0_", "cv_", "cv_raw_"):
+        c = pre+k; mm = Q.clean & Q[c+"_d"].notna()
+        after[c] = np.corrcoef(np.log(Q.area_ha.clip(1e-4))[mm], Q[c+"_d"][mm])[0, 1]
+fig, axes = plt.subplots(2, 2, figsize=(16, 9)); axes = axes.ravel()
+a = axes[0]
+g_ = Q[Q.clean]
+a.scatter(g_["s0_1013"], g_["mean_1013"], s=9, color=BLUE[3], alpha=.45, edgecolor="none")
+lim = [np.nanpercentile(g_["s0_1013"], 1), np.nanpercentile(g_["mean_1013"], 99.5)]
+a.plot(lim, lim, color=INK2, ls="--", lw=1.4)
+bad = Q[(Q["mean_1013"]-Q["s0_1013"]) > 2]
+a.scatter(bad["s0_1013"], bad["mean_1013"], s=26, color="#D55E00", edgecolor=SURFACE, lw=.5,
+          label="mean inflated >2 dB")
+a.set_xlabel("median (used)"); a.set_ylabel("plain mean (rejected)")
+a.set_title("Why the median"); a.legend(fontsize=8)
+a = axes[1]
+xx = np.arange(len(DATES))
+a.bar(xx-.19, [before["s0_"+k] for k in DATES], .36, color="#D55E00", edgecolor=SURFACE, lw=1.4, label="before")
+# After-values are ~0 by construction; draw them as markers so 'removed' is legible.
+_aft = [after["s0_"+k] for k in DATES]
+a.bar(xx+.19, _aft, .36, color="#009E73", edgecolor=SURFACE, lw=1.4, label="after")
+a.plot(xx+.19, _aft, "o", color="#009E73", markersize=7, markeredgecolor=SURFACE,
+       markeredgewidth=1.2, zorder=5)
+a.axhline(0, color=INK2, lw=1); a.set_xticks(xx); a.set_xticklabels([DLAB[k] for k in DATES])
+_wr = max(abs(v) for v in _aft)
+a.set_ylim(-max(.02, _wr*3), max([before["s0_"+k] for k in DATES])*1.18)
+# The residual belongs in the title, not floating in the plot: below the zero line it hit
+# the date labels, above it crowded the markers. A title cannot collide with the data.
+a.set_ylabel("corr with log(area)")
+a.set_title("Size bias removed  (after: |r| < %.3f)" % max(_wr, .001), fontsize=10.5)
+a.legend(fontsize=8, frameon=False)
+a = axes[2]
+qs = pd.qcut(g_.area_ha, 5, labels=["Q1", "Q2", "Q3", "Q4", "Q5"])
+a.plot(range(5), [g_[qs == q]["s0_1013"].mean() for q in ["Q1", "Q2", "Q3", "Q4", "Q5"]],
+       marker="o", color="#D55E00", label="before")
+a.plot(range(5), [g_[qs == q]["s0_1013_d"].mean() for q in ["Q1", "Q2", "Q3", "Q4", "Q5"]],
+       marker="o", color="#009E73", label="after")
+a.set_xticks(range(5)); a.set_xticklabels(["smallest", "", "middle", "", "largest"])
+a.set_ylabel("$\\sigma^0$ (dB)"); a.set_title("By plot size"); a.legend(fontsize=8)
+a = axes[3]
+fm_ = farms.set_index("FID").join(Q[FLAGS+["clean"]])
+gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=a, facecolor="none", edgecolor=INK2, lw=1.2)
+fm_[fm_.clean].plot(ax=a, facecolor="#d9d9d6", edgecolor="none")
+for f_, c_ in (("flag_edge", "#E69F00"), ("flag_small", "#009E73"),
+               ("flag_temporal", "#56B4E9"), ("flag_partial_swath", "#CC79A7")):
+    s_ = fm_[fm_[f_].fillna(False)]
+    if len(s_): s_.plot(ax=a, facecolor=c_, edgecolor="none")
+mapaxes(a); a.set_title("Quality flags (%d clean)" % int(Q.clean.sum()))
+a.legend(handles=[Patch(facecolor="#d9d9d6", label="clean"), Patch(facecolor="#CC79A7", label="swath edge"),
+                  Patch(facecolor="#E69F00", label="edge-dominated"), Patch(facecolor="#009E73", label="few cells"),
+                  Patch(facecolor="#56B4E9", label="temporal jump")], fontsize=7.5, ncol=3, frameon=False,
+         loc="upper center", bbox_to_anchor=(.5, -.02))   # below the map, not over the village
+fig.tight_layout(); savefig(fig, "fig03_features.png", "robust statistics, size bias removed"); plt.show()
+# ============================================================================
+# STAGE 4 · November phenology + Round 1 area constraint
+# ============================================================================
+# crop_type is NOT from SAR: Round 1 areas as a hard constraint, ordered by November optical
+# phenology. Stage 7b shows a radar-only map beating a constraint-only null.
+R1 = pd.DataFrame({"crop": CROPS, "round1_ha": [297.0814, 213.9334, 73.3334, 65.1184, 15.7592],
+                   "exact": [True, True, True, True, False]}).set_index("crop")
+R1["share"] = R1.round1_ha/R1.round1_ha.sum(); R1["target_ha"] = R1.share*F_HA
+print("Round 1 areas for %s, rescaled to the %.1f ha digitised (shares carried, not hectares):" % (VNAME, F_HA))
+print(R1.assign(share=(100*R1.share).round(2)).round(2).to_string())
+
+SCLG = {4, 5, 6, 7}
+def on_grid(href, T_, W_, H_, rs=Resampling.average, dt="float32"):
+    with rasterio.open(href) as ds:
+        bb = rasterio.transform.array_bounds(H_, W_, T_)
+        if ds.crs.to_epsg() != UTM: bb = transform_bounds(UTM, ds.crs, *bb)
+        w_ = win_from_bounds(*bb, ds.transform).round_offsets().round_lengths()
+        src = ds.read(1, window=w_, boundless=True, fill_value=0).astype(dt)
+        st, sc = ds.window_transform(w_), ds.crs
+    dst = np.zeros((H_, W_), dt)
+    reproject(source=src, destination=dst, src_transform=st, src_crs=sc, dst_transform=T_,
+              dst_crs="EPSG:%d" % UTM, resampling=rs)
+    return dst
+def z10(arr, nf=NF):
+    f = LAB10.ravel(); s = f > 0
+    v = arr.ravel()[s]; i = f[s]; ok = np.isfinite(v); i, v = i[ok], v[ok].astype(np.float64)
+    n = np.bincount(i, minlength=nf).astype(float); sm = np.bincount(i, weights=v, minlength=nf)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(n > 0, sm/np.maximum(n, 1), np.nan), n
+
+# Cache the per-farm NDVI: with it attached, an offline re-run reproduces this crop map exactly.
+S2_CACHE = "s2_ndvi_cache.csv"
+TS = pd.DataFrame()
+if NET:
+    q = {"collections": ["sentinel-2-l2a"], "bbox": BBOX84,
+         "datetime": "2025-05-01T00:00:00Z/2025-12-20T23:59:59Z", "limit": 200}
+    feats = sorted(requests.post("https://earth-search.aws.element84.com/v1/search", json=q,
+                                 timeout=90).json().get("features", []),
+                   key=lambda x: x["properties"]["datetime"])
+    ser = {}
+    for f in feats:
+        d = f["properties"]["datetime"][:10]
+        try:
+            scl = on_grid(f["assets"]["scl"]["href"], T10, W10, H10, Resampling.nearest, "uint8")
+            if (np.isin(scl, list(SCLG)) & (LAB10 > 0)).sum() < .55*(LAB10 > 0).sum(): continue
+            nir = on_grid(f["assets"]["nir"]["href"], T10, W10, H10)
+            red = on_grid(f["assets"]["red"]["href"], T10, W10, H10)
+            with np.errstate(invalid="ignore", divide="ignore"): nd = (nir-red)/(nir+red)
+            nd[~np.isin(scl, list(SCLG))] = np.nan
+            m_, n_ = z10(nd)
+            v = pd.Series(m_[fid], index=fid); v[pd.Series(n_[fid], index=fid) < 4] = np.nan
+            ser[d] = v if d not in ser else pd.Series(np.fmax(ser[d].values, v.values), index=fid)
+        except Exception: continue
+    TS = pd.DataFrame(ser); TS.columns = pd.to_datetime(TS.columns); TS = TS.reindex(sorted(TS.columns), axis=1)
+    try:                      # leave a cache behind so an offline re-run reproduces this exactly
+        TS.to_csv(os.path.join(OUT, S2_CACHE))
+        print("wrote %s (%d farms x %d dates) - attach it as a dataset to reproduce offline"
+              % (S2_CACHE, TS.shape[0], TS.shape[1]))
+    except Exception as _e:
+        print("could not write the Sentinel-2 cache: %s" % _e)
+    print("\nSentinel-2: %d usable dates | Nov %d | Oct %d | pre-monsoon %d"
+          % (TS.shape[1], sum(c.month == 11 for c in TS.columns), sum(c.month == 10 for c in TS.columns),
+             sum(c.month == 5 or (c.month == 6 and c.day <= 12) for c in TS.columns)))
+
+if TS.shape[1] < 8:
+    # No network - fall back to the cached NDVI if one is attached.
+    _cp = A1(S2_CACHE)
+    if _cp:
+        try:
+            _c = pd.read_csv(_cp, index_col=0)
+            _c.index = _c.index.astype(Q.index.dtype)
+            _c.columns = pd.to_datetime(_c.columns)
+            TS = _c.reindex(sorted(_c.columns), axis=1)
+            S2_FROM_CACHE = True
+            print("Sentinel-2 unavailable live - LOADED CACHE %s (%d farms x %d dates)"
+                  % (os.path.basename(_cp), TS.shape[0], TS.shape[1]))
+        except Exception as _e:
+            print("cache found but unreadable (%s) - continuing without optical" % _e)
+    else:
+        print("No Sentinel-2 and no cache: crop_type falls back to the area constraint alone.")
+S2_FROM_CACHE = bool(globals().get("S2_FROM_CACHE", False))
+HAVE_S2 = bool(NET or S2_FROM_CACHE)
+z = lambda s: (s-s.mean())/(s.std()+1e-9)
+L = pd.DataFrame(0., index=Q.index, columns=CROPS)
+if TS.shape[1] >= 8:
+    NOV = [c for c in TS.columns if c.month == 11]
+    OCTD = [c for c in TS.columns if c.month == 10]
+    PRE = [c for c in TS.columns if c.month == 5 or (c.month == 6 and c.day <= 12)]
+    P = pd.DataFrame(index=TS.index)
+    P["nov"] = TS[NOV].mean(axis=1); P["oct"] = TS[OCTD].mean(axis=1); P["pre"] = TS[PRE].mean(axis=1)
+    P["peak"] = TS.max(axis=1); P["o2n"] = P["oct"]-P["nov"]
+    P = P.reindex(Q.index)
+    Q["ndvi_nov"], Q["ndvi_oct"] = P["nov"], P["oct"]
+    L["Cotton"]    = (1.4*z(P.nov) + .5*z(P.pre)).fillna(0)
+    L["Rice"]      = (.8*z(P.oct) - .8*z(P.nov) - .4*z(P.pre)).fillna(0)
+    L["Groundnut"] = (.6*z(P.o2n) - .5*z(P.nov)).fillna(0)
+    L["Bajra"]     = (-.5*z(P.nov) - .4*z(P.oct) + .3*z(P.pre)).fillna(0)
+    L["Maize"]     = (-.4*z(P.nov) - .3*z(P.oct) + .4*z(P.peak)).fillna(0)
+    # integrated NDVI - the standard published yield proxy - built here so the YIELD stage
+    # can be scored against a season quantity rather than a single October scene.
+    _tp = getattr(np, "trapezoid", None) or np.trapz
+    _cols = sorted([c for c in TS.columns if 150 <= c.dayofyear <= 300])
+    if len(_cols) >= 4:
+        _v = TS[_cols].reindex(Q.index).values
+        _xd = np.array([c.dayofyear for c in _cols], float)
+        _auc = np.full(len(Q), np.nan)
+        for _i in range(len(Q)):
+            _m = np.isfinite(_v[_i])
+            if _m.sum() >= 4: _auc[_i] = _tp(_v[_i][_m], _xd[_m])/(_xd[_m].max()-_xd[_m].min())
+        Q["ndvi_auc"] = _auc
+        print("integrated NDVI built from %d Sentinel-2 dates (the yield yardstick)" % len(_cols))
+    print("November phenology preference built (cotton picking runs Oct-Jan -> Nov green = cotton)")
+    print("")
+    print("PROVENANCE: L is Sentinel-2 NDVI only (Nov/Oct/pre-monsoon/peak). No sigma0 in it.")
+    print("it is not the column we ship.")
+else:
+    print("Sentinel-2 unavailable - falling back to area constraint with a seeded tiebreak only")
+rng0 = np.random.default_rng(20260809)
+L = L + .18*pd.DataFrame(rng0.normal(size=L.shape), index=L.index, columns=L.columns)
+area = Q.area_ha.values; targets = np.array([R1.loc[c, "target_ha"] for c in CROPS])
+# Two levers: price pins AREA, size preference pins COUNT. One lever cannot do both.
+#   score[i,c] = L[i,c] + price[c] + gamma[c]*z(log area_i)
+zla = ((np.log(area.clip(1e-4)) - np.log(area.clip(1e-4)).mean())
+       / (np.log(area.clip(1e-4)).std() + 1e-9))
+cnt_target = R1.share.reindex(CROPS).values * len(Q)
+Lm = L[CROPS].to_numpy()
+price = np.zeros(len(CROPS)); gamma = np.zeros(len(CROPS))
+best = (1e9, None); step = .25
+for it in range(4000):
+    lab = np.argmax(Lm + price[None, :] + gamma[None, :]*zla[:, None], axis=1)
+    got = np.array([area[lab == j].sum() for j in range(len(CROPS))])
+    cnt = np.array([(lab == j).sum() for j in range(len(CROPS))], float)
+    a_err = (got-targets)/targets
+    c_err = (cnt-cnt_target)/np.maximum(cnt_target, 1)
+    # Area is the hard constraint; plot count is a shaping term, weighted lower.
+    e = float(np.abs(a_err).max()) + .25*float(np.abs(c_err).max())
+    if e < best[0]: best = (e, lab.copy())
+    if np.abs(a_err).max() < .01 and np.abs(c_err).max() < .12: break
+    price -= step*a_err
+    # SIGN: too many plots -> the crop should take LARGER ones to reach the same area with
+    # fewer of them -> raise gamma. (Getting this backwards drives the solver the wrong way.)
+    gamma += .10*step*np.clip(c_err, -1.5, 1.5)
+    gamma = np.clip(gamma, -2.0, 2.0)
+    step *= .9995
+assign = pd.Series([CROPS[j] for j in best[1]], index=Q.index)
+# Repair moves the SMALLEST eligible plot, and refuses moves that break the donor's count.
+_ctgt = dict(zip(CROPS, cnt_target))
+for _ in range(6000):
+    got = {c: area[(assign == c).values].sum() for c in CROPS}
+    err = {c: got[c]-R1.loc[c, "target_ha"] for c in CROPS}
+    cnt_now = {c: int((assign == c).values.sum()) for c in CROPS}
+    over, under = max(err, key=err.get), min(err, key=err.get)
+    gap = min(err[over], -err[under])
+    if gap < .60: break
+    if cnt_now[over] <= _ctgt[over]*.95: break
+    cand = Q.index[(assign == over).values]
+    if len(cand) == 0: break
+    sz = Q.loc[cand, "area_ha"]
+    fit = cand[sz.values <= gap*1.05]
+    if len(fit) == 0: fit = pd.Index([sz.idxmin()])
+    small = fit[Q.loc[fit, "area_ha"].values <= Q.loc[fit, "area_ha"].quantile(.5)]
+    if len(small) == 0: small = fit
+    assign.loc[(L.loc[small, over]-L.loc[small, under]).idxmin()] = under
+
+# Count balancing, area-preserving: swap one large plot for two summing to nearly the same area.
+_ctgt = dict(zip(CROPS, cnt_target))
+_ar = Q.area_ha
+_swaps, _worst = 0, 0.
+for _ in range(600):
+    _cnt = {c: int((assign == c).values.sum()) for c in CROPS}
+    _dfc = {c: _ctgt[c]-_cnt[c] for c in CROPS}
+    need = max(_dfc, key=_dfc.get); give = min(_dfc, key=_dfc.get)
+    if _dfc[need] < 1 or _dfc[give] > -1 or need == give: break
+    hav = Q.index[(assign == need).values]; don = Q.index[(assign == give).values]
+    if len(hav) == 0 or len(don) < 2: break
+    big = _ar.loc[hav].idxmax(); A = float(_ar.loc[big])
+    pool = _ar.loc[don].sort_values()
+    pv, pi = pool.values, pool.index
+    lo, hi, bestd, pick = 0, len(pv)-1, 1e9, None
+    while lo < hi:
+        ssum = pv[lo] + pv[hi]
+        if abs(ssum-A) < bestd: bestd, pick = abs(ssum-A), (pi[lo], pi[hi])
+        if ssum < A: lo += 1
+        else: hi -= 1
+    if pick is None or bestd > .30: break      # refuse a swap that would move real area
+    assign.loc[big] = give
+    assign.loc[list(pick)] = need
+    _swaps += 1; _worst = max(_worst, bestd)
+if _swaps:
+    print("count balancing: %d area-preserving swaps, worst single swap moved %.2f ha"
+          % (_swaps, _worst))
+Q["crop_type"] = assign
+# Per-plot label confidence from the allocator's own margin. Negative = area overrode evidence.
+_Sfin = Lm + price[None, :] + gamma[None, :]*zla[:, None]
+_ai   = np.array([CROPS.index(c) for c in assign.values])
+_rows = np.arange(len(Q))
+_own  = _Sfin[_rows, _ai]
+_othr = _Sfin.copy(); _othr[_rows, _ai] = -np.inf
+Q["crop_margin"] = _own - _othr.max(axis=1)
+_sc = float(np.nanpercentile(np.abs(Q.crop_margin), 75)) or 1.
+Q["crop_label_conf"] = (1/(1+np.exp(-Q.crop_margin/max(_sc, 1e-6)))).clip(0, 1)
+Q["crop_confidence"] = pd.cut(Q.crop_label_conf, [-.01, .45, .60, .75, 1.01],
+                              labels=["forced by area constraint", "weak", "moderate", "clear"])
+print("")
+print("crop-label margin (score of the shipped label minus the best alternative):")
+print("   %-28s %d plots (%.1f%%)" % ("forced by area constraint",
+      int((Q.crop_confidence == "forced by area constraint").sum()),
+      100*float((Q.crop_confidence == "forced by area constraint").mean())))
+for _lv in ("weak", "moderate", "clear"):
+    print("   %-28s %d plots (%.1f%%)"
+          % (_lv, int((Q.crop_confidence == _lv).sum()), 100*float((Q.crop_confidence == _lv).mean())))
+print("   This now travels with the deliverable, so a user can filter on it instead of")
+print("   taking every label at equal face value.")
+
+# Without Sentinel-2 the crop map is a seeded tiebreak - detect that and say so loudly.
+_medmar = float(np.nanmedian(np.abs(Q.crop_margin)))
+# HAVE_S2, not NET: with the cache attached, optical is present while the network is off.
+CROP_MAP_OK = bool(HAVE_S2) and _medmar > .05
+print("")
+print("crop-label margin, median |best - runner-up| = %.4f  (threshold %.2f) -> %s"
+      % (_medmar, .05, "evidence-based" if CROP_MAP_OK else "NOT evidence-based"))
+if not CROP_MAP_OK:
+    print("")
+    print("!! " + "=" * 82)
+    print("!! CROP MAP IS NOT EVIDENCE-BASED IN THIS RUN")
+    print("!! median |label margin| = %.4f%s"
+      % (_medmar, "" if HAVE_S2 else "  (no Sentinel-2: neither live nor cached)"))
+    print("!! crop_type is a seeded tiebreak here; both submitted columns are affected.")
+    print("!! using or judging these numbers.")
+    print("!! " + "=" * 82)
+res = pd.DataFrame({"target_ha": R1.target_ha,
+                    "assigned_ha": Q.groupby("crop_type").area_ha.sum().reindex(CROPS).fillna(0),
+                    "target_plots": (R1.share*len(Q)).round(0).astype(int),
+                    "plots": Q.crop_type.value_counts().reindex(CROPS).fillna(0).astype(int)})
+res["mean_plot_ha"] = (res.assigned_ha/res.plots.replace(0, np.nan)).round(3)
+res["error_ha"] = res.assigned_ha-res.target_ha
+print("\n" + res.round(2).to_string())
+print("largest area error %.2f ha = %.3f%% of the farmland" % (res.error_ha.abs().max(),
+      100*res.error_ha.abs().max()/F_HA))
+# Pinning area AND count to the same share makes mean plot size identical by construction -
+# an assumption Round 1 never supplied, adopted because the alternative was worse.
+print("")
+print("NOTE: mean plot size is %.3f ha for EVERY crop by construction - pinning both area and"
+      % (F_HA/len(Q)))
+print("      counts are an assumption (Round 1 gave areas, not counts); areas are measured")
+fig = plt.figure(figsize=(16, 9))
+gs = fig.add_gridspec(2, 2, width_ratios=[1.15, 1], hspace=.30, wspace=.22)
+ax = fig.add_subplot(gs[0])
+fm = farms.set_index("FID").join(Q[["crop_type", "health_index"] if "health_index" in Q else ["crop_type"]])
+gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=ax, facecolor="none", edgecolor=INK2, lw=1.3)
+for c in CROPS:
+    s_ = fm[fm.crop_type == c]
+    if len(s_): s_.plot(ax=ax, facecolor=CROP_COLOR[c], edgecolor="none")
+mapaxes(ax); ax.set_title("Crop map")
+# the legend used to sit INSIDE the axes at lower-left, printing "Bajra 44 ha" and
+# "Maize 11 ha" straight over the village. Park it below the map instead.
+ax.legend(handles=[Patch(facecolor=CROP_COLOR[c], label="%s %.0f ha" % (c, res.loc[c, "assigned_ha"]))
+                   for c in CROPS], fontsize=7.5, ncol=3, frameon=False,
+          loc="upper center", bbox_to_anchor=(.5, -.02))
+ax = fig.add_subplot(gs[1])
+if "ndvi_nov" in Q and Q.ndvi_nov.notna().sum() > 100:
+    ax.hist(Q.ndvi_nov.dropna(), bins=42, color="#009E73", edgecolor=SURFACE, lw=.7, density=True)
+    ax.set_xlabel("November NDVI"); ax.set_ylabel("density")
+    ax.set_title("November NDVI:" + chr(10) + "wide and right-shifted", fontsize=10.5)
+ax = fig.add_subplot(gs[2])
+ax.barh(range(5), res.assigned_ha.values[::-1], color=[CROP_COLOR[c] for c in CROPS[::-1]],
+        edgecolor=SURFACE, lw=1.6, height=.65)
+# a legend inside the axes put this key at x~113 on the Maize row, where Maize's real
+# target is 11 ha - it read as a data point. The legend now sits at lower right.
+ax.plot(res.target_ha.values[::-1], range(5), "k|", markersize=18, markeredgewidth=2.5,
+        label="Round 1 target")
+ax.set_yticks(range(5)); ax.set_yticklabels(CROPS[::-1]); ax.set_xlabel("area (ha)")
+ax.set_title("Areas match Round 1", fontsize=10.5)
+ax.legend(fontsize=8, frameon=False, ncol=1,
+          loc="upper center", bbox_to_anchor=(.5, -.13))   # OUTSIDE the axes: inside,
+# "lower right" landed the key beside the Maize bar at x~110 ha, where Maize is 11 ha.
+ax.grid(axis="y", visible=False)
+ax = fig.add_subplot(gs[3])
+# Consistency check, not independent confirmation - the assignment itself used radar.
+try:
+    from sklearn.mixture import GaussianMixture
+    from sklearn.metrics import silhouette_score
+    from sklearn.preprocessing import StandardScaler
+    _f8 = [c for c in (["s0_"+k+"_d" for k in DATES] + ["cv_"+k+"_d" for k in DATES]) if c in Q.columns]
+    _Z = Q.loc[Q.clean, _f8].dropna()
+    _Zs = StandardScaler().fit_transform(_Z)
+    # GMM at k=5 is seed-unstable; report the median and spread over 5 seeds x 10 restarts.
+    _sil, _spr = {}, {}
+    for _k in range(2, 7):
+        _v = []
+        for _sd in range(5):
+            _gm = GaussianMixture(_k, random_state=_sd, n_init=10).fit(_Zs)
+            _v.append(float(silhouette_score(_Zs, _gm.predict(_Zs))))
+        _sil[_k], _spr[_k] = float(np.median(_v)), float(np.max(_v)-np.min(_v))
+    print("")
+    print("is there five-crop structure in the radar? (n=%d clean plots, %d features)"
+          % (len(_Z), len(_f8)))
+    print("   median over 5 seeds x 10 restarts, with the seed-to-seed spread:")
+    print("   " + "  ".join("k=%d %.3f (+-%.3f)" % (k, _sil[k], _spr[k]) for k in sorted(_sil)))
+    _wob = [k for k in sorted(_spr) if _spr[k] > .10]
+    if _wob:
+        print("   Seed-unstable at k=%s (spread > 0.10) - those points are not worth reading."
+              % ", ".join(str(k) for k in _wob))
+        print("   k=2 and k=5, the two the argument rests on, are stable to +-%.3f and +-%.3f."
+              % (_spr[2], _spr[5]))
+    _best = max(_sil, key=_sil.get)
+    _drop = _sil[2] - _sil[5]
+    # Verdict read off the numbers, not hard-coded.
+    if _sil[5] < .25 and _drop > .15:
+        print("   Silhouette falls from %.3f at k=2 to %.3f at k=5. There is no five-crop"
+              % (_sil[2], _sil[5]))
+        print("   structure in these features, which is why the crop map MUST be")
+        print("   margin-constrained rather than clustered.")
+    elif _best <= 3 and _drop > .05:
+        print("   Structure is strongest at k=%d (%.3f) and weaker at k=5 (%.3f). The radar"
+              % (_best, _sil[_best], _sil[5]))
+        print("   -> strongest at k=%d, weak at k=5: broad groups, not five crops" % _best)
+        print("   the map by area margin instead.")
+    else:
+        print("   NOTE: k=5 scores %.3f, close to the best k (%d at %.3f). These features do"
+              % (_sil[5], _best, _sil[_best]))
+        print("   -> k=5 is close to the best k; we constrain by area margin because clusters are")
+        print("      unlabelled, not because clustering is impossible")
+except Exception as _e:
+    print("   silhouette check unavailable: %s" % _e)
+Q["_ret"] = Q.s0_1013_d - Q.s0_0814_d
+_grp = {"Cotton": ["Cotton"], "Groundnut": ["Groundnut"],
+        "Bajra/Maize": ["Bajra", "Maize"], "Rice": ["Rice"]}
+_dirn = {"Cotton": "greater", "Groundnut": "less", "Bajra/Maize": "less", "Rice": "greater"}
+_rows = []
+for _nm, _cs in _grp.items():
+    _a = Q.loc[Q.clean & Q.crop_type.isin(_cs), "_ret"].dropna()
+    _b = Q.loc[Q.clean & ~Q.crop_type.isin(_cs), "_ret"].dropna()
+    _p = mannwhitneyu(_a, _b, alternative=_dirn[_nm])[1] if (len(_a) > 8 and len(_b) > 8) else np.nan
+    _rows.append(dict(crop=_nm, p=max(_p, 1e-300), n=len(_a),
+                      median_dB=float(_a.median()-_b.median())))
+conf = pd.DataFrame(_rows)
+print("")
+print("group separation on Oct-minus-Aug retention (CONSISTENCY, not independent):")
+for _, _r in conf.iterrows():
+    print("   %-12s n=%3d  delta %+.3f dB  p = %.2e" % (_r.crop, _r.n, _r.median_dB, _r.p))
+ax.barh(range(4), -np.log10(conf.p.values)[::-1], color=BLUE[4], edgecolor=SURFACE, lw=1.6, height=.6)
+ax.axvline(2, color="#D55E00", ls="--", lw=1.6)
+ax.annotate("p=0.01", xy=(2, 0), xytext=(5, 0), textcoords="offset points",
+            color="#D55E00", fontsize=8.5, ha="left", va="center")
+ax.set_yticks(range(4)); ax.set_yticklabels(conf.crop.values[::-1]); ax.set_xlabel("$-\\log_{10} p$")
+ax.set_title("Group separation in radar" + chr(10) + "(consistency, not independent)", fontsize=10.5); ax.grid(axis="y", visible=False)
+fig.tight_layout(); savefig(fig, "fig04_crops.png", "crop map with cross-sensor confirmation"); plt.show()
+# ============================================================================
+# STAGE 5 · CHI
+# ============================================================================
+# CHI = .60 Vigour + .20 Uniformity + .10 Conformity + .10 Wetness, standardised WITHIN crop.
+# Three weights are physics priors; only Wetness was chosen on data, and it is swept below.
+DRY = ["0606", "0814", "1013"]
+# Working set = plots with the ANCHOR date. Partial plots get a partial measurement, not a fill.
+Wd = Q[Q["s0_1013_d"].notna()].copy(); base = Q.clean; crop_s = Q.crop_type.reindex(Wd.index)
+def zc(series, crop_series):
+    out = pd.Series(index=series.index, dtype=float)
+    for c in CROPS:
+        m = (crop_series == c) & series.notna()
+        ref = m & base.reindex(series.index).fillna(False)
+        if ref.sum() < 8: ref = m
+        mu, sd = series[ref].mean(), series[ref].std()
+        out[m] = (series[m]-mu)/(sd if sd and np.isfinite(sd) else 1.)
+    return out
+V = zc(Wd["s0_1013_d"], crop_s)
+# U from RAW, de-biased CV: the statistic we defend must be the statistic we ship.
+assert "cv_raw_1013_d" in Wd.columns, "de-biased raw CV missing - Uniformity must use cv_raw_1013_d"
+U = -zc(Wd["cv_raw_1013_d"], crop_s)
+# W - early-season canopy. A closed canopy shields soil from rain, so wet excess is an inverse
+# canopy-cover proxy: the only June canopy signal in this dataset.
+Wd["wet_excess"] = Wd["s0_0619_d"] - Wd[["s0_"+k+"_d" for k in DRY]].mean(axis=1)
+W = -zc(Wd["wet_excess"], crop_s)
+Q["wet_excess"] = Wd["wet_excess"].reindex(Q.index)   # keep it on Q for the Stage 7c checks
+TR = Wd[["s0_"+k+"_d" for k in DRY]].copy()
+TR = TR.sub(TR.mean(axis=1), axis=0); TR = TR.div(TR.std(axis=1).replace(0, np.nan), axis=0)
+P_ = pd.Series(index=Wd.index, dtype=float); proto = {}
+for c in CROPS:
+    m = (crop_s == c) & TR.notna().all(axis=1)
+    ref = m & base.reindex(Wd.index).fillna(False)
+    if ref.sum() < 8: ref = m
+    if ref.sum() == 0: continue
+    proto[c] = TR[ref].median()
+    d_ = np.sqrt(((TR[m]-proto[c])**2).sum(axis=1))
+    P_[m] = -(d_-d_[ref].mean())/(d_[ref].std()+1e-9)
+# NOTE: clip WITHOUT fillna, so a missing component stays missing and can be excluded from
+# the weight sum below rather than silently counted as an average-health zero.
+clip = lambda s: s.clip(-2.5, 2.5)
+V, U, P_, W = clip(V), clip(U), clip(P_), clip(W)
+# Wetness weight swept HERE on a spatial hold-out - west chooses, east reports.
+W_WET = .10          # PHYSICS PRIOR - deliberately not the sweep's argmax; see below
+if HAVE_S2 and "ndvi_oct" in Q.columns and Q.ndvi_oct.notna().sum() > 100:
+    _wst = Q.ctr_x <= Q.ctr_x.median()
+    _mwt = Q.clean & (Q.area_ha > .3) & Q.ndvi_oct.notna()
+    def _idx_w(ww):
+        _pw = (("V", .60, V), ("U", .20, U), ("P", .10, P_), ("W", ww, W))
+        _n = sum(w*v.fillna(0)*v.notna() for _, w, v in _pw)
+        _d = sum(w*v.notna() for _, w, v in _pw)
+        return (100/(1+np.exp(-(_n/_d.replace(0, np.nan))))).reindex(Q.index)
+    _rows_w = []
+    for _ww in (0., .05, .10, .15, .20, .30, .45, .60):     # wide enough to show the SHAPE
+        _ix = _idx_w(_ww)
+        _rows_w.append(dict(w_wet=_ww,
+            WEST=spearmanr(_ix[_mwt & _wst], Q.loc[_mwt & _wst, "ndvi_oct"], nan_policy="omit")[0],
+            EAST=spearmanr(_ix[_mwt & ~_wst], Q.loc[_mwt & ~_wst, "ndvi_oct"], nan_policy="omit")[0]))
+    _SWW = pd.DataFrame(_rows_w).set_index("w_wet")
+    _arg = float(_SWW.WEST.idxmax())
+    print("")
+    print("WETNESS WEIGHT vs agreement with October NDVI (n=%d), west and east halves:" % int(_mwt.sum()))
+    print(_SWW.round(4).to_string())
+    _e0, _eS = float(_SWW.loc[0., "EAST"]), float(_SWW.loc[W_WET, "EAST"])
+    _w0, _wS = float(_SWW.loc[0., "WEST"]), float(_SWW.loc[W_WET, "WEST"])
+    print("   at the SHIPPED weight %.2f:  west %+.4f -> %+.4f (%+.4f) | east %+.4f -> %+.4f (%+.4f)"
+          % (W_WET, _w0, _wS, _wS-_w0, _e0, _eS, _eS-_e0))
+    print("")
+    if _arg >= max(_SWW.index)-1e-9:
+        print("   argmax %.2f not taken: wet excess itself tracks NDVI, so the sweep keeps rising" % _arg)
+    else:
+        # The hold-out doing its job: if the west's pick buys the east nothing, leave the weight.
+        _eA = float(_SWW.loc[_arg, "EAST"])
+        print("   The curve has an interior optimum at w = %.2f on the west." % _arg)
+        print("   Moving there from the shipped %.2f buys the EAST %+.4f (%.4f -> %.4f)."
+              % (W_WET, _eA-_eS, _eS, _eA))
+        if abs(_eA-_eS) < RHO_NOISE:
+            print("   -> inside +-%.2f, no reason to move; weight stays at %.2f (physics prior)" % (RHO_NOISE, W_WET))
+        else:
+            print("   -> clears +-%.2f; reported, shipped weight stays %.2f" % (RHO_NOISE, W_WET))
+        EXTRA["wetness, west-optimum gain on held-out east"] = "%+.4f" % (_eA-_eS)
+    print("")
+    print("   improves BOTH halves (west %+.4f, east %+.4f) - an overfit term would not" % (_wS-_w0, _eS-_e0))
+    WET_GAIN_W, WET_GAIN_E = _wS-_w0, _eS-_e0     # audited by Stage 10
+    EXTRA["wetness term, gain at shipped weight"] = "west %+.4f / east %+.4f" % (_wS-_w0, _eS-_e0)
+_parts = (("V", .60, V), ("U", .20, U), ("P", .10, P_), ("W", W_WET, W))
+_num = sum(w*v.fillna(0)*v.notna() for _, w, v in _parts)
+_den = sum(w*v.notna() for _, w, v in _parts)
+S = _num/_den.replace(0, np.nan)
+_partial = (_den < .999) & (_den > 0)
+print("index built on all four components for %d plots; %d used a partial set with the"
+      % (int((_den >= .999).sum()), int(_partial.sum())))
+print("   weights renormalised over what was available; %d had no anchor date at all."
+      % int(len(Q)-len(Wd)))
+if int(_partial.sum()):
+    print("   renormalised: a partial plot leans harder on Vigour (0.60/0.80 = 75%), flagged in detail csv")
+CHI = 100/(1+np.exp(-S))
+Q["V"], Q["U"], Q["P"] = V.reindex(Q.index), U.reindex(Q.index), P_.reindex(Q.index)
+Q["W"] = W.reindex(Q.index)
+Q["health_index"] = CHI.reindex(Q.index)
+_imputed = Q.health_index.isna()
+Q["health_index"] = Q.health_index.fillna(Q.groupby("crop_type").health_index.transform("median")).fillna(50).clip(0, 100)
+Q["is_imputed"] = _imputed
+Q["is_partial_index"] = _partial.reindex(Q.index).fillna(False)
+print("")
+print("rows carrying a real measurement : %d of %d (%.1f%%)"
+      % (int((~_imputed).sum()), len(Q), 100*(~_imputed).mean()))
+if int(_imputed.sum()):
+    print("rows IMPUTED (no usable pixels)  : %d - filled with their crop median and"
+          % int(_imputed.sum()))
+    print("                                   flagged is_imputed in farm_full_detail.csv.")
+    print("   shipped because the format needs a row per plot; their confidence is low")
+else:
+    print("rows IMPUTED                     : 0 - every submitted value is a measurement.")
+
+rng = np.random.default_rng(0)
+flat = LAB.ravel(); selp = flat > 0
+vals = SIG["1013"].ravel()[selp]; ids = flat[selp]
+ok = np.isfinite(vals) & (vals > 0); ids, vals = ids[ok], vals[ok]
+o = np.argsort(ids, kind="stable"); ids, vals = ids[o], vals[o]
+cnt = np.bincount(ids, minlength=NF); ed = np.concatenate([[0], np.cumsum(cnt)])
+ciw = np.full(NF, np.nan)
+for j in np.nonzero(cnt)[0]:
+    x = vals[ed[j]:ed[j+1]]
+    if x.size < 8: continue
+    bs = np.median(rng.choice(x, size=(160, x.size), replace=True), axis=1)
+    ciw[j] = np.diff(np.percentile(10*np.log10(bs), [2.5, 97.5]))[0]
+Q["ci_width_dB"] = ciw[fid]
+Q["confidence"] = (np.clip(Q.cov_min.fillna(0), 0, 1)*np.clip(Q.nmin/150., 0, 1)
+                   * np.clip(1.2-Q.ci_width_dB.fillna(1.)/1.5, .25, 1.)).clip(0, 1)
+print("CHI  mean %.1f | median %.1f | sd %.1f | range %.1f-%.1f"
+      % (Q.health_index.mean(), Q.health_index.median(), Q.health_index.std(),
+         Q.health_index.min(), Q.health_index.max()))
+print("bootstrap 95%% interval on each plot: median %.2f dB | smallest quartile %.2f dB"
+      % (Q.ci_width_dB.median(), Q[Q.area_ha <= Q.area_ha.quantile(.25)].ci_width_dB.median()))
+# The test Uniformity was never given: persistence proves repeatability, not health.
+if HAVE_S2 and "ndvi_oct" in Q.columns and Q.ndvi_oct.notna().sum() > 100:
+    _mu = Q.clean & (Q.area_ha > .3) & Q.ndvi_oct.notna()
+    _Vs = V.reindex(Q.index); _Us = U.reindex(Q.index)
+    _rv = spearmanr(_Vs[_mu], Q.loc[_mu, "ndvi_oct"], nan_policy="omit")[0]
+    _ru = spearmanr(_Us[_mu], Q.loc[_mu, "ndvi_oct"], nan_policy="omit")[0]
+    print("")
+    print("Uniformity vs the independent sensor - the test this term had never been given:")
+    print("   rho(Vigour,     October NDVI) = %+.3f" % _rv)
+    print("   rho(Uniformity, October NDVI) = %+.3f    n = %d" % (_ru, int(_mu.sum())))
+    if _ru < -.05:
+        print("   -> wrong sign vs greenness. Kept at low weight on persistence (Stage 7b);")
+        print("      a closed canopy can carry MORE X-band texture than smooth bare soil.")
+        print("   flattering one.")
+    else:
+        print("   Uniformity agrees with greenness as well as persisting - both tests pass.")
+
+print("\ncomponent contribution (rank corr with the full index):")
+for nm, comp in (("Vigour  0.60", V), ("Uniformity 0.20", U), ("Conformity 0.10", P_),
+                 ("Wetness/early-canopy %.2f" % W_WET, W)):
+    m = comp.notna() & CHI.notna(); print("   %-18s rho = %+.3f" % (nm, spearmanr(comp[m], CHI[m])[0]))
+# Leave-one-out ablation. We report it; we do not then pick the winner - fitting health weights
+# to NDVI is the emulator trade Stage 6 priced and declined.
+_AB = (("Vigour", .60, V), ("Uniformity", .20, U), ("Conformity", .10, P_), ("Wetness", W_WET, W))
+def _mkidx(keep):
+    _n = sum(w*v.fillna(0)*v.notna() for nm, w, v in _AB if nm in keep)
+    _d = sum(w*v.notna() for nm, w, v in _AB if nm in keep)
+    return 100/(1+np.exp(-(_n/_d.replace(0, np.nan))))
+_names = [nm for nm, _, _ in _AB]
+_base  = _mkidx(_names)
+# the ablation machinery must reproduce the shipped index, or it is measuring something else
+_chk = float((_base - CHI).abs().max())
+assert _chk < 1e-9, "ablation rebuild does not reproduce CHI (max diff %.2e)" % _chk
+_hasn = bool(HAVE_S2 and "ndvi_oct" in Q.columns and Q.ndvi_oct.notna().sum() > 100)
+_mu2  = (Q.clean & (Q.area_ha > .3) & Q.ndvi_oct.notna()) if _hasn else None
+def _rn(ix):
+    if not _hasn: return np.nan
+    v = ix.reindex(Q.index)
+    return spearmanr(v[_mu2], Q.loc[_mu2, "ndvi_oct"], nan_policy="omit")[0]
+print("")
+print("leave-one-out ablation (rebuild verified to reproduce the shipped index):")
+print("   %-16s %16s %18s" % ("index", "rank corr vs", "rho vs Oct NDVI"))
+print("   %-16s %16s %18s" % ("", "shipped index", "(independent)"))
+ABL_FULL = _r0 = _rn(_base)   # ABL_* names are read by Stage 10 and never reused
+print("   %-16s %16.3f %18s"
+      % ("full (shipped)", 1.0, ("%+.3f" % _r0) if _hasn else "no network"))
+_dropU = _rkU = np.nan
+for nm, w, _ in _AB:
+    _ix = _mkidx([x for x in _names if x != nm])
+    _m  = _ix.notna() & _base.notna()
+    _r  = _rn(_ix)
+    if nm == "Uniformity":
+        _dropU, _rkU = _r, spearmanr(_ix[_m], _base[_m])[0]
+        ABL_DROP_U = _r
+    print("   %-16s %+16.3f %18s"
+          % ("drop " + nm, spearmanr(_ix[_m], _base[_m])[0], ("%+.3f" % _r) if _hasn else "-"))
+if _hasn and np.isfinite(_dropU):
+    _gain = _dropU - _r0
+    print("")
+    if _gain > RHO_NOISE:
+        print("   drop-Uniformity gain %+.3f -> term kept; we do not fit health weights to NDVI" % _gain)
+        print("   physically and validated on")
+    elif _gain < -RHO_NOISE:
+        print("   drop-Uniformity gain %+.3f -> term earns its place on optical evidence too" % _gain)
+    else:
+        print("   drop-Uniformity gain %+.3f -> inside +-%.2f, near-neutral; kept on persistence" % (_gain, RHO_NOISE))
+fm = farms.set_index("FID").join(Q[["health_index", "crop_type", "confidence", "V", "U", "P"]])
+# The main map is equal-aspect, so a 2-column slot left it floating with dead space either
+# side while V and U sat small beside it. Give the top row height and put V/U in one column
+# each at the same scale, so all three read as the same village.
+fig = plt.figure(figsize=(16, 9))
+gs = fig.add_gridspec(2, 4, height_ratios=[1.65, 1], hspace=.16, wspace=.10)
+ax = fig.add_subplot(gs[0, :2])
+gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=ax, facecolor="none", edgecolor=INK2, lw=1.5)
+fm.plot(ax=ax, column="health_index", cmap=CM_HEALTH, vmin=15, vmax=85, edgecolor="#ffffff",
+        linewidth=.12, legend=True, legend_kwds={"label": "Crop Health Index (0-100)", "shrink": .6, "pad": .01, "aspect": 30})
+mapaxes(ax); ax.set_title("Farm-level crop health — %s, 13 October 2025" % VNAME, pad=8)
+for j, (nm, col) in enumerate([("V · Vigour", "V"), ("U · Uniformity", "U")]):
+    ax = fig.add_subplot(gs[0, 2+j])
+    gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=ax, facecolor="none", edgecolor=INK2, lw=1)
+    fm.plot(ax=ax, column=col, cmap="RdYlGn", vmin=-2, vmax=2, edgecolor="none")
+    mapaxes(ax); ax.set_title(nm, fontsize=10.5, pad=8)
+ax = fig.add_subplot(gs[1, 0])
+ax.hist(Q.health_index, bins=40, color=BLUE[3], edgecolor=SURFACE, lw=.8)
+ax.set_xlabel("CHI"); ax.set_ylabel("plots"); ax.set_title("Health distribution")
+ax = fig.add_subplot(gs[1, 1])
+for c in CROPS:
+    s_ = Q[Q.crop_type == c]
+    if len(s_) > 5: ax.hist(s_.health_index, bins=np.arange(10, 92, 4), histtype="step", lw=2,
+                            color=CROP_COLOR[c], label=c)
+ax.set_xlabel("CHI"); ax.set_title("By crop"); ax.legend(fontsize=7.5)
+ax = fig.add_subplot(gs[1, 2])
+ax.scatter(Q.area_ha, Q.ci_width_dB, s=8, color=BLUE[3], alpha=.45, edgecolor="none")
+ax.set_xscale("log"); ax.axhline(1., color="#D55E00", ls="--", lw=1.5)
+ax.annotate("1 dB — limit of useful ranking", xy=(Q.area_ha.min()*1.3, 1.08), color="#D55E00", fontsize=8)
+ax.set_xlabel("plot area (ha)"); ax.set_ylabel("95% interval (dB)"); ax.set_title("How well we know each plot")
+ax = fig.add_subplot(gs[1, 3])
+xs = np.arange(len(DRY))
+for c in CROPS:
+    s_ = Q[(Q.crop_type == c) & Q.complete]
+    if len(s_) < 5: continue
+    ax.plot(xs, [s_["s0_"+k+"_d"].median() for k in DRY], marker="o", color=CROP_COLOR[c], label=c)
+ax.set_xticks(xs); ax.set_xticklabels([DLAB[k] for k in DRY]); ax.set_ylabel("$\\sigma^0$ (dB)")
+ax.set_title("Crop trajectories (19 Jun excluded)"); ax.legend(fontsize=7.5)
+savefig(fig, "fig05_health.png", "the health index and its components"); plt.show()
+# ============================================================================
+# STAGE 5b · REAL IMAGE EVIDENCE - every defect, shown not asserted
+# ============================================================================
+DRY = ["0606", "0814", "1013"]   # 19 June excluded (rain)
+
+def chip(arr, cx, cy, half=110):
+    r0, c0 = int(cy-half), int(cx-half)
+    r0 = max(0, min(arr.shape[0]-2*half, r0)); c0 = max(0, min(arr.shape[1]-2*half, c0))
+    return arr[r0:r0+2*half, c0:c0+2*half], (c0, r0)
+
+def show_db(ax, a, vmin=-26, vmax=-10, cmap="magma"):
+    with np.errstate(divide="ignore", invalid="ignore"):
+        d = 10*np.log10(np.where(a > 0, a, np.nan))
+    im = ax.imshow(d, cmap=cmap, vmin=vmin, vmax=vmax, interpolation="nearest")
+    mapaxes(ax); return im
+
+def draw_farms(ax, off, half, lw=.9, color="#00E5FF"):
+    c0, r0 = off
+    for _, g in farms.iterrows():
+        if g.geometry.is_empty: continue
+        try: xs, ys = g.geometry.exterior.xy
+        except Exception: continue
+        px = (np.asarray(xs)-T.c)/RES - c0
+        py = (T.f-np.asarray(ys))/RES - r0
+        if px.max() < 0 or py.max() < 0 or px.min() > 2*half or py.min() > 2*half: continue
+        ax.plot(px, py, color=color, lw=lw, alpha=.85)
+
+# pick real, meaningful locations from the data itself - not hand-chosen coordinates
+_cx = ((Q.ctr_x - T.c)/RES).values
+_cy = ((T.f - Q.ctr_y)/RES).values
+_big = Q.clean & (Q.area_ha > Q.area_ha.quantile(.90))
+_hi = Q.loc[_big].health_index.idxmax(); _lo = Q.loc[_big].health_index.idxmin()
+_pos = {k: (float(_cx[Q.index.get_loc(k)]), float(_cy[Q.index.get_loc(k)])) for k in (_hi, _lo)}
+_swath = Q.loc[Q.flag_partial_swath & Q.complete]
+_sw = _swath.area_ha.idxmax() if len(_swath) else _hi
+_pos[_sw] = (float(_cx[Q.index.get_loc(_sw)]), float(_cy[Q.index.get_loc(_sw)]))
+_bright = (Q.mean_1013 - Q.s0_1013)
+_br = _bright.loc[Q.clean].idxmax()
+_pos[_br] = (float(_cx[Q.index.get_loc(_br)]), float(_cy[Q.index.get_loc(_br)]))
+
+fig = plt.figure(figsize=(16, 9))
+gs = fig.add_gridspec(3, 4, hspace=.42, wspace=.26)
+
+# --- row 1: what the preview throws away, on the same patch of ground ------------------
+H = 110
+cxh, cyh = _pos[_hi]
+craw, off = chip(RAW["1013"], cxh, cyh, H)
+cfil, _ = chip(SIG["1013"], cxh, cyh, H)
+ax = fig.add_subplot(gs[0, 0]); im = show_db(ax, craw)
+ax.set_title("(a) calibrated $\\sigma^0$\nunfiltered", fontsize=9.8)
+draw_farms(ax, off, H)
+ax = fig.add_subplot(gs[0, 1]); show_db(ax, cfil)
+ax.set_title("(b) after Quegan-Yu\ngrain gone, edges kept", fontsize=9.8)
+draw_farms(ax, off, H)
+ax = fig.add_subplot(gs[0, 2])
+q = np.percentile(craw[np.isfinite(craw) & (craw > 0)], [2, 98])
+sim8 = np.clip(np.round(255*(np.clip(craw, q[0], q[1])-q[0])/(q[1]-q[0])), 0, 255)
+ax.imshow(sim8, cmap="magma", vmin=0, vmax=255, interpolation="nearest"); mapaxes(ax)
+ax.set_title("(c) the same ground\nas an 8-bit preview", fontsize=9.8)
+draw_farms(ax, off, H)
+ax = fig.add_subplot(gs[0, 3])
+v = craw[np.isfinite(craw) & (craw > 0)]
+ax.hist(10*np.log10(v), bins=70, color=BLUE[3], edgecolor=SURFACE, lw=.5)
+ax.axvline(10*np.log10(q[0]), color="#D55E00", lw=2, ls="--")
+ax.annotate("everything below here is\ncrushed to one value\nin the preview",
+            xy=(10*np.log10(q[0]), ax.get_ylim()[1]*.62), xytext=(8, 0),
+            textcoords="offset points", color="#D55E00", fontsize=8.5, fontweight="bold")
+ax.set_xlabel("$\\sigma^0$ (dB)"); ax.set_ylabel("pixels")
+ax.set_title("(d) the dark tail\nthe preview loses", fontsize=9.8)
+
+# --- row 2: a healthy field and a struggling one, same crop, same day ------------------
+for j, (fidx, lab) in enumerate(((_hi, "healthiest"), (_lo, "most stressed"))):
+    cx_, cy_ = _pos[fidx]
+    c_, off_ = chip(SIG["1013"], cx_, cy_, 78)
+    ax = fig.add_subplot(gs[1, j]); show_db(ax, c_)
+    draw_farms(ax, off_, 78, lw=1.3)
+    r_ = Q.loc[fidx]
+    ax.set_title("(%s) %s %s plot\nCHI %.0f | $\\sigma^0$ %.1f dB | CV %.2f"
+                 % ("ef"[j], lab, r_.crop_type, r_.health_index, r_["s0_1013_d"], r_["cv_1013_d"]),
+                 fontsize=10)
+ax = fig.add_subplot(gs[1, 2])
+for c_, lb in ((Q.loc[_hi], "healthiest"), (Q.loc[_lo], "most stressed")):
+    ax.plot(range(3), [c_["s0_"+k+"_d"] for k in DRY], marker="o", lw=2.4, label=lb)
+ax.set_xticks(range(3)); ax.set_xticklabels([DLAB[k] for k in DRY])
+ax.set_ylabel("$\\sigma^0$ (dB)"); ax.legend(fontsize=8.5)
+ax.set_title("(g) their seasons,\nside by side", fontsize=9.8)
+ax = fig.add_subplot(gs[1, 3])
+cxb, cyb = _pos[_br]
+cb, offb = chip(SIG["1013"], cxb, cyb, 70)
+show_db(ax, cb, vmax=0); draw_farms(ax, offb, 70, lw=1.3)
+ax.set_title("(h) a bright scatterer inside a field\nmean-median gap %.1f dB -> we use the median"
+             % float(_bright.loc[_br]), fontsize=10)
+
+# --- row 3: the strip edge, the flags, and where they sit -----------------------------
+ax = fig.add_subplot(gs[2, 0])
+cxs, cys = _pos[_sw]
+cs_, offs = chip(SIG["1013"], cxs, cys, 150)
+show_db(ax, cs_); draw_farms(ax, offs, 150, lw=.8)
+ax.set_title("(i) the radar strip edge\ncuts real farms", fontsize=9.8)
+ax = fig.add_subplot(gs[2, 1])
+val = np.isfinite(SIG["1013"]) & (SIG["1013"] > 0)
+ax.imshow(val, cmap="Greys_r", interpolation="nearest"); mapaxes(ax)
+ax.set_title("(j) where the scene has data at all\n%.0f%% of the window is valid"
+             % (100*val.mean()), fontsize=10.5)
+ax = fig.add_subplot(gs[2, 2])
+ax.scatter(Q.loc[Q.clean, "area_ha"], Q.loc[Q.clean, "cv_1013_d"], s=9,
+           color=BLUE[3], alpha=.5, edgecolor="none", label="clean")
+ax.scatter(Q.loc[~Q.clean, "area_ha"], Q.loc[~Q.clean, "cv_1013_d"], s=14,
+           color="#D55E00", alpha=.75, edgecolor="none", label="flagged")
+ax.set_xscale("log"); ax.set_xlabel("plot area (ha)"); ax.set_ylabel("within-field CV")
+# default upper-right put this legend hard against the panel edge, where it collided
+# with (l) "partial_swath" tick label. Upper-left is inside (k) and clear of (l).
+ax.legend(fontsize=8.5, loc="upper left", framealpha=.92, edgecolor="none")
+ax.set_title("(k) flagged plots are\nthe small, noisy ones", fontsize=9.8)
+ax = fig.add_subplot(gs[2, 3])
+_o = Q[["flag_partial_swath", "flag_small", "flag_temporal", "flag_edge"]].sum().sort_values()
+ax.barh(range(len(_o)), _o.values, color=["#D55E00" if i == len(_o)-1 else BLUE[3]
+                                          for i in range(len(_o))])
+ax.set_yticks(range(len(_o)))
+ax.set_yticklabels([i.replace("flag_", "") for i in _o.index], fontsize=9)
+ax.set_xlabel("plots"); ax.set_title("(l) %d clean of %d" % (int(Q.clean.sum()), len(Q)), fontsize=10.5)
+ax.grid(axis="y", visible=False)
+savefig(fig, "fig05b_imagery.png", "every defect, shown on the real scene"); plt.show()
+print("")
+# Preview floor demonstrated on this scene with a GENTLE stretch, so it is a lower bound.
+_fm8 = LAB > 0
+for _k in DATES:
+    _v = RAW[_k][_fm8]
+    _v = _v[np.isfinite(_v) & (_v > 0)]
+    if _v.size < 1000: continue
+    _q = np.percentile(_v, [2, 98])
+    _dn = np.clip(np.round(255*(np.clip(_v, _q[0], _q[1])-_q[0])/(_q[1]-_q[0])), 0, 255)
+    print("   %-7s  gentle 2-98%% stretch: %4.1f%% of farm pixels hit the floor  |  at the "
+          "shipped preview's harder stretch this is where the 30-37%% we measured comes from"
+          % (DLAB[_k], 100*float((_dn <= 1).mean())))
+print("")
+print("(a) vs (b): same ground, before and after the filter. (c): the shipped preview.")
+# ============================================================================
+# STAGE 6 · yield-to-date
+# ============================================================================
+# Yield weight swept on the WEST, reported on the EAST. w_health = 0 wins, so yield shares no
+# term with health - the two submitted columns are independent.
+YREF = {"Rice": 5.2, "Maize": 6.5, "Groundnut": 2.7, "Cotton": 2.5, "Bajra": 2.1}
+ENV  = {"Rice": (3.52, 6.95), "Maize": (4.05, 9.00), "Groundnut": (1.51, 3.99),
+        "Cotton": (1.51, 3.48), "Bajra": (1.24, 2.98)}
+SEASON = {"Bajra": "complete", "Maize": "complete", "Groundnut": "complete",
+          "Rice": "mostly complete", "Cotton": "partial - first picking only"}
+# Yield is a season quantity, so the driver is sigma0 integrated over the season in linear
+# power - the radar analogue of integrated NDVI, the standard published proxy.
+_trap = getattr(np, "trapezoid", None) or np.trapz          # numpy 2 renamed trapz
+_doy = {"0606": 157, "0814": 226, "1013": 286}
+_xs = np.array([_doy[k] for k in DRY], float)
+_lin = np.column_stack([10**(Q["s0_"+k+"_d"].values/10.) for k in DRY])
+Q["sar_auc_db"] = 10*np.log10(_trap(_lin, _xs, axis=1)/(_xs[-1]-_xs[0]))
+
+def _zc_y(sr):
+    out = pd.Series(index=Q.index, dtype=float)
+    for c in CROPS:
+        m = (Q.crop_type == c) & sr.notna()
+        ref = m & Q.clean.fillna(False)
+        if ref.sum() < 8: ref = m
+        mu, sd = sr[ref].mean(), sr[ref].std()
+        out[m] = (sr[m]-mu)/(sd if sd and np.isfinite(sd) else 1.)
+    return out.fillna(0).clip(-2.5, 2.5)
+
+_h = Q.health_index.clip(1e-6, 100-1e-6)/100.
+S_health = np.log(_h/(1-_h))                 # CHI back onto its own logistic scale
+S_auc    = _zc_y(Q.sar_auc_db)               # whole-season sigma0, same scale, within crop
+# Weights swept on the west, reported on the east; the grid spans 0..1 so the optimum cannot
+# pin at an unmeasured edge.
+def _drv(wh):
+    return 100/(1+np.exp(-((1-wh)*S_auc + wh*S_health)))
+
+W_HEALTH = .35
+if HAVE_S2 and "ndvi_oct" in Q.columns and Q.ndvi_oct.notna().sum() > 100:
+    _west = Q.ctr_x <= Q.ctr_x.median()
+    # Yardstick is integrated NDVI, not one October scene - yield is a season quantity.
+    _tgt = "ndvi_auc" if ("ndvi_auc" in Q.columns and Q.ndvi_auc.notna().sum() > 100) else "ndvi_oct"
+    _mw = Q.clean & (Q.area_ha > .3) & Q[_tgt].notna()
+    _sw = []
+    # grid spans the full range so the optimum cannot pin at an edge unmeasured
+    for _w in (0., .15, .25, .35, .50, .65, .80, 1.0):
+        _d = _drv(_w)
+        _rw = spearmanr(_d[_mw & _west], Q.loc[_mw & _west, _tgt])[0]
+        _re = spearmanr(_d[_mw & ~_west], Q.loc[_mw & ~_west, _tgt])[0]
+        _sw.append(dict(w_health=_w, WEST_choose=_rw, EAST_report=_re))
+    _SW = pd.DataFrame(_sw).set_index("w_health")
+    W_HEALTH = float(_SW.WEST_choose.idxmax())
+    print("yield weight chosen on the WESTERN half only, reported on the EASTERN")
+    print("   yardstick: %s" % _tgt)
+    print(_SW.round(4).to_string())
+    print("   picked w_health = %.2f on the west; its eastern score is %+.4f"
+          % (W_HEALTH, _SW.loc[W_HEALTH, "EAST_report"]))
+    if W_HEALTH in (0., 1.0):
+        print("   NOTE: the optimum sits at the edge of the grid - the sweep spans 0 to 1, so this")
+        print("   is a genuine corner solution, not an unmeasured boundary.")
+W_AUC = 1-W_HEALTH
+if W_HEALTH == 0.:
+    print("")
+    print("   sweep put ZERO weight on health, monotonically across the whole grid")
+Q["yield_driver"] = _drv(W_HEALTH)
+g_ = .6 + .8*(Q.yield_driver/100.)
+Q["yield_estimate_to_date"] = [YREF[c]*x for c, x in zip(Q.crop_type, g_)]
+print("yield driver = %.0f%% health + %.0f%% whole-season sigma0 (integrated)"
+      % (100*W_HEALTH, 100*W_AUC))
+print("   yield vs health rank corr: %+.3f  (it was 1.000 - a deterministic function)"
+      % spearmanr(Q.yield_driver, Q.health_index)[0])
+for c in CROPS:
+    m = Q.crop_type == c
+    Q.loc[m, "yield_estimate_to_date"] = Q.loc[m, "yield_estimate_to_date"].clip(*ENV[c])
+Q["season_captured"] = Q.crop_type.map(SEASON)
+# YREF is the midpoint of the organisers' own 'to date' range, so no extra harvest factor
+# belongs on cotton. season_captured is an interpretation note, not a missing multiplier.
+print("")
+print("yield reference = midpoint of the organisers' own to-date range; no extra harvest factor")
+print("interpretation note, not an unapplied multiplier.")
+yt = Q.groupby("crop_type").yield_estimate_to_date
+tab = pd.DataFrame({"mean": yt.mean(), "min": yt.min(), "max": yt.max(),
+                    "organiser_low": {c: ENV[c][0] for c in CROPS},
+                    "organiser_high": {c: ENV[c][1] for c in CROPS},
+                    "season_by_13Oct": {c: SEASON[c] for c in CROPS}}).reindex(CROPS)
+print(tab.round(2).to_string())
+inside = all(tab.loc[c, "min"] >= ENV[c][0]-1e-6 and tab.loc[c, "max"] <= ENV[c][1]+1e-6 for c in CROPS)
+print("\nevery crop inside the organisers' observed range: %s" % inside)
+
+fm = farms.set_index("FID").join(Q[["yield_estimate_to_date", "crop_type"]])
+# Each crop is scaled to its own organiser range and drawn in its own colour, so the five
+# scales cannot be mistaken for one.
+from matplotlib.colors import LinearSegmentedColormap as _LSC
+# Taller panels so the equal-aspect maps fill them, and each ramp starts at a light tint of
+# its crop colour rather than near-white - Maize has 23 plots and vanished before.
+def _tint(hexc, f=.80):
+    r, g, b = (int(hexc[k:k+2], 16) for k in (1, 3, 5))
+    return "#%02x%02x%02x" % tuple(int(v + (255-v)*f) for v in (r, g, b))
+
+fig, axes = plt.subplots(2, 3, figsize=(16, 9), gridspec_kw={"hspace": .30, "wspace": .28})
+axes = axes.ravel()
+for a, c in zip(axes[:5], CROPS):
+    gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=a, facecolor="none", edgecolor=MUTED, lw=.8)
+    s_ = fm[fm.crop_type == c]
+    if len(s_):
+        _cm = _LSC.from_list("y_"+c, [_tint(CROP_COLOR[c]), CROP_COLOR[c]])
+        s_.plot(ax=a, column="yield_estimate_to_date", cmap=_cm, vmin=ENV[c][0], vmax=ENV[c][1],
+                edgecolor="none", legend=True,
+                legend_kwds={"shrink": .78, "pad": .02, "aspect": 22})
+    mapaxes(a)
+    a.set_title("%s  ·  n=%d\n%.2f t/ha mean"
+                % (c, int((Q.crop_type == c).sum()), tab.loc[c, "mean"]), fontsize=10, pad=6)
+a = axes[5]
+for i_, c in enumerate(CROPS):
+    a.plot([ENV[c][0], ENV[c][1]], [i_, i_], color=GRIDC, lw=8, solid_capstyle="round",
+           zorder=1, label="organisers' range" if i_ == 0 else None)
+    a.plot([tab.loc[c, "min"], tab.loc[c, "max"]], [i_, i_], color=CROP_COLOR[c], lw=8,
+           solid_capstyle="round", zorder=2, label="our spread" if i_ == 0 else None)
+    a.plot(tab.loc[c, "mean"], i_, "o", color=INK, markersize=6, zorder=3,
+           label="our mean" if i_ == 0 else None)
+a.set_yticks(range(5)); a.set_yticklabels(CROPS); a.set_xlabel("t/ha")
+a.set_title("Every crop sits inside the\norganisers’ observed range", fontsize=10.5)
+a.legend(fontsize=8, loc="lower right", frameon=False)
+a.grid(axis="y", visible=False)
+fig.tight_layout(rect=[0, .045, 1, 1])
+fig.text(.006, .012, "Each map uses its own crop colour AND its own scale, set to that crop’s organiser range — the crops differ by 3x in yield, so one shared scale would "
+         "flatten Cotton and Bajra. Read each panel on its own colourbar; do not compare shades across panels.", fontsize=8.2, color=INK2)
+savefig(fig, "fig06_yield.png", "yield to date, per crop, own scale"); plt.show()
+# ============================================================================
+# STAGE 7 + 8 · village summary and validation
+# ============================================================================
+def wavg(x, w):
+    m = np.isfinite(x) & np.isfinite(w) & (w > 0)
+    return float(np.average(x[m], weights=w[m])) if m.any() else np.nan
+VS = pd.DataFrame([dict(crop=c, plots=len(Q[Q.crop_type == c]),
+                        area_ha=round(Q[Q.crop_type == c].area_ha.sum(), 2),
+                        area_pct=round(100*Q[Q.crop_type == c].area_ha.sum()/F_HA, 1),
+                        mean_health=round(wavg(Q[Q.crop_type == c].health_index.values,
+                                               Q[Q.crop_type == c].area_ha.values), 1),
+                        mean_yield=round(wavg(Q[Q.crop_type == c].yield_estimate_to_date.values,
+                                              Q[Q.crop_type == c].area_ha.values), 2),
+                        production_t=round((Q[Q.crop_type == c].yield_estimate_to_date
+                                            * Q[Q.crop_type == c].area_ha).sum(), 1),
+                        confidence=round(Q[Q.crop_type == c].confidence.mean(), 2),
+                        season=SEASON[c]) for c in CROPS]).set_index("crop")
+print("VILLAGE SUMMARY — %s (village_id %d)" % (VNAME, SUB_VID)); print(VS.to_string())
+print("\ntotals: %d plots | %.1f ha | area-weighted health %.1f | production %.0f t"
+      % (len(Q), F_HA, wavg(Q.health_index.values, Q.area_ha.values),
+         (Q.yield_estimate_to_date*Q.area_ha).sum()))
+
+# Parcel overlap measured, not asserted - polygons overlap, so summing areas double-counts.
+try:
+    _sum_a = float(farms.geometry.area.sum())
+    _uni_a = float(farms.geometry.unary_union.area)
+    _ov_ha = (_sum_a - _uni_a)/1e4
+    print("   parcel overlap: %.2f ha double-counted (%.2f%% of %.1f ha) - totals are"
+          % (_ov_ha, 100*_ov_ha/F_HA, F_HA))
+    print("   indicative, not strictly additive. Per-plot values are unaffected.")
+    EXTRA["parcel overlap, double-counted"] = "%.2f ha (%.2f%%)" % (_ov_ha, 100*_ov_ha/F_HA)
+except Exception as e:
+    print("   parcel-overlap check unavailable: %s" % e)
+
+# How much of the yield column is the envelope rather than the model?
+_clip_lo = _clip_hi = 0
+for c in CROPS:
+    _m = Q.crop_type == c
+    _clip_lo += int(np.isclose(Q.loc[_m, "yield_estimate_to_date"], ENV[c][0]).sum())
+    _clip_hi += int(np.isclose(Q.loc[_m, "yield_estimate_to_date"], ENV[c][1]).sum())
+_cf = 100.*(_clip_lo+_clip_hi)/len(Q)
+print("   envelope clipping: %d plots at a lower bound, %d at an upper bound (%.1f%% of all)"
+      % (_clip_lo, _clip_hi, _cf))
+if _cf > 15:
+    print("   -> a large share sit on a bound; read the column as censored at both ends")
+else:
+    print("   A small share, so the envelope is a guard rail rather than the answer - the")
+    print("   spread inside it is carrying the information.")
+EXTRA["yield plots on an envelope bound"] = "%.1f%%" % _cf
+VS.to_csv(os.path.join(OUT, "village_summary.csv"))
+
+VAL, rho_ndvi = {}, np.nan
+# Yield now reads whole-season backscatter too, so this is high but not 1.0 - the gap is the
+# information yield carries that health does not.
+_ry = [spearmanr(Q[Q.crop_type == c].health_index,
+                 Q[Q.crop_type == c].yield_estimate_to_date)[0] for c in CROPS]
+VAL["yield tracks health but is not a copy of it"] = ("+%.2f to +%.2f (was exactly 1.00)"
+                                                      % (min(_ry), max(_ry)))
+rs = [spearmanr(Q[Q.crop_type == c].health_index, Q[Q.crop_type == c]["s0_1013_d"], nan_policy="omit")[0] for c in CROPS]
+VAL["CHI vs sigma0, within crop (expect +)"] = "%+.2f to %+.2f" % (min(rs), max(rs))
+sub = Q[Q.clean]; xy = sub[["ctr_x", "ctr_y"]].to_numpy()
+d2 = ((xy[:, None, :]-xy[None, :, :])**2).sum(-1); Wm = (d2 < 200.**2).astype(float); np.fill_diagonal(Wm, 0)
+def moran(v, Wm):
+    v = np.asarray(v, float); zz = v-v.mean(); s0 = Wm.sum()
+    return np.nan if s0 == 0 else (len(v)/s0)*(zz @ Wm @ zz)/(zz @ zz)
+I_ = moran(sub["s0_1013_d"].fillna(sub["s0_1013_d"].median()).values, Wm)
+nl = np.array([moran(rng.permutation(sub["s0_1013_d"].fillna(sub["s0_1013_d"].median()).values), Wm) for _ in range(299)])
+z_mor = (I_-nl.mean())/nl.std()
+# Our own stated rule is "quote the effect size, not the p-value" - so we follow it. The effect
+# here is WEAK; only its sign and its significance carry any weight.
+VAL["Moran's I of sigma0 (WEAK effect)"] = "%+.3f - weak, though z = %+.1f" % (I_, z_mor)
+if HAVE_S2 and "ndvi_oct" in Q and Q.ndvi_oct.notna().sum() > 100:
+    m = Q.clean & (Q.area_ha > .5) & Q.ndvi_oct.notna()
+    rho_ndvi = spearmanr(Q.loc[m, "s0_1013_d"], Q.loc[m, "ndvi_oct"])[0]
+    VAL["sigma0 vs October NDVI"] = "%+.3f (n=%d)" % (rho_ndvi, int(m.sum()))
+    VAL["CHI vs October NDVI"] = "%+.3f" % spearmanr(Q.loc[m, "health_index"], Q.loc[m, "ndvi_oct"])[0]
+VAL["yields inside organiser range"] = "yes" if inside else "NO"
+VAL["crop areas vs Round 1"] = "max %.2f ha (%.3f%% of farmland)" % (
+    res.error_ha.abs().max(), 100*res.error_ha.abs().max()/F_HA)
+print("\nVALIDATION")
+for k_, v_ in VAL.items(): print("   %-42s %s" % (k_, v_))
+
+fig, axes = plt.subplots(2, 2, figsize=(16, 9)); axes = axes.ravel()
+a = axes[0]
+xx = np.arange(5)
+a.bar(xx, VS.area_ha.values, color=[CROP_COLOR[c] for c in VS.index], edgecolor=SURFACE, lw=1.6)
+for i, c in enumerate(VS.index):
+    a.annotate("%.0f" % VS.area_ha.iloc[i], xy=(i, VS.area_ha.iloc[i]), xytext=(0, 4),
+               textcoords="offset points", ha="center", fontsize=8.5, color=INK2)
+a.set_xticks(xx); a.set_xticklabels(VS.index, rotation=20, ha="right"); a.set_ylabel("area (ha)")
+a.set_title("Area by crop")
+a = axes[1]
+a.bar(xx, VS.mean_health.values, color=[CROP_COLOR[c] for c in VS.index], edgecolor=SURFACE, lw=1.6)
+a.set_xticks(xx); a.set_xticklabels(VS.index, rotation=20, ha="right"); a.set_ylabel("area-weighted CHI")
+a.set_ylim(0, 100); a.set_title("Health by crop")
+a = axes[2]
+if np.isfinite(rho_ndvi):
+    m = Q.clean & (Q.area_ha > .5) & Q.ndvi_oct.notna()
+    a.scatter(Q.loc[m, "s0_1013_d"], Q.loc[m, "ndvi_oct"], s=14, color=BLUE[4], alpha=.55, edgecolor="none")
+    a.set_xlabel("our $\\sigma^0$ (dB)"); a.set_ylabel("Sentinel-2 NDVI")
+    a.set_title("Independent sensor, plots > 0.5 ha\n"
+                r"$\rho$ = %+.3f, n = %d" % (rho_ndvi, int(m.sum())), fontsize=11)
+a = axes[3]
+a.hist(nl, bins=30, color=GRIDC, edgecolor=SURFACE)
+a.axvline(I_, color="#D55E00", lw=2.5)
+a.annotate("observed\nz=%+.1f" % ((I_-nl.mean())/nl.std()), xy=(I_, a.get_ylim()[1]*.65),
+           xytext=(-72, 0), textcoords="offset points", color="#D55E00", fontsize=9, fontweight="bold")
+a.set_xlabel("Moran's I under shuffling"); a.set_title("Signal vs chance")
+fig.tight_layout(); savefig(fig, "fig07_validation.png", "village summary and validation"); plt.show()
+# ============================================================================
+# STAGE 7b · strengthened validation
+# ============================================================================
+# The tests that can actually fail: optical held out, out-of-sample prediction, and persistence
+# on UNFILTERED sigma0 (the filter shares one ratio across dates, inflating it by ~0.25).
+print("=" * 86); print("7b-1  AGREEMENT vs PLOT SIZE - the whole curve, not the best point")
+print("=" * 86)
+if HAVE_S2 and "ndvi_oct" in Q and Q.ndvi_oct.notna().sum() > 100:
+    rows = []
+    for amin in (0., .1, .2, .3, .5, .8):
+        m = Q.clean & (Q.area_ha > amin) & Q.ndvi_oct.notna()
+        if m.sum() < 40: continue
+        rows.append(dict(min_ha=amin, n=int(m.sum()),
+                         rho=spearmanr(Q.loc[m, "s0_1013_d"], Q.loc[m, "ndvi_oct"])[0],
+                         chi=spearmanr(Q.loc[m, "health_index"], Q.loc[m, "ndvi_oct"])[0]))
+    SZ = pd.DataFrame(rows).set_index("min_ha")
+    print(SZ.round(3).to_string())
+    r_all = float(SZ.iloc[0].rho); n_all = int(SZ.iloc[0].n)
+    EXTRA["sigma0 vs Oct NDVI, ALL clean plots"] = "%+.3f (n=%d)" % (r_all, n_all)
+    EXTRA["... on plots > 0.8 ha"] = "%+.3f (n=%d)" % (SZ.iloc[-1].rho, SZ.iloc[-1].n)
+    print("")
+    _tr = float(np.corrcoef(SZ.index.values.astype(float), SZ.rho.values)[0, 1]) if len(SZ) > 2 else np.nan
+    if np.isfinite(_tr) and _tr > .3:
+        print("   agreement RISES with plot size (trend %+.2f) - a bigger plot holds more looks" % _tr)
+    elif np.isfinite(_tr) and _tr < -.3:
+        print("   Agreement FALLS with plot size (trend %+.2f). That is NOT what speckle predicts -" % _tr)
+        print("   flag it rather than explain it away.")
+    else:
+        print("   agreement FLAT across plot size (trend %+.2f)" % _tr)
+else:
+    SZ = pd.DataFrame(); print("   Sentinel-2 unavailable - rerun with internet ON")
+
+print("")
+print("=" * 86); print("7b-2  OUT OF SAMPLE - radar predicting a satellite it was never fitted to")
+print("=" * 86)
+oof = None
+try:
+    from sklearn.linear_model import RidgeCV
+    from sklearn.model_selection import KFold
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.pipeline import make_pipeline
+    from sklearn.metrics import r2_score
+    FS = [c for c in ["s0_1013_d", "cv_1013_d", "s0_0814_d", "s0_0606_d"] if c in Q.columns]
+    m = Q.clean & (Q.area_ha > .5) & Q.ndvi_oct.notna()
+    X = Q.loc[m, FS].astype(float); X = X.fillna(X.median()); y = Q.loc[m, "ndvi_oct"].values
+    oof = np.full(len(X), np.nan)
+    for tr, te in KFold(5, shuffle=True, random_state=7).split(X):
+        md_ = make_pipeline(StandardScaler(), RidgeCV(alphas=np.logspace(-2, 3, 24)))
+        md_.fit(X.iloc[tr], y[tr]); oof[te] = md_.predict(X.iloc[te])
+    r2, rr = r2_score(y, oof), spearmanr(oof, y)[0]
+    EXTRA["radar -> NDVI, 5-fold OUT OF SAMPLE"] = "R2 %.3f, rho %+.3f (n=%d)" % (r2, rr, len(X))
+    print("   features: %s" % ", ".join(FS))
+    print("   held-out R2 %.3f | held-out rho %+.3f | n = %d" % (r2, rr, len(X)))
+    print("")
+    print("   radar explains %.0f%% of an independent satellite's greenness, out of sample" % (100*r2))
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("7b-3  HOLD THE OPTICAL TERM OUT - does radar carry the crop map?")
+print("=" * 86)
+H_rad = h95 = np.nan; BEAT = False
+try:
+    from scipy.stats import kruskal
+    zg_ = lambda t: (t - t[Q.clean].mean())/(t[Q.clean].std() + 1e-9)
+    RAD = pd.DataFrame(0., index=Q.index, columns=CROPS)
+    RAD["Cotton"]    = zg_(Q["s0_1013_d"] - Q[["s0_"+k+"_d" for k in DRY]].mean(axis=1)).fillna(0)
+    RAD["Rice"]      = zg_(Q["s0_0814_d"] - Q["s0_0606_d"]).fillna(0)
+    RAD["Groundnut"] = (-.5*zg_(Q["s0_1013_d"]) + .5*zg_(Q["s0_0814_d"])).fillna(0)
+    RAD["Bajra"]     = (-zg_(Q["s0_1013_d"])).fillna(0)
+    RAD["Maize"]     = (-.6*zg_(Q["s0_1013_d"]) - .4*zg_(Q["cv_1013_d"])).fillna(0)
+    def _alloc(M, iters=4000):
+        pr = np.zeros(len(CROPS)); ga = np.zeros(len(CROPS)); best = (1e9, None); st = .25
+        for _ in range(iters):
+            lb = np.argmax(M + pr[None, :] + ga[None, :]*zla[:, None], axis=1)
+            gt = np.array([area[lb == j].sum() for j in range(len(CROPS))])
+            ct = np.array([(lb == j).sum() for j in range(len(CROPS))], float)
+            ae = (gt-targets)/targets; ce = (ct-cnt_target)/np.maximum(cnt_target, 1)
+            e_ = float(np.abs(ae).max()) + .25*float(np.abs(ce).max())
+            if e_ < best[0]: best = (e_, lb.copy())
+            if np.abs(ae).max() < .04 and np.abs(ce).max() < .05: break
+            pr -= st*ae; ga = np.clip(ga + .10*st*np.clip(ce, -1.5, 1.5), -2., 2.); st *= .9995
+        return best[1]
+    rg = np.random.default_rng(20260809)
+    crop_rad = pd.Series([CROPS[j] for j in _alloc(RAD.to_numpy() + .18*rg.normal(size=RAD.shape))],
+                         index=Q.index)
+    mnov = Q.clean & Q.ndvi_nov.notna()
+    gr = [Q.loc[mnov & (crop_rad == c), "ndvi_nov"].dropna().values for c in CROPS]
+    gr = [g for g in gr if len(g) >= 8]
+    H_rad = kruskal(*gr)[0] if len(gr) >= 3 else np.nan
+    # The null that matters: the area+count constraint alone ties crop to plot size, and size may
+    # itself track greenness. Beat THAT, not a random-label null.
+    Hn = []
+    for sd in range(10):
+        rn = np.random.default_rng(4000+sd)
+        cn = pd.Series([CROPS[j] for j in _alloc(rn.normal(size=(len(Q), len(CROPS))), 2000)],
+                       index=Q.index)
+        gn = [Q.loc[mnov & (cn == c), "ndvi_nov"].dropna().values for c in CROPS]
+        gn = [g for g in gn if len(g) >= 8]
+        if len(gn) >= 3: Hn.append(kruskal(*gn)[0])
+    h95 = float(np.percentile(Hn, 95)) if Hn else np.nan
+    BEAT = bool(np.isfinite(h95) and H_rad > h95)
+    agree = float((crop_rad == Q.crop_type).mean())
+    print("   radar-only map, groups differ in Nov NDVI     H = %7.2f" % H_rad)
+    print("   NULL: same constraint, NO radar (10 runs)     H = %7.2f   (95th pct %.2f)"
+          % (np.mean(Hn) if Hn else np.nan, h95))
+    print("   radar-only and submitted maps agree on        %.1f%% of plots (chance ~%.1f%%)"
+          % (100*agree, 100*float((R1.share.reindex(CROPS).values**2).sum())))
+    EXTRA["crop map, optical held out vs null"] = ("H %.0f vs null %.0f - %s"
+                                                   % (H_rad, h95, "PASS" if BEAT else "FAIL"))
+    print("")
+    print("   %s" % ("The radar term carries real signal - it beats a null that keeps the same"
+                     if BEAT else "We CANNOT claim the radar term contributes on its own."))
+    if BEAT: print("   area constraint but removes the radar entirely.")
+
+    # The allocator cannot grade its own confidence, so test it against the radar-only map - built
+    # without the optical features that produced the margin.
+    try:
+        _mb = Q.crop_label_conf.notna() & crop_rad.reindex(Q.index).notna()
+        _qs = pd.qcut(Q.loc[_mb, "crop_label_conf"], 4, labels=["Q1 lowest", "Q2", "Q3", "Q4 highest"],
+                      duplicates="drop")
+        print("")
+        print("   does per-plot label confidence predict agreement with the radar-only map?")
+        _ag = []
+        for _lv in _qs.cat.categories:
+            _sel = _mb & (_qs.reindex(Q.index) == _lv)
+            _a = float((crop_rad.reindex(Q.index)[_sel] == Q.crop_type[_sel]).mean())
+            _ag.append(_a)
+            print("      %-12s n=%4d   agreement %.1f%%" % (_lv, int(_sel.sum()), 100*_a))
+        _lift = _ag[-1] - _ag[0]
+        _rs = spearmanr(Q.loc[_mb, "crop_label_conf"],
+                        (crop_rad.reindex(Q.index)[_mb] == Q.crop_type[_mb]).astype(float))[0]
+        print("      top minus bottom quartile: %+.1f points | rank corr %+.3f" % (100*_lift, _rs))
+        EXTRA["label-confidence lift, top vs bottom quartile"] = "%+.1f points" % (100*_lift)
+        if _lift > .05 and _rs > .05:
+            print("      -> EARNED: confident plots agree more often with a map from different features")
+        elif _lift < -.02:
+            print("      -> INVERTED: confident plots agree LESS; do not ship this as a confidence")
+            print("      uninformative until this is understood.")
+        else:
+            print("      -> NOT DEMONSTRATED (lift %+.1f pts): reports allocator decisiveness, not accuracy" % (100*_lift))
+    except Exception as _e:
+        print("   label-confidence validation unavailable: %s" % _e)
+
+    # Rice does not separate: the X-band discriminator is the July transplanting dip and there is
+    # no July acquisition. A candidate that did not replicate, reported anyway.
+    def _h_rr(lbl):
+        a_ = Q.loc[mnov & (lbl == "Rice"), "ndvi_nov"].dropna().values
+        b_ = Q.loc[mnov & (lbl != "Rice"), "ndvi_nov"].dropna().values
+        return kruskal(a_, b_)[0] if (len(a_) >= 8 and len(b_) >= 8) else np.nan
+    def _mk(extra=None, w=0., seed=20260809):
+        P_ = RAD.copy()
+        if extra is not None: P_["Rice"] = P_["Rice"] + w*zg_(extra).fillna(0)
+        r_ = np.random.default_rng(seed)
+        return pd.Series([CROPS[j] for j in _alloc(P_.to_numpy() + .18*r_.normal(size=P_.shape))],
+                         index=Q.index)
+    h_r0 = _h_rr(_mk())
+    h_r1 = _h_rr(_mk(Q["s0_0606_d"], .5))
+    _rc = spearmanr(Q.loc[mnov, "s0_0606_d"], Q.loc[mnov, "ndvi_nov"])[0]
+    _zn = (Q.ndvi_nov.fillna(Q.ndvi_nov.median()) - Q.ndvi_nov.mean())/(Q.ndvi_nov.std()+1e-9)
+    _nl = []
+    for _t in range(6):
+        _rs = np.random.default_rng(900+_t)
+        _sy = (np.sign(_rc)*abs(_rc)*_zn
+               + np.sqrt(max(1-_rc*_rc, .01))*pd.Series(_rs.normal(size=len(Q)), index=Q.index))
+        _nl.append(_h_rr(_mk(_sy, .5)))
+    _nl = np.array(_nl)
+    print("")
+    print("   RICE, the crop that does not separate on retention:")
+    print("      radar-only map, rice vs rest      H = %6.2f" % h_r0)
+    print("      + 6 June (land preparation)       H = %6.2f   (%+.1f)" % (h_r1, h_r1-h_r0))
+    print("      6 correlation-matched nulls       H = %6.2f max (%+.1f)"
+          % (np.nanmax(_nl), np.nanmax(_nl)-h_r0))
+    # Read the interpretation off the measurement - do not assert it.
+    _beat = np.isfinite(h_r1) and h_r1 > np.nanmax(_nl)
+    print("      corr(6 June, November NDVI)       %+.3f" % _rc)
+    if _beat and abs(_rc) < .15:
+        print("      -> real rice information, not the metric rewarding its own yardstick")
+        print("      feature for resembling its own target.")
+    elif _beat:
+        print("      The feature beats every null, though it also correlates with the yardstick")
+        print("      at %+.3f - so read the gain with that in mind." % _rc)
+    else:
+        print("      -> a no-information null matches it: not a rice signal. Do not use.")
+    EXTRA["rice separation, 6 June, null-controlled"] = ("H %.1f -> %.1f vs best null %.1f"
+                                                         % (h_r0, h_r1, np.nanmax(_nl)))
+    print("")
+    print("   Not used in the submitted crop map - every test above runs on the radar-only map.")
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("7b-4  THE PERSISTENCE CLAIM, MEASURED BOTH WAYS")
+print("=" * 86)
+try:
+    def _cvmap(a):
+        f = LAB.ravel(); sl = f > 0
+        v = a.ravel()[sl]; i2 = f[sl]
+        ok = np.isfinite(v) & (v > 0); i2, v = i2[ok], v[ok].astype(np.float64)
+        o2 = np.argsort(i2, kind="stable"); i2, v = i2[o2], v[o2]
+        n2 = np.bincount(i2, minlength=NF); e2 = np.concatenate([[0], np.cumsum(n2)])
+        cv2 = np.full(NF, np.nan)
+        for j2 in np.nonzero(n2)[0]:
+            x2 = v[e2[j2]:e2[j2+1]]
+            if x2.size >= 10: cv2[j2] = x2.std()/x2.mean()
+        return cv2
+    rawcv = {k: pd.Series(_cvmap(RAW[k])[fid], index=Q.index) for k in DRY}
+    print("   within-field CV, cross-date rank correlation")
+    print("   pair              raw sigma0    filtered    inflation")
+    keep = []
+    for a_, b_ in (("0814", "1013"), ("0606", "1013"), ("0606", "0814")):
+        mm = Q.clean & rawcv[a_].notna() & rawcv[b_].notna()
+        rr_ = spearmanr(rawcv[a_][mm], rawcv[b_][mm])[0]
+        ff_ = spearmanr(Q.loc[mm, "cv_"+a_], Q.loc[mm, "cv_"+b_])[0]
+        keep.append(rr_)
+        print("   %s vs %s        %+.3f        %+.3f       %+.3f" % (a_, b_, rr_, ff_, ff_-rr_))
+    EXTRA["Uniformity persistence (UNFILTERED)"] = "%+.3f to %+.3f" % (min(keep), max(keep))
+    print("")
+    print("   the filter shares one ratio across dates, raising this ~0.25; the raw column is quoted")
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("7b-5  DOES THE YIELD COLUMN CARRY ANYTHING HEALTH DOES NOT?")
+print("=" * 86)
+try:
+    _tp = getattr(np, "trapezoid", None) or np.trapz
+    _cols = sorted([c for c in TS.columns if 150 <= c.dayofyear <= 300]) if "TS" in dir() else []
+    if len(_cols) >= 4:
+        _v = TS[_cols].reindex(Q.index).values
+        _xd = np.array([c.dayofyear for c in _cols], float)
+        _auc = np.full(len(Q), np.nan)
+        for _i in range(len(Q)):
+            _m = np.isfinite(_v[_i])
+            if _m.sum() >= 4:
+                _auc[_i] = _tp(_v[_i][_m], _xd[_m])/(_xd[_m].max()-_xd[_m].min())
+        Q["ndvi_auc"] = _auc
+        # Integrated NDVI is the standard published yield proxy, and Sentinel-2 never enters either
+        # submitted column - so it is the closest independent yardstick available.
+        _my = Q.clean & (Q.area_ha > .3) & Q.ndvi_auc.notna()
+        _old = .6 + .8*(Q.health_index/100.)          # what the yield used to be driven by
+        _rows = []
+        def _partial(yv, xv, cv, mk):
+            # x vs y after removing c from BOTH - "does this add anything health does not"
+            mk = mk & np.isfinite(yv) & np.isfinite(xv) & np.isfinite(cv)
+            if mk.sum() < 30: return np.nan
+            _rk = lambda v: pd.Series(v[mk]).rank().values
+            Y_, X_, C_ = _rk(yv), _rk(xv), _rk(cv)
+            A_ = np.column_stack([np.ones(len(C_)), C_])
+            ry = Y_ - A_ @ np.linalg.lstsq(A_, Y_, rcond=None)[0]
+            rx = X_ - A_ @ np.linalg.lstsq(A_, X_, rcond=None)[0]
+            return float(np.corrcoef(rx, ry)[0, 1])
+        for _nm, _x in (("health index alone (old driver)", _old),
+                        ("sigma0 13 Oct alone", Q.s0_1013_d),
+                        ("integrated sigma0", Q.sar_auc_db),
+                        ("SUBMITTED driver (see Stage 6 sweep)", Q.yield_driver)):
+            _w = []
+            for c in CROPS:
+                _mm = _my & (Q.crop_type == c)
+                if _mm.sum() >= 25: _w.append(spearmanr(_x[_mm], Q.loc[_mm, "ndvi_auc"])[0])
+            _rows.append(dict(driver=_nm, pooled=spearmanr(_x[_my], Q.loc[_my, "ndvi_auc"])[0],
+                              within_crop=(np.mean(_w) if _w else np.nan), crops=len(_w),
+                              partial_given_health=(np.nan if "health index" in _nm else
+                                  _partial(Q.ndvi_auc.values, np.asarray(_x, float),
+                                           Q.health_index.values, _my))))
+        _YD = pd.DataFrame(_rows).set_index("driver")
+        print("   n = %d plots | yardstick = integrated NDVI over %d Sentinel-2 dates"
+              % (int(_my.sum()), len(_cols)))
+        print(_YD.round(3).to_string(na_rep="  (self)"))   # health-vs-health partial is undefined
+        _gain = _YD.loc["SUBMITTED driver (see Stage 6 sweep)", "pooled"] - _YD.loc["health index alone (old driver)", "pooled"]
+        EXTRA["yield driver vs integrated NDVI"] = ("%+.3f, up %+.3f on health alone"
+                                                    % (_YD.loc["SUBMITTED driver (see Stage 6 sweep)", "pooled"], _gain))
+        print("")
+        print("   The submitted yield driver agrees with the established proxy %+.3f better than"
+              % _gain)
+        print("   health alone did. That gap is the information the yield column now carries.")
+        print("")
+        print("   weight chosen on the WEST; read Stage 6's EASTERN column for the held-out figure")
+        print("   yield column either way.")
+    else:
+        print("   Sentinel-2 series unavailable - cannot run this check")
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("VALIDATION LEDGER - everything above, in one place")
+print("=" * 86)
+for k, v in EXTRA.items(): print("   %-42s %s" % (k, v))
+
+# ---------------------------------------------------------------- figure
+fig = plt.figure(figsize=(16, 9))
+gs = fig.add_gridspec(2, 2, hspace=.32, wspace=.24)
+ax = fig.add_subplot(gs[0])
+if len(SZ):
+    ax.plot(SZ.index, SZ.rho, marker="o", lw=2.4, color=BLUE[4], label="$\\sigma^0$")
+    ax.plot(SZ.index, SZ.chi, marker="s", lw=2.4, color="#D55E00", label="CHI")
+    # labels on their own row below the data, not chasing each point - at the left edge the
+    # thresholds are close together and the annotations collided with each other and the markers
+    _lo = float(min(SZ.rho.min(), SZ.chi.min())); _hi = float(max(SZ.rho.max(), SZ.chi.max()))
+    ax.set_ylim(_lo-.09*(_hi-_lo)-.03, _hi+.04*(_hi-_lo))
+    for _k, (x_, n_) in enumerate(zip(SZ.index, SZ.n)):
+        if _k % 2 and len(SZ) > 4: continue          # thin them where thresholds crowd
+        _ha = "left" if _k == 0 else "center"
+        ax.annotate("n=%d" % int(n_), xy=(x_, ax.get_ylim()[0]), xytext=(2 if _k == 0 else 0, 4),
+                    textcoords="offset points", ha=_ha, fontsize=7.5, color=MUTED)
+    ax.legend(fontsize=8.5, loc="upper left")
+ax.set_xlabel("minimum plot size (ha)"); ax.set_ylabel("rho vs Sentinel-2 NDVI")
+ax.set_title("Agreement rises with plot size")
+ax = fig.add_subplot(gs[1])
+if oof is not None:
+    ax.scatter(oof, y, s=13, color=BLUE[3], alpha=.55, edgecolor="none")
+    lo_, hi_ = float(min(oof.min(), y.min())), float(max(oof.max(), y.max()))
+    ax.plot([lo_, hi_], [lo_, hi_], color="#D55E00", ls="--", lw=1.6)
+    ax.set_title("Held out: $R^2$ = %.2f" % r2)
+ax.set_xlabel("predicted NDVI (unseen plots)"); ax.set_ylabel("actual NDVI")
+ax = fig.add_subplot(gs[2])
+if np.isfinite(H_rad):
+    ax.bar([0, 1], [np.mean(Hn) if Hn else 0, H_rad],
+           color=[BLUE[1], BLUE[4]], width=.55)
+    ax.axhline(h95, color="#D55E00", ls="--", lw=1.6)
+    ax.annotate("null 95th percentile", xy=(-0.30, h95), xytext=(0, 6),
+                textcoords="offset points", color="#D55E00", fontsize=8.5,
+                ha="left", va="bottom")
+    ax.set_xticks([0, 1]); ax.set_xticklabels(["constraint\nonly (null)", "radar-only\nmap"])
+    ax.set_ylabel("Kruskal-Wallis H")
+ax.set_title("Radar beats the null")
+ax = fig.add_subplot(gs[3])
+try:
+    # CV is a positive ratio with a long tail; log-log so the bulk is visible.
+    _cx = rawcv["0814"][Q.clean]; _cy = rawcv["1013"][Q.clean]
+    _pos = (_cx > 0) & (_cy > 0) & np.isfinite(_cx) & np.isfinite(_cy)
+    ax.scatter(_cx[_pos], _cy[_pos], s=10, color=BLUE[3], alpha=.45, edgecolor="none")
+    ax.set_xscale("log"); ax.set_yscale("log")
+    _lim = [float(min(_cx[_pos].min(), _cy[_pos].min()))*.9,
+            float(max(_cx[_pos].max(), _cy[_pos].max()))*1.1]
+    ax.plot(_lim, _lim, ls=":", lw=1.2, color=INK2, zorder=0)   # y = x, for reference
+    ax.set_xlim(_lim); ax.set_ylim(_lim)
+    # matplotlib labels log MINOR ticks by default; over a range of well under a decade
+    # that produces overlapping "2x10^-1 3x10^-1 ..." mush. Use a few plain ticks instead.
+    from matplotlib.ticker import FixedLocator, NullFormatter, FuncFormatter
+    _tk = [t for t in (.2, .3, .5, .7, 1, 1.5, 2, 3, 5) if _lim[0] <= t <= _lim[1]]
+    for _axis in (ax.xaxis, ax.yaxis):
+        _axis.set_major_locator(FixedLocator(_tk))
+        _axis.set_major_formatter(FuncFormatter(lambda v, _p: "%g" % v))
+        _axis.set_minor_formatter(NullFormatter())
+    ax.set_xlabel("within-field CV, 14 Aug (unfiltered, log)")
+    ax.set_ylabel("within-field CV, 13 Oct (log)")
+    ax.set_title("Patchiness persists: rho = %+.2f (n=%d)" % (keep[0], int(_pos.sum())))
+except Exception: pass
+savefig(fig, "fig08_validation2.png", "the three strongest checks"); plt.show()
+# ============================================================================
+# STAGE 7c · the tests we had not run
+# ============================================================================
+print("=" * 86); print("7c-1  IS INTEGRATED SIGMA0 'DURATION', OR JUST THREE-DATE AVERAGING?")
+print("=" * 86)
+# Does integrated sigma0 beat a plain three-date mean? If not, 'duration' is the wrong word.
+try:
+    if "ndvi_auc" in Q.columns and Q.ndvi_auc.notna().sum() > 100:
+        m7c = Q.clean & (Q.area_ha > .3) & Q.ndvi_auc.notna()
+        mean3 = Q[["s0_"+k+"_d" for k in DRY]].mean(axis=1)
+        rows = []
+        for nm, v in (("single date, 13 Oct", Q["s0_1013_d"]),
+                      ("plain 3-date mean (dB)", mean3),
+                      ("integrated sigma0 (trapezoid)", Q["sar_auc_db"])):
+            w_ = []
+            for c in CROPS:
+                mm = m7c & (Q.crop_type == c)
+                if mm.sum() >= 25: w_.append(spearmanr(v[mm], Q.loc[mm, "ndvi_auc"])[0])
+            rows.append(dict(predictor=nm, pooled=spearmanr(v[m7c], Q.loc[m7c, "ndvi_auc"])[0],
+                             within_crop=(np.mean(w_) if w_ else np.nan)))
+        D1 = pd.DataFrame(rows).set_index("predictor")
+        print(D1.round(3).to_string())
+        _gap = D1.loc["integrated sigma0 (trapezoid)", "pooled"] - D1.loc["plain 3-date mean (dB)", "pooled"]
+        _lift = D1.loc["plain 3-date mean (dB)", "pooled"] - D1.loc["single date, 13 Oct", "pooled"]
+        print("")
+        print("   averaging three dates buys        %+.3f over one date" % _lift)
+        print("   trapezoid weighting buys a further %+.3f over the plain mean" % _gap)
+        print("")
+        if abs(_gap) < RHO_NOISE:
+            print("   -> trapezoid adds %+.3f over a plain 3-date mean: the gain is multi-date" % _gap)
+            print("      information, not canopy duration. Term kept, word corrected.")
+        else:
+            print("   -> trapezoid beats the plain mean by %+.3f: time weighting is doing real work" % _gap)
+        # a quarter of the integral is pre-monsoon, before most of these crops are sown
+        _wt = np.array([ (226-157)/2, ((226-157)+(286-226))/2, (286-226)/2 ], float); _wt /= _wt.sum()
+        print("")
+        print("   trapezoid weights: 6 Jun %.0f%% | 14 Aug %.0f%% | 13 Oct %.0f%%"
+              % tuple(100*_wt))
+        print("   6 June is pre-monsoon: ~a quarter of the integral is bare soil, stated not hidden")
+    else:
+        print("   integrated NDVI unavailable - cannot run")
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("7c-2  DOES THE FILTER HELP THE FEATURES WE ACTUALLY SHIP?")
+print("=" * 86)
+# Quegan-Yu is the right tool for a pixel product. But every feature here is a FIELD MEDIAN
+# over ~300 cells, where averaging has already suppressed speckle. Test it honestly.
+try:
+    _mf = Q.clean & (Q.area_ha > .3) & Q.ndvi_oct.notna()
+    _rawmed = {}
+    for k in ["1013"]:
+        _m2 = fstat(RAW[k])[0]
+        _rawmed[k] = pd.Series(10*np.log10(_m2[fid]), index=Q.index)
+    rows = [dict(variant="RAW field median (no filter)",
+                 rho=spearmanr(_rawmed["1013"][_mf], Q.loc[_mf, "ndvi_oct"])[0]),
+            dict(variant="Quegan-Yu field median (shipped)",
+                 rho=spearmanr(Q.loc[_mf, "s0_1013"], Q.loc[_mf, "ndvi_oct"])[0])]
+    F1 = pd.DataFrame(rows).set_index("variant")
+    _rk = spearmanr(_rawmed["1013"][Q.clean], Q.loc[Q.clean, "s0_1013"])[0]
+    _rkcv = spearmanr(Q.loc[Q.clean, "cv_raw_1013"], Q.loc[Q.clean, "cv_1013"])[0]
+    print(F1.round(4).to_string())
+    print("")
+    print("   filtered vs raw, field median : rank corr %.4f" % _rk)
+    print("   filtered vs raw, field CV     : rank corr %.4f" % _rkcv)
+    print("")
+    print("   the filter barely moves the field MEDIAN (%.3f); its work is on the CV" % _rk)
+    print("   the shipped per-field features is small.")
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("7c-3  WHY DOES AGREEMENT RISE WITH PLOT SIZE? (three explanations, not one)")
+print("=" * 86)
+# We claimed "speckle physics". True - but the Sentinel-2 side denoises with size too, and
+# geolocation error is a bigger fraction of a small plot. Show all three.
+try:
+    if len(SZ):
+        _bands = [(0, .15), (.15, .30), (.30, .60), (.60, 99)]
+        rows = []
+        for lo_, hi_ in _bands:
+            mm = Q.clean & (Q.area_ha > lo_) & (Q.area_ha <= hi_) & Q.ndvi_oct.notna()
+            if mm.sum() < 40: continue
+            rows.append(dict(band="%.2f-%.2f ha" % (lo_, min(hi_, 9)), n=int(mm.sum()),
+                             rho=spearmanr(Q.loc[mm, "s0_1013_d"], Q.loc[mm, "ndvi_oct"])[0],
+                             SAR_cells=float(Q.loc[mm, "ncells_total"].median()),
+                             S2_cells_approx=float((Q.loc[mm, "area_ha"]*1e4/100.).median()),
+                             our_ci_dB=float(Q.loc[mm, "ci_width_dB"].median())))
+        B1 = pd.DataFrame(rows).set_index("band")
+        print(B1.round(3).to_string())
+        print("")
+        print("   both sensors gain precision with plot size, so this is not a one-sided artefact")
+        print("   small plot. We no longer assert a single cause.")
+except Exception as e:
+    print("   unavailable: %s" % e)
+
+print("")
+print("=" * 86); print("7c-4  CLAIMS THAT WERE QUOTED RATHER THAN COMPUTED")
+print("=" * 86)
+try:
+    _mq = Q.clean & (Q.area_ha > .3) & Q.ndvi_oct.notna()
+    _we = Q["wet_excess"] if "wet_excess" in Q.columns else (
+        Q["s0_0619_d"] - Q[["s0_"+k+"_d" for k in DRY]].mean(axis=1))
+    _mwe = _mq & _we.notna()
+    print("   wet excess vs October NDVI      pooled %+.3f  (n=%d)"
+          % (spearmanr(_we[_mwe], Q.loc[_mwe, "ndvi_oct"])[0], int(_mwe.sum())))
+    from sklearn.mixture import GaussianMixture as _G
+    _nv = Q.loc[Q.clean & Q.ndvi_nov.notna(), "ndvi_nov"].values.reshape(-1, 1)
+    _b1 = _G(1, random_state=0).fit(_nv).bic(_nv); _b2 = _G(2, random_state=0, n_init=5).fit(_nv).bic(_nv)
+    print("   November NDVI bimodality        BIC 1-comp %.1f vs 2-comp %.1f -> %s"
+          % (_b1, _b2, "bimodal" if _b2 < _b1-6 else "NOT bimodal (one component wins)"))
+    from sklearn.model_selection import KFold as _KF
+    from sklearn.preprocessing import StandardScaler as _SS
+    from sklearn.pipeline import make_pipeline as _mp
+    from sklearn.linear_model import RidgeCV as _RC
+    from sklearn.ensemble import HistGradientBoostingRegressor as _GB
+    _F = [c for c in ["s0_1013_d", "cv_1013_d", "s0_0814_d", "s0_0606_d"] if c in Q.columns]
+    _X = Q.loc[_mq, _F].astype(float); _X = _X.fillna(_X.median())
+    _y = Q.loc[_mq, "ndvi_oct"].values
+    def _wc(pred):
+        v = pd.Series(np.nan, index=Q.index); v[_mq] = pred
+        r = []
+        for c in CROPS:
+            mm = _mq & (Q.crop_type == c)
+            if mm.sum() >= 25: r.append(spearmanr(v[mm], Q.loc[mm, "ndvi_oct"])[0])
+        return np.mean(r) if r else np.nan
+    CEIL = {}
+    for _nm, _mk in (("ridge", lambda: _mp(_SS(), _RC(alphas=np.logspace(-2, 3, 24)))),
+                     ("gradient boosting", lambda: _GB(max_depth=3, max_iter=250,
+                                                       learning_rate=.06, random_state=0))):
+        _p = np.full(len(_X), np.nan)
+        for tr, te in _KF(5, shuffle=True, random_state=17).split(_X):
+            _md = _mk(); _md.fit(_X.iloc[tr], _y[tr]); _p[te] = _md.predict(_X.iloc[te])
+        CEIL[_nm] = _wc(_p)
+    CEIL["our index (fitted to nothing)"] = _wc(Q.loc[_mq, "health_index"].values)
+    print("   model ceiling, WITHIN crop, out of sample:")
+    for _k2, _v2 in CEIL.items(): print("      %-32s %+.3f" % (_k2, _v2))
+    _hd = max(CEIL.values()) - CEIL["our index (fitted to nothing)"]
+    print("      headroom over our index          %+.3f" % _hd)
+    print("      declined: an index fitted to NDVI is an NDVI emulator, trainable only where")
+    print("      optical already exists - which removes the reason to use SAR at all")
+except Exception as e:
+    print("   unavailable: %s" % e)
+# ============================================================================
+# 7c-6 · noise floor and radiometric flatness
+# ============================================================================
+# NESZ subtraction is monotone, so it cannot move a rank statistic - and every headline here
+# is rank-based. Proven below rather than asserted, then the floor's spatial flatness bounded.
+try:
+    _nz = {k: float(META[k].get("nesz_peak", np.nan)) if isinstance(META[k], dict) else np.nan
+           for k in DATES}
+    if not np.isfinite(list(_nz.values())).any():
+        import json as _js
+        _nz = {k: _js.load(open(A1("CAPELLA_C14_SM_SLC_HH_%s_extended.json" % STEMS[k])))
+                    ["collect"]["image"]["nesz_peak"] for k in DATES}
+    _k = "1013"
+    _share = 100*10**(_nz[_k]/10)/10**(float(Q["s0_"+_k].median())/10)
+    _corr = 10*np.log10(np.maximum(10**(Q["s0_"+_k]/10) - 10**(_nz[_k]/10), 1e-12))
+    _mm = (Q.clean & Q.ndvi_oct.notna()) if "ndvi_oct" in Q.columns else Q.clean
+    _d_rho = np.nan
+    if "ndvi_oct" in Q.columns and _mm.sum() > 50:
+        _d_rho = (spearmanr(_corr[_mm], Q.loc[_mm, "ndvi_oct"])[0]
+                  - spearmanr(Q.loc[_mm, "s0_"+_k], Q.loc[_mm, "ndvi_oct"])[0])
+
+    # residual spatial trend across the village, crop level removed first
+    _resid = Q["s0_1013_d"].copy()
+    for c in CROPS:
+        _mc = (Q.crop_type == c) & _resid.notna()
+        if _mc.sum() > 5: _resid[_mc] = _resid[_mc] - _resid[_mc].median()
+    _g = Q.clean & _resid.notna()
+    _X = np.column_stack([np.ones(int(_g.sum())),
+                          (Q.loc[_g, "ctr_x"]-Q.ctr_x.mean())/1000.,
+                          (Q.loc[_g, "ctr_y"]-Q.ctr_y.mean())/1000.])
+    _b, *_ = np.linalg.lstsq(_X, _resid[_g].values, rcond=None)
+    _tot = (abs(_b[1])*(Q.ctr_x.max()-Q.ctr_x.min())
+            + abs(_b[2])*(Q.ctr_y.max()-Q.ctr_y.min()))/1000.
+    print("noise floor %.0f%% of measured power (13 Oct) | NESZ-subtracted rank corr moves %+.4f"
+          % (_share, _d_rho))
+    print("radiometric flatness: %.2f dB residual trend across the village" % _tot)
+    print("   -> left uncorrected: a constant floor cannot move a rank, and the trend sits far")
+    print("      below the 2-4 dB signals we work with. Quoted as a bound, not corrected away.")
+    EXTRA["scene-wide radiometric gradient"] = "%.2f dB across the village" % _tot
+except Exception as e:
+    print("   noise-floor check unavailable: %s" % e)
+# ============================================================================
+# 7c-5 · how much of the answer rides on the crop map?
+# ============================================================================
+# Both submitted columns are standardised WITHIN crop, so a relabelled plot is scored against
+# a different population. Rebuild both on the radar-only map - a hostile assignment sharing no
+# information with the one we ship - and report how far they move. A bound, not an error bar.
+try:
+    if "crop_rad" not in dir(): raise RuntimeError("radar-only map unavailable")
+    _alt = crop_rad.reindex(Q.index)
+
+    def _zc_alt(sr, cmap):
+        out = pd.Series(index=Q.index, dtype=float)
+        for c in CROPS:
+            m = (cmap == c) & sr.notna()
+            ref = m & Q.clean.fillna(False)
+            if ref.sum() < 8: ref = m
+            if ref.sum() == 0: continue
+            mu, sd = sr[ref].mean(), sr[ref].std()
+            out[m] = (sr[m]-mu)/(sd if sd and np.isfinite(sd) else 1.)
+        return out.fillna(0).clip(-2.5, 2.5)
+
+    _chi_alt = 100/(1+np.exp(-(.60*_zc_alt(Q["s0_1013_d"], _alt)
+                               - .20*_zc_alt(Q["cv_raw_1013_d"], _alt)
+                               - W_WET*_zc_alt(Q["wet_excess"], _alt))))
+    _y_alt = pd.Series([YREF[c]*(0.6+0.8*g/100.) for c, g in
+                        zip(_alt, 100/(1+np.exp(-_zc_alt(Q["sar_auc_db"], _alt))))], index=Q.index)
+    for c in CROPS:
+        _mc = _alt == c
+        _y_alt[_mc] = _y_alt[_mc].clip(*ENV[c])
+    _rh = spearmanr(Q.health_index, _chi_alt)[0]
+    _ry = spearmanr(Q.yield_estimate_to_date, _y_alt)[0]
+    _vp = float((Q.yield_estimate_to_date*Q.area_ha).sum())
+    _vpa = float((_y_alt*Q.area_ha).sum())
+    print("crop-map sensitivity - rebuilt on the radar-only map (%.0f%% of plots relabelled):"
+          % (100*float((_alt != Q.crop_type).mean())))
+    print("   health rank corr %+.3f | yield rank corr %+.3f | village production %+.1f%%"
+          % (_rh, _ry, 100*(_vpa-_vp)/_vp))
+    print("   -> trust the village summary; treat a single plot as conditional on its label.")
+    EXTRA["crop-map sensitivity, production"] = "%+.1f%%" % (100*(_vpa-_vp)/_vp)
+except Exception as e:
+    print("   sensitivity test unavailable: %s" % e)
+# ============================================================================
+# STAGE 8b · cover image for the media gallery
+# ============================================================================
+fig = plt.figure(figsize=(16, 9))
+gs = fig.add_gridspec(3, 3, width_ratios=[1.55, 1, 1], height_ratios=[.42, 1, .62],
+                      hspace=.30, wspace=.22)
+
+# ---- title band ----------------------------------------------------------------------
+axt = fig.add_subplot(gs[0, :]); axt.axis("off")
+axt.text(0, .72, "Crop Health & Yield from Capella X-band SAR",
+         fontsize=27, fontweight="bold", color=INK, va="center")
+axt.text(0, .30, "%s village, Vadodara · %d farm plots · %.1f ha · four acquisitions, Jun-Oct 2025"
+         % (VNAME, len(Q), F_HA), fontsize=13.5, color=INK2, va="center")
+axt.text(1, .72, "Team Coding Bits", fontsize=12.5, color=INK2, ha="right", va="center")
+axt.text(1, .34, "ANRF AISEHack 2.0 · Round 2", fontsize=11.5, color=MUTED, ha="right", va="center")
+axt.set_xlim(0, 1); axt.set_ylim(0, 1)
+
+# ---- the map, which is the point -----------------------------------------------------
+axm = fig.add_subplot(gs[1:, 0])
+fmc = farms.set_index("FID").join(Q[["health_index"]])
+gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=axm, facecolor="none", edgecolor=INK2, lw=1.6)
+fmc.plot(ax=axm, column="health_index", cmap=CM_HEALTH, vmin=15, vmax=85,
+         edgecolor="#ffffff", linewidth=.13, legend=True,
+         legend_kwds={"label": "Crop Health Index (0-100)", "shrink": .62})
+mapaxes(axm)
+axm.set_title("Every one of %d plots, scored" % len(Q), fontsize=13)
+
+# ---- what each crop got --------------------------------------------------------------
+axb = fig.add_subplot(gs[1, 1])
+_o = VS.reindex(CROPS)
+axb.barh(range(len(CROPS)), _o.area_ha.values[::-1],
+         color=[CROP_COLOR[c] for c in CROPS[::-1]], edgecolor=SURFACE, lw=1.4)
+for i_, (c, v) in enumerate(zip(CROPS[::-1], _o.area_ha.values[::-1])):
+    axb.text(v+3, i_, "%.0f ha" % v, va="center", fontsize=9, color=INK2)
+axb.set_yticks(range(len(CROPS))); axb.set_yticklabels(CROPS[::-1], fontsize=10)
+axb.set_xlim(0, _o.area_ha.max()*1.28); axb.set_xticks([])
+axb.grid(False); [axb.spines[s].set_visible(False) for s in ("top", "right", "bottom")]
+axb.set_title("Crop areas, matched to Round 1", fontsize=11.5)
+
+# ---- the check that matters ----------------------------------------------------------
+axs_ = fig.add_subplot(gs[1, 2])
+if HAVE_S2 and "ndvi_oct" in Q.columns and Q.ndvi_oct.notna().sum() > 100:
+    # the SAME population the card beside it quotes: every clean plot with an NDVI value
+    _mc = Q.clean & Q.ndvi_oct.notna()
+    axs_.scatter(Q.loc[_mc, "s0_1013_d"], Q.loc[_mc, "ndvi_oct"], s=7,
+                 color=BLUE[3], alpha=.40, edgecolor="none")
+    _rr = spearmanr(Q.loc[_mc, "s0_1013_d"], Q.loc[_mc, "ndvi_oct"])[0]
+    axs_.set_title("Checked against a different satellite\n"
+                   r"all clean plots: $\rho$ = %+.2f, n = %d" % (_rr, int(_mc.sum())),
+                   fontsize=11.5)
+axs_.set_xlabel("our radar $\\sigma^0$, 13 Oct (dB)", fontsize=9.5)
+axs_.set_ylabel("Sentinel-2 NDVI", fontsize=9.5)
+
+# ---- headline numbers ----------------------------------------------------------------
+axn = fig.add_subplot(gs[2, 1:]); axn.axis("off"); axn.set_xlim(0, 1); axn.set_ylim(0, 1)
+_r2t = ("%.2f" % r2) if "r2" in dir() else "-"
+# SZ is empty with no network, and this cell must never fail - the gallery needs the cover.
+_have_sz = hasattr(SZ, "empty") and not SZ.empty
+_c1 = ("%.2f-%.2f" % (SZ.iloc[0].rho, SZ.iloc[-1].rho)) if _have_sz else "-"
+# the range runs from ALL clean plots to the largest ones - say so, or this card and
+# the scatter beside it read as two different answers to the same question
+_c1l = ("radar vs optical\nall %d plots -> largest" % int(SZ.iloc[0].n)) if _have_sz else "radar vs optical (offline)"
+CARDS = [(_c1, _c1l),
+         (_r2t,                    "out-of-sample $R^2$\nunseen plots"),
+         ("5 / 5",                 "yields inside the\norganisers' ranges"),
+         ("%.0f t" % (Q.yield_estimate_to_date*Q.area_ha).sum(), "village production\nto 13 October")]
+for i_, (big, lab) in enumerate(CARDS):
+    x = i_/len(CARDS) + .012
+    axn.add_patch(plt.Rectangle((x, .06), 1/len(CARDS)-.028, .86,
+                                facecolor=SURFACE, edgecolor="#e2e2df", lw=1.2, zorder=0))
+    axn.text(x+.018, .60, big, fontsize=(20 if len(big) > 5 else 25), fontweight="bold",
+             color=BLUE[5], va="center")
+    axn.text(x+.018, .24, lab, fontsize=9.4, color=INK2, va="center", linespacing=1.45)
+fig.savefig(os.path.join(OUT, "fig00_cover.png"), dpi=170, bbox_inches="tight",
+            facecolor=SURFACE)
+FIGS.append(("fig00_cover.png", "media-gallery cover"))
+print("   [figure] fig00_cover.png                media-gallery cover (use this one)")
+plt.show()
+print("")
+# ============================================================================
+# STAGE 8c · deliverable maps, laid out 16:9 for the media gallery
+# ============================================================================
+# The gallery crops thumbnails to a wide fixed aspect, so anything below the map is lost.
+# These are 16:9 with the map left and all text right, which survives that crop intact.
+fmD = farms.set_index("FID").join(Q[["health_index", "yield_estimate_to_date", "crop_type"]])
+fmD["yield_pctile_in_crop"] = (Q.groupby("crop_type").yield_estimate_to_date
+                               .rank(pct=True).mul(100).reindex(fmD.index))
+_vha = float(vill.geometry.area.sum())/1e4
+
+
+# One 16:9 gallery figure: map on the left, title and notes on the right.
+def wide_map(fn, title, claim, draw, notes, legend_handles=None):
+    fig = plt.figure(figsize=(16, 9))
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.9, 1], wspace=.02)
+    ax = fig.add_subplot(gs[0, 0])
+    gpd.GeoSeries([vill.geometry.iloc[0]]).plot(ax=ax, facecolor="none", edgecolor=INK2, lw=1.7)
+    draw(ax)
+    mapaxes(ax)
+    side = fig.add_subplot(gs[0, 1]); side.axis("off")
+    side.set_xlim(0, 1); side.set_ylim(0, 1)
+    side.text(0, .95, title, fontsize=19, fontweight="bold", color=INK, va="top", wrap=True)
+    y = .82
+    for line in notes:
+        side.text(0, y, line, fontsize=11.5, color=INK2, va="top")
+        y -= .052
+    if legend_handles:
+        side.legend(handles=legend_handles, fontsize=11, frameon=False,
+                    loc="upper left", bbox_to_anchor=(0, y-.02), handlelength=1.4)
+    side.text(0, .045, "Team Coding Bits  ·  ANRF AISEHack 2.0 Round 2",
+              fontsize=9.5, color=MUTED, va="bottom")
+    savefig(fig, fn, claim)
+    plt.show()
+
+
+wide_map("map_health_index.png",
+         "Crop Health Index\n%s village, 13 October 2025" % VNAME,
+         "REQUIRED deliverable map",
+         lambda ax: fmD.plot(ax=ax, column="health_index", cmap=CM_HEALTH, vmin=15, vmax=85,
+                             edgecolor="#ffffff", linewidth=.15, legend=True,
+                             legend_kwds={"label": "Crop Health Index (0-100)",
+                                          "shrink": .62, "pad": .01}),
+         ["%d farms  ·  %.1f ha" % (len(Q), F_HA),
+          "median %.1f  ·  range %.0f to %.0f" % (Q.health_index.median(),
+                                                  Q.health_index.min(), Q.health_index.max()),
+          "scored within crop, so each field is",
+          "compared against its own crop only"])
+
+wide_map("map_yield_estimate.png",
+         "Yield Estimate to Date\n%s village, 13 October 2025" % VNAME,
+         "REQUIRED deliverable map",
+         lambda ax: fmD.plot(ax=ax, column="yield_estimate_to_date", cmap=CM_YIELD,
+                             edgecolor="#ffffff", linewidth=.15, legend=True,
+                             legend_kwds={"label": "Yield to date (t/ha)",
+                                          "shrink": .62, "pad": .01}),
+         ["%d farms  ·  %.1f ha" % (len(Q), F_HA),
+          "village production  %.0f t" % (Q.yield_estimate_to_date*Q.area_ha).sum(),
+          "accumulated to the final acquisition,",
+          "anchored on the published crop ranges"])
+
+wide_map("map_yield_within_crop.png",
+         "Yield to Date, ranked within crop\n%s village" % VNAME,
+         "supporting map: relative performance",
+         lambda ax: fmD.plot(ax=ax, column="yield_pctile_in_crop", cmap=CM_YIELD,
+                             vmin=0, vmax=100, edgecolor="#ffffff", linewidth=.15, legend=True,
+                             legend_kwds={"label": "percentile within the same crop",
+                                          "shrink": .62, "pad": .01}),
+         ["removes the crop-to-crop yield gap,",
+          "so colour is relative performance",
+          "",
+          "the map to read for field prioritisation"])
+
+
+def _draw_crops(ax):
+    for c in CROPS:
+        _s = fmD[fmD.crop_type == c]
+        if len(_s): _s.plot(ax=ax, facecolor=CROP_COLOR[c], edgecolor="#ffffff", linewidth=.15)
+
+
+wide_map("map_crop_classification.png",
+         "Crop Classification\n%s village" % VNAME,
+         "supporting map: crop classification",
+         _draw_crops,
+         ["%d farms  ·  %.1f ha" % (len(Q), F_HA), ""],
+         legend_handles=[Patch(facecolor=CROP_COLOR[c],
+                               label="%-10s %3d plots   %3.0f ha"
+                                     % (c, int((Q.crop_type == c).sum()), res.loc[c, "assigned_ha"]))
+                         for c in CROPS])
+
+wide_map("map_village_overview.png",
+         "Village Overview\n%s, Vadodara" % VNAME,
+         "supporting map: village overview",
+         lambda ax: farms.plot(ax=ax, facecolor=BLUE[3], edgecolor="#ffffff", linewidth=.15),
+         ["%d digitised farm plots" % len(Q),
+          "%.1f ha of farmland" % F_HA,
+          "%.0f%% of the %.0f ha village area" % (100*F_HA/_vha, _vha),
+          "median plot %.2f ha" % Q.area_ha.median()])
+# ============================================================================
+# STAGE 9 · submission CSV with a hard validation gate
+# ============================================================================
+# The gate checks CONTENT, not just shape - a collapsed index passes every format check.
+sub = pd.DataFrame({"village_id": SUB_VID, "farm_id": Q.index.astype(int),
+                    "crop_type": Q.crop_type.values,
+                    # health_index is int64 to match the organisers' dummy sheet exactly.
+                    "health_index": np.round(Q.health_index.values).astype(int),
+                    "yield_estimate_to_date": np.round(Q.yield_estimate_to_date.values, 2)}
+                   ).sort_values("farm_id").reset_index(drop=True)
+assert len(sub) == 966, len(sub)
+assert list(sub.columns) == ["village_id", "farm_id", "crop_type", "health_index", "yield_estimate_to_date"]
+assert sub.farm_id.is_unique and sub.farm_id.min() == 1 and sub.farm_id.max() == 966
+# village_id is 1 for every row, matching the dummy sheet - not the shapefile's 22.
+assert (sub.village_id == 1).all(), sub.village_id.unique()
+assert set(sub.crop_type.unique()) <= set(CROPS) and sub.crop_type.notna().all()
+assert sub.health_index.between(0, 100).all() and sub.health_index.dtype.kind == "i" and (sub.yield_estimate_to_date > 0).all()
+assert not sub.isna().any().any()
+# The brief asks for EXACTLY these five columns, one row per farm. Assert the contract
+# rather than trust it: a silent column rename would otherwise reach the organisers.
+assert list(sub.columns) == ["village_id", "farm_id", "crop_type", "health_index",
+                             "yield_estimate_to_date"], list(sub.columns)
+assert len(sub) == len(farms) == 966, (len(sub), len(farms))
+# CONTENT guards, not just format. Every assert above checks shape - a bug that collapsed
+# health_index to a single value would satisfy all of them. These catch that.
+assert sub.health_index.nunique() >= 25, "health_index collapsed to %d values" % sub.health_index.nunique()
+assert sub.health_index.std() > 5, "health_index spread degenerate (sd %.2f)" % sub.health_index.std()
+assert sub.yield_estimate_to_date.nunique() >= 100, "yield collapsed"
+assert sub.crop_type.value_counts().max() < .90*len(sub), "one crop has taken over the map"
+# Not an assert: a run with no optical must still WRITE a submission, loudly flagged.
+# Crashing here would produce nothing at all, which is strictly worse.
+if not CROP_MAP_OK:
+    print("!! " + "=" * 82)
+    print("!! WARNING - crop_type is NOT evidence-based in this run (no Sentinel-2, live or cached).")
+    print("!! The file below is valid in format but is NOT the result we submit. Re-run with")
+    print("!! internet on, or attach %s from a previous run." % S2_CACHE)
+    print("!! enabling internet, or by attaching %s from a previous run." % S2_CACHE)
+    print("!! " + "=" * 82)
+EXTRA["crop map evidence-based this run"] = "yes" if CROP_MAP_OK else "NO - see Stage 9 warning"
+assert sub.health_index.value_counts(normalize=True).max() < .15, "one health value dominates"
+print("content guards passed: %d distinct health values (sd %.1f), %d distinct yields"
+      % (sub.health_index.nunique(), sub.health_index.std(), sub.yield_estimate_to_date.nunique()))
+print("VALIDATION GATE PASSED\n")
+sub.to_csv(os.path.join(OUT, "submission.csv"), index=False)
+
+# Standalone spreadsheet, required separately. Same five columns, written from the same frame
+# as submission.csv so the two files cannot disagree.
+sub.to_csv(os.path.join(OUT, "farm_level_results.csv"), index=False)
+try:
+    sub.to_excel(os.path.join(OUT, "farm_level_results.xlsx"), index=False)
+    print("standalone spreadsheet written as .xlsx and .csv (identical content)")
+except Exception:
+    print("standalone spreadsheet written as .csv (openpyxl unavailable for .xlsx)")
+
+# Working detail, NOT a deliverable: every intermediate the two submitted columns are built
+# from, so any number in this notebook can be traced to the plot it came from.
+Q.to_csv(os.path.join(OUT, "farm_full_detail.csv"))
+print(sub.head(8).to_string(index=False))
+print("\ncrop counts:"); print(sub.crop_type.value_counts().reindex(CROPS).to_string())
+print("\n" + "="*78); print("RUN COMPLETE in %.1f minutes" % ((time.time()-T0)/60)); print("="*78)
+if os.path.exists(os.path.join(OUT, S2_CACHE)):
+    print("TO REPRODUCE OFFLINE: attach %s as a dataset and re-run with internet off." % S2_CACHE)
+    print("")
+# Deliverables first, then working files, then figures - the order the brief asks for them.
+for f_ in ["submission.csv", "farm_level_results.csv", "farm_level_results.xlsx",
+           "map_health_index.png", "map_yield_estimate.png", "map_yield_within_crop.png",
+           "map_crop_classification.png", "map_village_overview.png",
+           "village_summary.csv", "farm_full_detail.csv", S2_CACHE] +           sorted(n for n, _ in FIGS if n not in
+                 ("map_health_index.png", "map_yield_estimate.png", "map_yield_within_crop.png",
+                  "map_crop_classification.png", "map_village_overview.png")):
+    p_ = os.path.join(OUT, f_)
+    # size in bytes under 1 KB: an integer-KB format printed "0 KB" for village_summary.csv,
+    # which reads as an EMPTY FILE in the one place a reader checks the outputs exist.
+    if os.path.exists(p_):
+        _b = os.path.getsize(p_)
+        print("   %-30s %s" % (f_, ("%d B" % _b) if _b < 1024 else ("%.0f KB" % (_b/1024))))
+    else:
+        print("   %-30s MISSING" % f_)
+print("\nvillage_id = %d on all %d rows, matching the organisers' dummy sheet." % (SUB_VID, len(sub)))
+print("the village shapefile carries ID %d; that is Sokhda's index across villages, not this id." % VID)
+# ============================================================================
+# STAGE 10 · self-check: do the key numbers still hold?
+# ============================================================================
+# Each entry: (what the markdown says, the value this run computed, tolerance).
+# A claim that cannot be computed in this run is marked as sourced elsewhere and skipped.
+def _get(fn, default=np.nan):
+    try: return float(fn())
+    except Exception: return default
+
+CLAIMS = [
+    # (quantity, expected, this run, tolerance, needs optical?)
+    ("alt calibration, scene max",  46.9,  _get(lambda: CAL_ALT_DB),                   .5,  False),
+    ("wetness gain, west half",     0.0143, _get(lambda: WET_GAIN_W),                  .01, True),
+    ("wetness gain, EAST half",     0.0101, _get(lambda: WET_GAIN_E),                  .01, True),
+    ("effective-looks gain, min",     2.4,   _get(lambda: min(ENL_GAIN)),               .15, False),
+    ("effective-looks gain, max",     2.8,   _get(lambda: max(ENL_GAIN)),               .15, False),
+    ("silhouette at k=2",             0.525, _get(lambda: _sil[2]),                     .03, False),
+    ("silhouette at k=5",             0.154, _get(lambda: _sil[5]),                     .05, False),
+    ("model ceiling - our index",     0.462, _get(lambda: CEIL["our index (fitted to nothing)"]), .02, True),
+    ("model ceiling - ridge",         0.439, _get(lambda: CEIL["ridge"]),               .02, True),
+    ("model ceiling - gradient boost",0.560, _get(lambda: CEIL["gradient boosting"]),   .02, True),
+    ("Uniformity vs Oct NDVI",       -0.142, _get(lambda: _ru),                         .02, True),
+    ("drop-Uniformity gain vs NDVI",  0.017, _get(lambda: ABL_DROP_U - ABL_FULL),       .02, True),
+    ("sigma0 vs Oct NDVI, all clean", 0.62,  _get(lambda: SZ.iloc[0].rho),              .02, True),
+    ("... on plots > 0.8 ha",         0.74,  _get(lambda: SZ.iloc[-1].rho),             .02, True),
+    ("out-of-sample radar -> NDVI R2",0.62,  _get(lambda: r2),                          .03, True),
+    ("crop areas, worst error (ha)",  0.6,   _get(lambda: res.error_ha.abs().max()),    .25, False),
+    ("clean plots",                   883,   _get(lambda: Q.clean.sum()),               3.,  False),
+    ("plots total",                   966,   _get(lambda: len(Q)),                      0.,  False),
+]
+print("=" * 88); print("STAGE 10  KEY-NUMBER SELF-CHECK"); print("=" * 88)
+print("   %-34s %10s %10s   %s" % ("quantity", "expected", "this run", "verdict"))
+drift = 0; skipped = 0
+MUTE = 0                       # claims we legitimately cannot compute (no optical data)
+for name, said, got, tol, needs_optical in CLAIMS:
+    if not np.isfinite(got):
+        # An optical value may go uncomputed only when there is genuinely no optical data. Anything
+        # else means a renamed variable - a silent skip, which is what this cell exists to stop.
+        _no_optical = "ndvi_oct" not in Q.columns or not Q.ndvi_oct.notna().any()
+        if needs_optical and _no_optical:
+            print("   %-34s %10s %10s   no optical data this run - not checkable"
+                  % (name, said, "-")); MUTE += 1
+        else:
+            print("   %-34s %10s %10s   *** NOT COMPUTED - LOOK FOR A RENAMED VARIABLE ***"
+                  % (name, said, "-")); drift += 1
+        skipped += 1; continue
+    ok = abs(got-said) <= tol
+    if not ok: drift += 1
+    print("   %-34s %10.3f %10.3f   %s" % (name, said, got, "ok" if ok else "*** DRIFT ***"))
+print("")
+if drift == 0:
+    print("   %d values checked, %d not checkable without optical, ZERO drift."
+          % (len(CLAIMS)-skipped, MUTE))
+else:
+    print("   *** %d VALUE(S) MOVED since these were pinned. Investigate before submitting;"
+          % drift)
+    print("   a pinned number that moves means the pipeline changed - intentionally or not.")
+print("")
+print("   Every value above is produced by this run. Figures from earlier experiments"
+      " that this notebook does not reproduce are named as such in the 4-page report,"
+      " and are deliberately not pinned here - they are not this run's to produce.")

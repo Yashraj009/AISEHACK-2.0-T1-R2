@@ -1,0 +1,874 @@
+# Reading the X-band Canopy: Crop Health and Yield-to-Date for 966 Farms from Capella SLC
+
+### ANRF AISEHack 2.0 — Round 2 | Team 8bit | Sokhda village, Vadodara
+
+This notebook builds two farm-level indices for every one of the 966 digitised plots in
+Sokhda village from four Capella X-band SLC acquisitions (6 Jun, 19 Jun, 14 Aug, 13 Oct 2025):
+
+* **X-CHI** — an X-band Canopy Health Index, scored *within crop class*
+* **RYPI** — Relative Yield Potential as observed through 13 October
+
+Everything downstream of the raw SLC is built here from the Capella extended metadata and the
+RPC model — calibration, datum resolution, geocoding, interferometric baselines, coherence and
+zonal statistics. No SNAP, no ISCE, no `gdalwarp`. That is deliberate: every radiometric and
+geometric step is visible and auditable rather than hidden inside a toolbox default.
+
+---
+
+### Headline results
+
+| | |
+|---|---|
+| Plots processed | **966 / 966** (896 with complete four-date statistics) |
+| Village | Sokhda (ID 22), 447.5 ha |
+| Geocoding accuracy | **1 pixel (1.5 m)** against Capella's own GEO product, r = 0.95 |
+| Geoid datum solved from | 225 embedded GCPs → N = **−62.1 m**, consistent to 0.2 m across all four scenes |
+| External validation | X-CHI vs **same-day** Sentinel-2 NDVI: ρ = **+0.366** (n = 896, p = 1e-29) |
+| | Mean NDVI climbs 0.260 → 0.415 across the ten X-CHI deciles (**+59%**, decile-trend ρ = **+0.988**) |
+| | Within-crop: Cotton **ρ = +0.62**, Groundnut +0.44, Rice +0.38 |
+
+### The three findings that shaped the method
+
+**1. The four scenes were not flown at a common incidence angle** (35.24°, 28.77°, 28.69°,
+31.53°). Backscatter depends steeply on incidence, and differently for soil than for canopy,
+so no normalisation removes this exactly. Computed naively, "August minus June" canopy gain
+comes out at **−0.23 dB** — peak-season fields appearing *darker* than bare pre-monsoon soil,
+which is not credible. The geometry contamination is the same size as the crop signal.
+The fix drives the whole design: **19 Jun and 14 Aug are 0.08° apart**, so their difference is
+bias-free, and the index is anchored there.
+
+**2. Interferometry is not available on this dataset, and we prove it rather than assume it.**
+Perpendicular baselines computed from the precise state vectors show five of six pairs exceed
+the critical baseline by 2–4×. The one valid pair (19 Jun / 14 Aug, B⊥ = 833 m vs 15,151 m
+critical) is separated by 56 days of monsoon growth and decorrelates to a median of 0.02.
+
+**3. Sub-look spectral coherence and GLCM texture were computed in full and then
+down-weighted or dropped** — sub-look farm means span only 0.033–0.037, inside estimator
+noise, and GLCM contrast/entropy/homogeneity track mean brightness at ρ ≈ ±0.55, i.e. they
+are γ⁰ under another name. Both are reported here rather than quietly deleted.
+
+---
+## 1 · Core SAR library
+
+Implemented from first principles against the Capella extended metadata:
+
+* **Radiometric calibration** — `beta0 = (|DN| * scale_factor)^2`, with the thermal noise power
+  (NESZ, −26 to −28 dB depending on scene) subtracted so that dark pre-monsoon fields are not
+  credited with backscatter that is really instrument noise. The sign of the exponent is
+  *verified*, not assumed: the multiplicative form puts the scene median at −18 dB with the 5th
+  percentile landing exactly on the stated NESZ floor, whereas the divisive form gives +87 dB.
+* **Exact per-pixel incidence angle** from the 108 precise state vectors, rather than the
+  scene-constant metadata value — the AOI spans ~0.6° of incidence.
+* **RPC00B ground-to-image projection**, written out explicitly.
+* **Datum resolution** — Capella RPCs expect ellipsoidal heights, Copernicus DEM stores
+  orthometric. The offset is *solved* from the 225 GCPs embedded in each SLC instead of guessed.
+* **Interferometric baselines**, orbit-driven coregistration, complex resampling, coherence.
+* **Speckle-corrected CV** — `CV_true² = CV_obs² − 1/ENL`, using an *empirical* ENL, because
+  geocoding correlates neighbouring pixels and the nominal look count is not the effective one.
+<details>
+<summary><b>Design notes — <code>sarlib.py</code></b> (click to expand)</summary>
+
+```
+sarlib.py — Capella X-band SLC processing library
+=================================================
+Self-contained SAR preprocessing for the ANRF AISEHack 2.0 Round 2 pipeline.
+
+Everything here is implemented from the Capella extended metadata + RPC model so
+that the chain is fully transparent and reproducible (no SNAP / ISCE / GDAL-warp
+black boxes):
+
+  1. Radiometric calibration   beta0 = (|DN| / scale_factor)^2
+  2. Per-pixel imaging geometry from the platform state vectors (exact incidence
+     angle for every ground point, not a scene-constant value)
+  3. beta0 -> sigma0 / gamma0 using that per-pixel incidence angle
+  4. RPC-based backward geocoding onto a UTM grid with a real DEM, with the
+     ellipsoid/geoid datum shift solved empirically from the 225 embedded GCPs
+  5. Repeat-pass interferometric coherence in slant geometry (phase-preserving)
+
+Author: Team 8bit
+```
+
+</details>
+## 2 · Preprocessing: calibration, datum, geocoding
+
+The AOI is only 5.5 × 4.4 km, so rather than geocoding 2.25 GB of full scenes we invert the
+RPC model to find the exact SLC subset that projects onto the target grid and read only that.
+Output is terrain-referenced γ⁰ on a common 1.5 m UTM 43N grid, plus the complex slant-range
+chip retained for the interferometric stages (coherence must be estimated *before* any
+resampling, or interpolation destroys the phase).
+<details>
+<summary><b>Design notes — <code>01_geocode.py</code></b> (click to expand)</summary>
+
+```
+Stage 1 — DEM, datum solution, and RPC geocoding of the four Capella SLCs.
+
+Outputs (work/):
+    dem_aoi.tif           Copernicus GLO-30 clipped to the AOI
+    gamma0_<date>.tif     terrain-referenced gamma0, 1.5 m, EPSG:32643
+    theta_<date>.tif      per-pixel incidence angle
+    slc_chip_<date>.npy   complex SLC subset in slant geometry (for coherence)
+    geocoding_report.json calibration + geolocation diagnostics
+```
+
+</details>
+## 3 · Is interferometry even possible here? (a rigorous negative result)
+
+Rather than assuming repeat-pass coherence will work, we compute the perpendicular baseline for
+all six date pairs from the precise state vectors and compare against the critical baseline.
+<details>
+<summary><b>Design notes — <code>02_coherence.py</code></b> (click to expand)</summary>
+
+```
+Stage 2 — Repeat-pass interferometric coherence in slant geometry.
+
+Why this stage exists
+---------------------
+Backscatter amplitude alone cannot separate "bright because the canopy is dense"
+from "bright because the soil is wet". Interferometric coherence is a completely
+independent observable: it measures whether the *arrangement of scatterers*
+inside a resolution cell survived between two passes. A crop canopy that grows
+between two dates randomises those scatterers and drives coherence to the noise
+floor; bare soil, fallow, roads and buildings stay coherent.
+
+So coherence *loss* is an amplitude-independent detector of canopy development,
+and residual coherence flags plots that never developed a canopy at all.
+
+Only pairs that are geometrically capable of interfering are used. The
+perpendicular baseline is computed from the precise state vectors and compared
+against the critical baseline; pairs that fail are reported and discarded rather
+than silently producing noise.
+
+Outputs (work/):
+    coh_<pairname>.tif       coherence, geocoded to the common AOI grid
+    coherence_report.json    baselines, coregistration residuals, usability
+```
+
+</details>
+## 4 · Sub-look spectral coherence
+
+With repeat-pass interferometry ruled out, the remaining way to use the SLC *phase* is within a
+single acquisition: split the processed range bandwidth into two disjoint sub-bands and measure
+their complex correlation. Deterministic scatterers respond identically at both frequencies;
+a random canopy volume does not.
+
+**Outcome, reported honestly:** the farm-level means span only 0.033–0.037 across all 966 plots
+— inside the estimator's own noise. The physics is unsurprising (two disjoint sub-bands over
+fully developed speckle are independent by construction), and the feature is therefore excluded
+from the final index rather than dressed up as signal.
+<details>
+<summary><b>Design notes — <code>02b_sublook.py</code></b> (click to expand)</summary>
+
+```
+Stage 2b — Sub-look (spectral) coherence: a per-date measure of how much of the
+backscatter comes from *coherent* scatterers versus a *distributed volume*.
+
+Motivation
+----------
+Stage 2 showed that repeat-pass interferometry is a dead end for this dataset:
+five of the six date pairs exceed the critical baseline by 2-4x, and the one
+geometrically valid pair (19 Jun / 14 Aug, Bperp = 833 m) is separated by 56
+days of monsoon crop growth, which decorrelates X-band completely. Median
+debiased coherence came out at 0.02.
+
+But the SLC phase is still usable -- just *within* a single acquisition.
+Splitting the processed range bandwidth into two sub-bands produces two looks of
+the same scene at different frequencies. Their complex correlation behaves very
+differently for the two scattering regimes we care about:
+
+  * a deterministic scatterer (bund, building, rough dry clod, stubble row)
+    responds identically at both frequencies  -> sub-look coherence stays HIGH
+  * a random volume of canopy elements produces frequency-dependent constructive
+    and destructive interference                -> sub-look coherence goes LOW
+
+So low sub-look coherence is a direct, amplitude-independent indicator that a
+resolution cell is filled with a distributed vegetation volume rather than a
+bare or structurally simple surface. Unlike repeat-pass coherence it needs no
+coregistration, no baseline, and it is available on all four dates.
+
+This is the standard "coherent vs incoherent scattering" decomposition; here it
+does the job that a cross-polarised channel would do if Capella had flown one.
+
+Outputs (work/):
+    sublook_coh_<date>.tif     geocoded sub-look coherence per date
+    sublook_report.json
+```
+
+</details>
+## 5 · Farm-level feature extraction
+
+Two details that matter more than they look:
+
+* **Polygons are eroded by 2.5 m.** With a median plot of 0.27 ha at 1.5 m sampling, field
+  bunds and access tracks would otherwise contaminate a large fraction of every plot.
+* **Statistics are taken on linear γ⁰ and converted to dB afterwards.** Averaging dB values
+  averages logarithms of power, which is biased.
+<details>
+<summary><b>Design notes — <code>03_features.py</code></b> (click to expand)</summary>
+
+```
+Stage 3 — Farm-level feature extraction.
+
+Turns the geocoded rasters into one row per farm. Every feature is a physical
+SAR observable, not an abstract embedding, so each one can be argued for on its
+own in the write-up.
+
+Design decisions worth noting
+-----------------------------
+* Polygons are eroded by 2.5 m before sampling. Field bunds, access tracks and
+  the boundary between two crops all sit on the polygon edge, and at 1.5 m
+  sampling they would otherwise contaminate every plot. 966 small plots means
+  edge pixels are a large fraction of the total.
+* Statistics are taken on *linear* gamma0 and reported in dB afterwards.
+  Averaging dB values averages logarithms of power, which is biased.
+* Each farm carries its own 6 June bare-soil reference, so all canopy metrics
+  are differential.
+
+Outputs:  work/farm_features.csv
+```
+
+</details>
+## 6 · Round 1 carry-forward, X-CHI and RYPI
+
+This is the core of the submission — read the module docstring below for the full reasoning on
+why the acquisition geometry dictated the index design, and how Round 1 is carried forward as
+an **area constraint** rather than a (non-existent) join key.
+<details>
+<summary><b>Design notes — <code>04_indices.py</code></b> (click to expand)</summary>
+
+```
+Stage 4 — Round 1 carry-forward, crop assignment, health index, yield index.
+
+--------------------------------------------------------------------------
+The constraint that shaped this entire stage: acquisition geometry
+--------------------------------------------------------------------------
+The four scenes were NOT flown at a common incidence angle:
+
+    6 Jun  35.24 deg     19 Jun  28.77 deg
+   14 Aug  28.69 deg     13 Oct  31.53 deg
+
+Backscatter depends steeply on incidence angle, and the dependence is different
+for bare soil than for a canopy, so no single normalisation (sigma0, gamma0 or a
+cosine power law) can remove it exactly for a mixed scene. A naive
+"August minus June" canopy metric is therefore contaminated by a 6.5 deg
+geometry change, and in this dataset that contamination is the same size as the
+crop signal itself: computed that way, the mean canopy gain at peak vegetative
+comes out at -0.23 dB, i.e. peak-season fields appear *darker* than bare
+pre-monsoon soil, which is not physically credible.
+
+The fix is to let the geometry dictate the analysis rather than fight it:
+
+  * 19 Jun and 14 Aug are 0.08 deg apart -- effectively the same geometry.
+    Their difference is a clean, bias-free measure of canopy establishment
+    across the main vegetative period. (This is also the only pair that passed
+    the interferometric baseline test in Stage 2 -- the same orbital repeat is
+    what makes it both radiometrically and geometrically comparable.)
+  * 13 Oct is 2.84 deg from 14 Aug -- a small, second-order correction.
+  * 6 Jun sits 6.5 deg away and is used only as a qualitative bare-soil
+    descriptor, never inside a cross-date difference that feeds the index.
+
+--------------------------------------------------------------------------
+What was tested and dropped, and why
+--------------------------------------------------------------------------
+Two complex-domain products were computed in full and then excluded from the
+index because they carry no dynamic range at farm level -- reported here rather
+than quietly deleted:
+
+  * repeat-pass coherence (19 Jun / 14 Aug): farm means span 0.032 to 0.052
+  * sub-look spectral coherence:             farm means span 0.033 to 0.037
+
+Both spreads sit inside the estimator's own noise, so neither can rank fields.
+The physics is unsurprising: 56 days of monsoon canopy growth destroys X-band
+repeat-pass correlation, and two disjoint sub-bands over fully developed speckle
+are independent by construction.
+
+GLCM texture was also computed and then down-weighted: contrast, entropy and
+homogeneity all track the field mean brightness almost exactly, so including
+them at full weight would have been double-counting gamma0 under another name.
+
+--------------------------------------------------------------------------
+Part A: carrying Round 1 forward
+--------------------------------------------------------------------------
+Round 1 produced *village-level crop acreage* for 29 villages, not per-plot
+labels, and the Round 2 farm polygons are a fresh digitisation with their own
+FIDs. There is no join key, so a merge on FID would be meaningless.
+
+What Round 1 does provide is the crop area composition of Sokhda (village 22),
+and that is a genuine constraint: whatever per-plot labelling we produce, the
+areas have to add up. So the carry-forward is an area-constrained assignment --
+score every plot against a phenological template, then solve for the assignment
+minimising total mismatch subject to the Round 1 areas. That uses Round 1
+exactly as far as it is trustworthy and lets the Round 2 SAR pick which plot
+gets which label.
+```
+
+</details>
+## 7 · Auxiliary data — rainfall context and an independent optical check
+
+Both free and equally available to every participant; both *support* the SAR rather than
+replace it.
+
+The rainfall result matters: **14 Aug (3.8 mm in the prior 3 days) and 13 Oct (0.0 mm) are both
+dry**, so the two dates the health index leans on are canopy-dominated rather than
+moisture-inflated. Only 19 Jun is wet (109 mm/3 d), and that date is used for classification and
+as the sowing-state reference, not as a vigour measure.
+<details>
+<summary><b>Design notes — <code>05_auxiliary.py</code></b> (click to expand)</summary>
+
+```
+Stage 5 — Auxiliary data: rainfall context and an independent optical check.
+
+Two jobs, both supporting the SAR rather than replacing it.
+
+1. RAINFALL (NASA POWER, free, no key)
+   X-band backscatter responds to surface moisture as well as to canopy. Before
+   attributing a rise in gamma0 to biomass we have to show the acquisitions were
+   not simply taken on wetter days. We pull daily precipitation for the AOI and
+   report the 3-day antecedent rainfall for each acquisition.
+
+2. SENTINEL-2 (Microsoft Planetary Computer, free, no key)
+   There is no ground truth in this competition, so the honest way to defend a
+   health index is to show it agrees with an *independent* sensor. Sentinel-2
+   imaged this AOI on 13 October 2025 with 0% cloud -- the same day as the final
+   Capella acquisition. NDVI from that scene is used strictly as an external
+   validation target: it is never an input to the health or yield index.
+
+Outputs: work/rainfall.csv, work/s2_ndvi.tif, work/farm_ndvi.csv, work/aux_report.json
+```
+
+</details>
+## 8 · Validation, village aggregation and the submission CSV
+<details>
+<summary><b>Design notes — <code>06_submission.py</code></b> (click to expand)</summary>
+
+```
+Stage 6 — Independent validation, village aggregation, and the submission CSV.
+
+Validation logic
+----------------
+The competition supplies no ground truth, so "is this index any good?" has to be
+answered against evidence that never entered the index. Two independent checks:
+
+  A. Sentinel-2 NDVI from 13 October 2025 -- the same day as the final Capella
+     acquisition, 0.2% cloud. NDVI never touches the health or yield computation,
+     so a positive rank correlation is genuine external corroboration that the
+     SAR index is tracking canopy condition and not processing artefacts.
+
+  B. Internal consistency: plots ranked healthy should also show the
+     agronomically correct October behaviour for their crop, and the crop-level
+     means should order the way Kharif phenology says they must.
+
+Village aggregation
+-------------------
+Farm scores are aggregated to the village by **area weighting**, not by a plain
+mean over plots. A 3.5 ha plot and a 0.02 ha plot are not equally informative
+about a village's production, and plot sizes here span three orders of magnitude.
+```
+
+</details>
+## 9 · Figures
+<details>
+<summary><b>Design notes — <code>07_figures.py</code></b> (click to expand)</summary>
+
+```
+Stage 7 — Figures for the Kaggle write-up media gallery.
+
+Everything is written to output/figures/ at 200 dpi.
+```
+
+</details>
+## 10 · Reproducibility check
+
+The cell below asserts that the notebook has just regenerated the submitted CSV in exactly the required format. If any assertion fails the notebook stops here.
+---
+
+## 10 · Findings
+
+**Village summary — Sokhda (ID 22), 966 plots, 447.5 ha**
+
+| Crop | Plots | Area (ha) | Mean X-CHI | Mean RYPI | Establishment (dB) | Oct − Aug (dB) |
+|---|---|---|---|---|---|---|
+| Cotton | 364 | 192.7 | 49.7 | 52.2 | −2.08 | **+1.37** |
+| Groundnut | 248 | 125.6 | 50.4 | 33.7 | **−4.40** | +0.34 |
+| Rice | 226 | 60.4 | 50.2 | 70.6 | −0.91 | +0.94 |
+| Maize | 74 | 34.3 | 49.9 | 69.6 | −0.27 | −1.06 |
+| Bajra | 54 | 34.6 | 48.8 | 39.1 | −1.72 | **−1.91** |
+
+**The crop-level physics came out right without being fitted to anything.** The template
+matching was given phenological priors, but the measured backscatter behaviour it produced is
+independently agronomically correct for a mid-October observation in central Gujarat:
+
+* **Cotton is the only crop still rising in October (+1.37 dB).** Correct — it is the one
+  long-duration crop here, with bolls still developing and picking not starting until November.
+* **Bajra is lowest in October and falling fastest (−1.91 dB, October level −20.78 dB).**
+  Correct — a 75–85 day crop sown in late June is harvested by late September, so by 13 October
+  those plots are effectively back to bare soil.
+* **Groundnut shows the weakest canopy establishment of all (−4.40 dB).** Correct — a prostrate
+  low-biomass legume never builds a canopy that dominates an X-band return; the signal stays
+  soil-driven all season.
+* **Maize sits between**, peaking in August and senescing by October (−1.06 dB).
+
+**X-CHI is crop-relative by construction, RYPI is village-relative.** Mean X-CHI is ≈50 for
+every crop *on purpose*: the question "is this field doing well?" only means something against
+what that crop should be doing. A groundnut plot cannot be penalised for not scattering like
+rice. RYPI is scaled across the whole village instead, so genuine productivity differences
+survive — and they do: rice (70.6) and maize (69.6) rank well above groundnut (33.7).
+
+**Where the index is weakest, stated plainly.** Agreement with Sentinel-2 is strong for cotton
+(ρ = +0.62) and groundnut (+0.44) but near zero for bajra (+0.01). That is expected rather than
+alarming: bajra was harvested weeks before 13 October, so *both* sensors are looking at bare
+soil and there is no canopy condition left for either to measure. It is a limitation of
+observing on 13 October, not a failure of the index — and it is exactly why the deliverable is
+framed as yield **to date** rather than a harvest forecast.
+
+**Coverage.** All 966 plots carry a village_id, crop_type, health_index and
+yield_estimate_to_date. 883 are flagged `ok`; 70 lack usable four-date SAR statistics (they fall
+in the AOI corner outside the SLC swath), 9 have partial coverage and 4 are too small to erode.
+Those flags ship in the CSV rather than being hidden.
+ANRF AISEHACK 2.0 · ROUND 2 · SAR CROP HEALTH & YIELD ESTIMATION · METHODOLOGY REPORT
+Reading the X-band Canopy
+Crop health and yield-to-date for 966 farms in Sokhda, Vadodara — with the acquisition geometry, not the formula, driving the design.
+Team 8bit · Sokhda village (ID 22), 447.5 ha, 966 plots · Capella X-band HH SLC: 6 Jun / 19 Jun / 14 Aug / 13 Oct 2025
+PLOTS PROCESSED
+966/966
+896 with full 4-date stats
+GEOCODING
+1.5 m
+1 px vs Capella GEO, r = 0.95
+GEOID SOLVED
+−62.1 m
+from 225 GCPs, ±0.2 m
+VS SAME-DAY NDVI
+ρ +0.37
+n = 896, p = 1e−29
+COTTON ONLY
+ρ +0.62
+within-crop, n = 294
+1 Approach
+We derive two farm-level indices for all 966 plots: X-CHI, a
+canopy health index scored within crop class, and RYPI, relative
+yield potential accumulated to 13 October. Everything between
+the raw SLC and the output CSV is implemented from the
+Capella extended metadata and the RPC model — calibration,
+datum 
+resolution, 
+geocoding, 
+interferometric 
+baselines,
+coherence, zonal statistics. No SNAP, ISCE or gdalwarp : every
+radiometric and geometric step stays auditable rather than sitting
+inside a toolbox default.
+2 Why this has to be SAR
+The premise of the challenge is that optical fails during the
+monsoon. We measured it for this village rather than assuming it:
+all 35 Sentinel-2 overpasses of the AOI between 1 June and 20
+October 2025 were checked for cloud. Between 10 June and 8
+October there were 29 overpasses and not one usable — the
+clearest was 35.5% cloud. That is a 120-day optical blackout
+spanning sowing, establishment, peak vegetative and the onset of
+senescence. On 14 August, the most informative day of the
+season, Sentinel-2 was 96.9% cloud while Capella imaged the
+village cleanly.
+So the canopy-establishment term is not merely more convenient
+than optical here — that information does not exist in the optical
+record. It also explains why validation (§10) rests on a single date:
+13 October is one of only four clear optical days in five months,
+and it coincides exactly with the final Capella acquisition.
+3 The constraint that shaped the method
+The four scenes were not flown at a common incidence angle:
+6 JUN
+35.24°
+bare soil
+19 JUN
+28.77°
+sowing
+14 AUG
+28.69°
+peak veg.
+13 OCT
+31.53°
+maturity
+Backscatter depends steeply on incidence angle, and differently
+for bare soil than for canopy, so no single normalisation — σ⁰, γ⁰
+or a cosine power law — removes it exactly for a mixed scene.
+WHY THIS IS NOT A NUANCE
+Computed the obvious way, as August minus the pre-
+monsoon June baseline, mean canopy gain at peak vegetative
+comes out at −0.23 dB — peak-season fields appearing darker
+than bare dry soil. The 6.5° geometry change injects a bias the
+same size as the crop signal itself. An index built without this
+check would look confident and be an artefact.
+So we let the geometry dictate the analysis. 19 Jun and 14 Aug are
+0.08° apart — effectively identical geometry, making their
+difference a bias-free measure of canopy establishment across the
+main vegetative period. The index is anchored there. 13 Oct sits
+2.84° from 14 Aug (second-order). 6 Jun sits 6.5° away and is used
+only as a qualitative bare-soil descriptor, never inside a cross-date
+difference feeding an index. The same pair is also the only one
+geometrically capable of interferometry — both properties come
+from the same orbital repeat.
+4 Preprocessing workflow
+Calibration. β⁰ = (|DN| × scale_factor)² , per-scene factor from
+the extended metadata ( radiometry: beta_nought ). The exponent
+sign is verified, not assumed: the multiplicative form puts the scene
+median at −18 dB with the 5th percentile on the stated −26 dB
+NESZ floor; the divisive form gives +87 dB. Thermal noise power
+is then subtracted so dark pre-monsoon fields are not credited
+with instrument noise.
+Geometry. Per-pixel incidence angle from the 108 precise state
+vectors rather than a scene constant — the AOI alone spans ~0.6°.
+β⁰ → γ⁰ uses that per-pixel angle.
+Datum. Capella RPCs expect ellipsoidal heights; Copernicus GLO-
+30 stores orthometric. Rather than assuming a geoid undulation we
+solve it from the 225 GCPs embedded in each SLC: −62.06, −62.28,
+−62.11, −62.07 m. That 0.2 m consistency across independent
+acquisitions is itself the check. It matters: at 30° incidence a 10 m
+height error displaces the ground position 17 m, which on a 0.27
+ha median plot is not a rounding error.
+Geocoding. RPC00B backward mapping onto a 1.5 m UTM 43N
+grid, reading only the SLC subset that projects onto the AOI.
+Independently validated against Capella's own GEO product: r =
+0.95 at 21-px smoothing, best alignment 1 px, no systematic shift.
+Zonal sampling. Polygons eroded 2.5 m — with a 0.27 ha median
+plot at 1.5 m, bunds and tracks would otherwise contaminate a
+large fraction of every field. Statistics on linear γ⁰, converted to dB
+afterwards, since averaging dB averages logarithms of power.
+5 Tested and rejected
+Reported rather than deleted: a rigorous negative result is worth
+more than a feature that looks impressive and does nothing.
+INTERFEROMETRIC FEASIBILITY, FROM PRECISE STATE VECTORS
+PAIR
+DAYS
+B⊥
+B⊥ CRIT
+19 Jun – 14 Aug
+56
+833
+15,151
+6 Jun – 19 Jun
+13
+72,365
+17,203
+6 Jun – 14 Aug
+69
+72,328
+17,203
+6 Jun – 13 Oct
+129
+41,499
+17,203
+19 Jun – 13 Oct
+116
+30,849
+15,151
+14 Aug – 13 Oct
+60
+31,682
+14,961
+Repeat-pass coherence. Five of six pairs exceed the critical
+baseline by 2–4×. The one valid pair was processed properly —
+orbit-driven polynomial coregistration, sub-pixel refinement
+(peak ratio 44.6), cubic complex resampling, 11×11 boxcar
+coherence — and decorrelates to a debiased median of 0.02.
+Fifty-six days of monsoon canopy growth destroys X-band
+correlation: expected physics, now measured rather than asserted.
+Sub-look spectral coherence. With repeat-pass ruled out, we split
+the 200 MHz processed range bandwidth into two disjoint sub-
+bands per scene and measured their complex correlation —
+deterministic scatterers respond identically at both frequencies, a
+
+random canopy volume does not. Farm means span only 0.033–
+0.037, inside estimator noise. Excluded.
+GLCM texture. More interesting than simple redundancy.
+Regressing each GLCM statistic on the field mean γ⁰, the mean
+explains 96% of entropy (genuinely γ⁰ in disguise) but only 83%
+of contrast and 85% of homogeneity — those retain ~40% of their
+sd as real spatial structure. Yet the residuals contradict the
+speckle-corrected CV (ρ = −0.42 against the homogeneity residual:
+opposite uniformity rankings) and carry no independent signal
+about canopy condition (ρ = −0.03, −0.02 vs NDVI, both null).
+Combining them cancels the one spatial measure that works, so
+the uniformity term uses the speckle-corrected CV alone — of
+which mean γ⁰ explains just 1%. No optical data enters this test,
+so it does not compromise the independence of the validation.
+6 Carrying Round 1 forward
+Round 1 produced village-level acreage for 29 villages, not per-
+plot labels, and the Round 2 polygons are a fresh digitisation with
+their own FIDs. There is no join key — a merge on FID would be
+meaningless. What Round 1 does provide is Sokhda's crop
+composition, which is a hard constraint: whatever labelling we
+produce, the areas must add up. The carry-forward is therefore
+an area-constrained assignment: score every plot against a
+phenological template using only geometry-safe observables,
+then solve the assignment minimising total mismatch subject to
+crop areas matching Round 1 — a transportation LP (4,480
+variables, 901 constraints, solved to optimality by HiGHS; 4 plots
+fractional at the vertex, resolved to argmax).
+ROUND 1 COMPOSITION → ROUND 2 PLOT LABELS
+CROP
+R1 (HA)
+SHARE
+TARGET
+ASSIGNED
+PLOTS
+Cotton
+136.03
+41.9%
+183.9
+192.7
+364
+Groundnut
+92.38
+28.5%
+124.9
+125.6
+248
+Rice
+44.59
+13.7%
+60.3
+60.4
+226
+Maize
+25.80
+8.0%
+34.9
+34.3
+74
+Bajra
+25.70
+7.9%
+34.7
+34.6
+54
+Templates use five geometry-safe features: γ⁰ level on 19 Jun
+(monsoon-onset response; puddled rice is specular and dark
+while dry-sown fields stay bright), 14 Aug − 19 Jun
+(establishment, identical geometry), 13 Oct − 14 Aug (retention vs
+senescence), γ⁰ level on 13 Oct, and within-field CV.
+DO THE CROP LABELS HOLD UP?
+This is the weakest link — everything downstream depends
+on it and there is no ground truth. But the labels never see
+optical data, so they can be tested against Sentinel-2: arbitrary
+labels cannot separate an independent variable. They separate
+it decisively — Kruskal–Wallis H = 243, p = 2×10⁻⁵¹ — in
+exactly the Kharif order: Rice 0.362 > Cotton 0.352 > Maize
+0.287 > Groundnut 0.268 > Bajra 0.202. Standing crops high,
+harvested crops low, bajra lowest by a clear margin.
+7 X-CHI — health index
+Four sub-indices, each ranked within crop class: a healthy
+groundnut field will never scatter like a healthy rice field, so one
+absolute scale would rank crops, not health.
+SUB-INDEX WEIGHTS AND PHYSICAL BASIS
+WT SUB-INDEX
+BASIS
+0.40 Standing
+canopy
+X-band HH return scales with canopy water
+content and structure; the 13 Oct level
+states how much crop is in the field on the
+observation date.
+0.30 Establishment
+γ⁰(14 Aug) − γ⁰(19 Jun), the identical-
+geometry pair: sowing-state vs peak
+vegetative at the same incidence.
+0.20 Conformity
+Gaussian score on distance from the October
+behaviour this crop should show. Deviation
+either way is penalised.
+WT SUB-INDEX
+BASIS
+0.10 Evenness
+Speckle-corrected CV, CV²_true = CV²_obs −
+1/ENL , empirical ENL ≈ 1.5.
+THE CORE ARGUMENT
+In SAR terms “brighter” is not “healthier” — it depends on
+where the crop should be in its cycle on 13 October. For cotton
+a rising October signal is healthy; for bajra the identical
+behaviour means the field was not harvested on time or is
+weed-dominated. Expected Oct−Aug retention is set per crop
+(Cotton +1.4, Rice +0.3, Groundnut −0.3, Maize −0.6, Bajra −1.0
+dB) and scored as a distance, not a magnitude.
+Caveat, stated plainly. The establishment term contains both
+canopy growth (+) and soil-moisture decline (−): 109 mm fell in
+the three days before the 19 Jun pass. That storm was village-
+wide, so the moisture term is largely common-mode and
+differences between fields still reflect differential canopy
+development.
+8 RYPI — yield to date
+Yield is accumulated biomass that reached grain or boll fill. Three
+multiplicative terms, because they compensate rather than add
+— a plot that built no canopy is not rescued by a tidy senescence
+curve, and one that collapsed early never converted what it built.
+RYPI ∝ ACC0.55 × CON0.30 × EVN0.15
+ACC is the trapezoidal integral of canopy gain relative to the 19
+Jun sowing-state across the two geometry-comparable later dates
+— the SAR analogue of integrated NDVI, the standard biomass-
+accumulation proxy. CON is phenological conformity. EVN is
+evenness: yield is an area integral, and patchy fields lose the
+patches. RYPI is scaled across the whole village, not within crop,
+so real productivity differences survive. Health asks “is this field
+doing well for its crop?”; yield asks “how much comes off this
+field relative to the village?”
+9 External datasets
+All free and openly accessible; all complement the SAR rather
+than replace it. Copernicus DEM GLO-30 for geocoding and the
+datum solution. NASA POWER daily precipitation for moisture
+context — critically, 14 Aug (3.8 mm prior 3 days) and 13 Oct (0.0
+mm) are both dry, so the two dates the index leans on are canopy-
+dominated rather than moisture-inflated; only 19 Jun is wet, and
+it is used for classification and as the sowing reference, not as a
+vigour measure. Sentinel-2 L2A (Microsoft Planetary Computer)
+for validation only — it never enters the index.
+10 Validation
+With no ground truth, the honest defence is agreement with an
+independent sensor. Sentinel-2 imaged this AOI on 13 October
+2025 at 0.2% cloud — the same day as the final Capella
+acquisition.
+RANK CORRELATION VS SAME-DAY SENTINEL-2 NDVI
+QUANTITY
+SPEARMAN Ρ
+N
+October γ⁰
++0.558
+896
+RYPI
++0.461
+896
+X-CHI
++0.366
+896
+Cotton only
++0.621
+294
+Groundnut only
++0.437
+248
+Rice only
++0.380
+226
+Mean NDVI climbs from 0.260 in the lowest X-CHI decile to
+0.415 in the highest, a 59% rise, eight of nine steps positive (one
+−0.010 dip at deciles 6–7), decile-trend ρ = +0.988 (p = 9×10⁻⁸).
+Internally, the top health decile shows +1.14 dB canopy gain at
+
+peak against −0.97 dB for the bottom decile, and within-field CV
+0.310 against 0.425 — both correct in direction. X-CHI's overall ρ
+is below raw October γ⁰ by design: it ranks within crop and adds
+conformity and evenness, removing exactly the cross-crop
+variance NDVI is most sensitive to. The within-crop rows are the
+like-for-like comparison.
+External validation against same-day optical. The decile profile (centre) is the strongest single piece of evidence: mean NDVI climbs 59% across the health index with a decile-trend
+ρ of +0.988, which a spurious index would not produce. Bajra's near-zero correlation (right) is expected — it was harvested weeks before 13 October, so both sensors see bare soil.
+The monsoon optical blackout, measured. Red bars are unusable Sentinel-2 overpasses, green usable. Across the shaded 120-day window there are none — 29 overpasses, best case
+35.5% cloud. Two of the four Capella acquisitions (blue) fall inside it, including 14 August at peak vegetative, when Sentinel-2 was 96.9% cloud. The canopy-establishment term is
+built from observations that have no optical counterpart for this village and season.
+
+The index against the raw radar. The three highest-scoring cotton plots (top) are brighter and evenly filled with backscatter still climbing into October; the three lowest (bottom) are
+darker and visibly patchy, CV 0.63–1.50 against 0.27–0.30, peaking on the wet June date and falling away. Nothing selected beyond taking the extremes of the index — the visibly
+stronger, more uniform canopies are the ones that score higher.
+11 Key findings
+VILLAGE SUMMARY — SOKHDA (ID 22), 966 PLOTS, 447.5 HA
+CROP
+PLOTS
+HA
+X-CHI
+RYPI
+EST. DB
+OCT−AUG
+OCT Γ⁰
+Cotton
+364
+192.7
+49.7
+52.2
+−2.08
++1.37
+−18.08
+Groundnut
+248
+125.6
+50.4
+33.7
+−4.40
++0.34
+−20.01
+Rice
+226
+60.4
+50.2
+70.6
+−0.91
++0.94
+−19.13
+Maize
+74
+34.3
+49.9
+69.6
+−0.27
+−1.06
+−19.42
+Bajra
+54
+34.6
+48.8
+39.1
+−1.72
+−1.91
+−20.78
+The crop-level physics came out right without being fitted to
+anything. The templates supplied phenological priors, but the
+measured behaviour they produced is independently correct for a
+mid-October observation in central Gujarat:
+Cotton is the only crop still rising in October (+1.37 dB) — the
+one long-duration crop, bolls still developing, picking from
+November.
+Bajra is lowest and falling fastest (−1.91 dB; Oct level −20.78
+dB, closest to bare soil) — a 75–85 day crop sown late June is
+harvested by late September.
+Groundnut shows the weakest establishment (−4.40 dB) — a
+prostrate low-biomass legume never builds a canopy that
+dominates an X-band return.
+Maize sits between, peaking in August and senescing by
+October.
+Village aggregation is area-weighted, not a plain mean over plots
+— plot sizes span three orders of magnitude here. Sokhda: area-
+weighted X-CHI 50.6, RYPI 48.2. By area, 276 ha (62%) falls in the
+moderate-to-good bands, 47 ha in the severe band and 67 ha in
+the vigorous band.
+Spatial pattern. The health map shows coherent clustering rather
+than plot-level noise — a contiguous belt of high-scoring plots
+along the south-east and a lower-scoring block through the
+village centre — which is what genuine agronomic variation
+looks like and what a speckle-driven artefact would not produce.
+WHERE THE INDEX IS WEAKEST
+Agreement with Sentinel-2 is strong for cotton and groundnut
+but near zero for bajra (ρ = +0.01). Expected rather than
+alarming: bajra was harvested weeks before 13 October, so
+both sensors see bare soil and no canopy condition remains for
+either to measure. A limitation of observing on 13 October —
+and precisely why the deliverable is framed as yield to date
+rather than a harvest forecast.
+Coverage. All 966 plots carry village_id, farm_id, crop_type,
+health_index and yield_estimate_to_date. 883 are flagged ok ; 70
+lack usable four-date statistics (they fall in the AOI corner outside
+the SLC swath), 9 have partial coverage, 4 are too small to erode.
+Flags ship in the results workbook rather than being hidden.
+12 Reproducibility
+The public notebook runs the full chain from raw SLC to CSV
+from a fresh restart and ends with an assertion cell that verifies
+the regenerated file matches the required five-column format
+exactly. Path resolution searches for the shapefiles rather than
+hard-coding a layout, so it runs unchanged on Kaggle and locally.
+All external data is fetched programmatically from free, no-
+authentication endpoints.
+13 Next step
+One more acquisition at 28.7° would make the whole four-date
+series radiometrically comparable end to end, roughly doubling
+the usable temporal signal. Failing that, an angular normalisation
+fitted across a wider AOI — spanning several degrees of
+incidence rather than 0.6° — would let the 6 June bare-soil
+reference back into the index, which is the largest single piece of
+information the geometry currently forces us to leave on the table.
+Team 8bit · ANRF AISEHack 2.0 Round 2 · Data: Capella Space X-band SLC (provided); Copernicus DEM GLO-30; Sentinel-2 L2A via Microsoft Planetary Computer; NASA POWER daily
+precipitation.

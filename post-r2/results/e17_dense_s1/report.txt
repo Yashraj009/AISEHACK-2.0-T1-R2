@@ -1,0 +1,102 @@
+==============================================================================
+SOURCE  results/tables/witness_season.csv -- ALREADY IN THE REPO, nothing fetched
+==============================================================================
+  10 Sentinel-1 VH dates, all relative orbit 34 descending:
+    20250612, 20250624, 20250706, 20250718, 20250730, 20250823, 20250904, 20250916, 20250928, 20251010
+  Capella has FOUR dates. This C-band series has 10, over the same season.
+
+  956 farms with a complete series and usable geometry
+  spatial folds: [262 143 250  98 203]
+
+==============================================================================
+T1  DOES THE DENSE C-BAND SERIES CORROBORATE OUR CROP LABELS?
+==============================================================================
+  10 dates + 9 deltas (full phenology)          kappa +0.135   acc  49.1%
+
+  dense S1   Bajra  Cotton  Groundnut  Maize  Rice
+  ours                                            
+  Bajra          2     114         28      0     3
+  Cotton         6     396         45      1     1
+  Groundnut      3     144         64      0     9
+  Maize          1      40          9      4     0
+  Rice           1      45         37      0     3
+
+  crop             n   dense S1   e14 annual    change
+  Bajra          147       1.4%        10.9%     -9.5pp
+  Cotton         449      88.2%        84.9%     +3.3pp
+  Groundnut      220      29.1%        28.6%     +0.5pp
+  Maize           54       7.4%         0.0%     +7.4pp
+  Rice            86       3.5%         4.7%     -1.2pp
+
+  This is the comparison D-1 rests on: the SAME crops, the SAME blocked-CV protocol,
+  a dense C-band series against an annual multi-sensor average.
+
+==============================================================================
+T2  IS TIMING WHAT MATTERS? (the actual D-1 hypothesis, isolated)
+==============================================================================
+  season mean + integral only (timing REMOVED)  kappa +0.046   acc  41.2%
+  10 dates, no deltas                           kappa +0.142   acc  49.2%
+  last 3 dates only (Sep-Oct)                   kappa +0.134   acc  47.3%
+  first 3 dates only (Jun-Jul)                  kappa +0.024   acc  42.8%
+
+  full phenology +0.135 vs flattened +0.046 -> timing is worth +0.089 kappa
+  If that gap is near zero, the season shape carries nothing the mean does not, and
+  D-1's premise -- that annual averaging is what destroyed rice and maize -- is wrong.
+
+==============================================================================
+T3  CONTROLS
+==============================================================================
+  permutation kappas: +0.013, -0.014, +0.009, +0.022, -0.002  mean +0.006
+  observed +0.135 is 10.5 permutation SDs above null
+  rho(area_ha, correctly predicted) = +0.064  p = 0.0477   (e13 died on this control)
+  area_ha alone (size floor)                    kappa +0.017   acc  38.2%
+
+==============================================================================
+T4  WHERE TWO INDEPENDENT SENSORS BOTH BACK OUR LABEL
+==============================================================================
+                                       farms  % of village
+  both sensors agree with us             383         40.1%
+  dense S1 only                           86          9.0%
+  embedding only                          81          8.5%
+  NEITHER agrees with us                 406         42.5%
+
+  both-agree observed 40.1% vs 23.8% if the two sensors were independent
+  crop          both agree   neither
+  Bajra               0.0%     87.8%
+  Cotton             78.8%      5.8%
+  Groundnut          13.2%     55.5%
+  Maize               0.0%     92.6%
+  Rice                0.0%     91.9%
+
+  The 'neither' column is the honest one: those farms carry a label that no
+  independent sensor supports, and they are where Track E lookups belong.
+
+==============================================================================
+T5  IS C-BAND BLIND TO RICE, OR DOES IT SIMPLY MISS THE EVENT?
+==============================================================================
+  Our rice channel is the Capella 6 -> 19 June brightening (+3.23 dB for rice against
+  +0.07..+1.12 for everything else), driven by 17.3 mm of rain in the six hours before
+  the 19 June overpass (e12, Open-Meteo). Sentinel-1 flew 12 June and 24 June, so it
+  STRADDLES that event without sampling it. Testing the closest available pair:
+
+  crop             n   12->24 Jun dB
+  Bajra          147         +1.940
+  Cotton         449         +1.788
+  Groundnut      220         +2.059
+  Maize           54         +1.787
+  Rice            86         +2.184
+
+  rice +2.184 dB vs rest +1.882 dB, Mann-Whitney p = 0.0699
+
+  Rice brightens MOST, which is the same direction as our Capella channel -- but the
+  margin is +0.30 dB against our +3.23 dB, and p = 0.07 is not significant.
+  CONCLUSION: 'C-band is blind to rice' is NOT established. What is established is
+  that a 12-day C-band VH series does not separate rice here, which is consistent
+  with a days-scale flooding event falling between two acquisitions.
+
+==============================================================================
+STANDING CONSTRAINT
+==============================================================================
+  Nothing here becomes a feature. docs/REPORT.md states Capella primacy is required
+  by the guidelines, and i5_validation's independence rests on this series never
+  having been read by the model. Using it as an input would forfeit both.

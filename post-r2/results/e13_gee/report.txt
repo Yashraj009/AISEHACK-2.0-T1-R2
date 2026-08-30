@@ -1,0 +1,52 @@
+==============================================================================
+SOURCE
+==============================================================================
+  per-farm zonal means for 966 farms at 10 m
+  Dynamic World Jun-Oct 2025 (20 images, contemporaneous with our SAR)
+  WorldCereal 2021 v100: temporarycrops, maize, irrigation
+
+==============================================================================
+T1  DYNAMIC WORLD -- do we carry non-crop parcels we never screened?
+==============================================================================
+  modal DW class    farms   % area   our median NDVI
+  crops               689    80.2%             0.281
+  built                91     3.7%             0.337
+  shrub_scrub          70     4.8%             0.327
+  flooded_veg          50     5.0%             0.392
+  trees                36     3.0%             0.454
+  grass                25     3.3%             0.445
+
+  parcels whose modal 2025 land cover is NOT crops/grass: 247 (16.6% of area)
+  Orion screened 37 parcels / 21.2 ha on a SAR-only rule. We screen none.
+
+                           non-crop       rest
+  NDVI 13 Oct                 0.375      0.286
+  gamma0 dB                   9.831      9.587
+  within-farm CV              0.471      0.468
+  our health index           44.580     51.920
+
+  If these parcels look different on a sensor we never read, they are
+  contaminating a health index that assumes every parcel is a field.
+
+==============================================================================
+T2  WORLDCEREAL 2021 -- cropland mask, and maize as a weak prior
+==============================================================================
+  temporarycrops (100 = cropland): median 59.0, 53.2% of farms above 50
+  irrigation     : median 6.7, 29.6% above 50
+  maize          : median 0.0, 2.5% above 50
+
+  maize agreement: raw 91.6%, Cohen's kappa -0.010
+    ours 42 maize farms, WorldCereal 24
+    kappa near 0 means a 2021 maize map says nothing about our 2025 labels,
+    which is what crop rotation predicts. It is a check, not a failure.
+
+==============================================================================
+T3  IRRIGATION -- a per-farm handle on the anchor mechanism?
+==============================================================================
+  rho(irrigation, our health index          ) = +0.056  p = 0.115
+  rho(irrigation, NDVI 13 Oct (withheld)    ) = -0.167  p = 2.42e-06
+  rho(irrigation, our yield                 ) = +0.050  p = 0.16
+
+  KHARIF_ANCHORS.md rests on irrigated summer bajra yielding 1.6x rainfed
+  kharif bajra. A per-farm irrigation flag would let that mechanism be applied
+  per parcel rather than per crop -- IF it varies here and tracks something.

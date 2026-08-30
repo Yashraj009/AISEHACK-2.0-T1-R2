@@ -14,9 +14,18 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "anrf-aise-hack-2-0-round-2-sar-crop-health-yield-estimation"
-FARMS = DATA / "Farm_boundaries_shp" / "Farm_boundaries_shp" / "Sokhda_Farms.shp"
-VILLAGE = DATA / "Village_Shp" / "Village_Shp" / "Sokhda_Village.shp"
+DATA = Path(os.environ.get("AISE_DATA") or
+            ROOT / "anrf-aise-hack-2-0-round-2-sar-crop-health-yield-estimation")
+
+# The village is named in the shapefile basenames, so a different village needs different
+# paths. Overridable by environment so a new AOI does not require editing this file under
+# time pressure -- the defaults reproduce Sokhda exactly when nothing is set.
+# ponytail: env vars, not a config file. Three values do not need a schema.
+VILLAGE_NAME = os.environ.get("AISE_VILLAGE", "Sokhda")
+FARMS = Path(os.environ.get("AISE_FARMS") or
+             DATA / "Farm_boundaries_shp" / "Farm_boundaries_shp" / f"{VILLAGE_NAME}_Farms.shp")
+VILLAGE = Path(os.environ.get("AISE_VILLAGE_SHP") or
+               DATA / "Village_Shp" / "Village_Shp" / f"{VILLAGE_NAME}_Village.shp")
 RESULTS = ROOT / "results"
 CACHE = RESULTS / "cache"
 FIGURES = RESULTS / "figures"

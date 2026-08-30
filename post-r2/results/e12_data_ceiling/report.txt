@@ -1,0 +1,75 @@
+==============================================================================
+1.  THE RESOLUTION CEILING, MEASURED ON OUR OWN FARMS
+==============================================================================
+  excluded 9 degenerate parcels (centroid >5 km out, area ~0)
+  966 farms, village extent 4.1 x 3.6 km
+  variance of the within-crop health residual: 836.67
+
+     cell side  cells used   ceiling   what sits at this scale
+        100 m          589     0.685   Capella farm-scale; Sentinel-1/2 at 10-20 m
+        250 m          168     0.226   MODIS 250 m; SoilGrids 250 m
+        500 m           52     0.125   Dynamic World / WorldCereal aggregated
+       1000 m           17     0.041   SoilGrids 1 km; CHIRPS 5 km is coarser still
+       5000 m            4     0.015   CHIRPS rainfall
+      11000 m            1     0.000   ERA5-Land reanalysis (~9-11 km)
+      25000 m            1     0.000   ERA5 (~25 km); most weather APIs
+      50000 m            1     0.000   NASA POWER (~50 km)
+
+  Read this as: a covariate constant within a cell of that size can explain AT MOST
+  this share of farm-to-farm health variation, and only if it is perfectly
+  correlated with the between-cell signal. A real dataset does worse.
+
+==============================================================================
+2.  PRICING THE PROPOSED DATA SOURCES AGAINST IT
+==============================================================================
+  source                              native cell  ceiling   verdict
+  USDA ERS ARMS                               n/a      n/a   US farm FINANCES, 16 US states. Wrong continent and subject
+  OpenWeatherMap (history)               25000 m     0.000   USELESS for ranking farms
+  NASA POWER (we use it)                 50000 m     0.000   USELESS for ranking farms
+  CHIRPS rainfall                         5000 m     0.015   USELESS for ranking farms
+  ERA5-Land reanalysis                   11000 m     0.000   USELESS for ranking farms
+  SoilGrids 250 m                          250 m     0.226   could matter
+  ESA WorldCereal 10 m                     100 m     0.685   farm-scale
+  Dynamic World 10 m                       100 m     0.685   farm-scale
+  Sentinel-1 / Sentinel-2                  100 m     0.685   farm-scale
+  Capella (what we ship)                   100 m     0.685   farm-scale
+
+  Every weather/reanalysis product lands in the same place: its cell is larger than
+  the village, so it takes ONE value for all 966 farms and its spatial ceiling is
+  exactly zero. That is not a judgement about weather, it is arithmetic.
+
+==============================================================================
+3.  WHERE WEATHER IS ACTUALLY USEFUL: TIMING, NOT RANKING
+==============================================================================
+  A spatial ceiling of zero does not make weather useless. Our rice signature is the
+  6->19 June brightening (+3.23 dB for rice vs +0.07..+1.12 for everything else),
+  and both Coding Bits and Megalodon report 19 June as a rain day (12.5 mm in the
+  preceding six hours; 21.9 mm on the day). The MECHANISM of our own crop map
+  depends on a weather fact.
+
+  So the question worth asking of a weather API is not 'can it rank farms' (no) but
+  'can it pin the rain to the acquisition hour'. Capella overpasses:
+    20250606  07:25 UTC
+    20250619  02:14 UTC
+    20250814  03:11 UTC
+    20251013  02:26 UTC
+
+  Open-Meteo's archive gives HOURLY precipitation free and without a key, which is
+  what Coding Bits used. OpenWeatherMap's history endpoint is paid and no better
+  resolved for this purpose. Testing Open-Meteo now.
+
+  fetched 408 hourly records, 4-20 June 2025
+    2025-06-06 07:00 UTC  ->  6 h before    0.0 mm   24 h before    0.1 mm   whole day    0.0 mm
+    2025-06-19 02:00 UTC  ->  6 h before   17.3 mm   24 h before   29.0 mm   whole day    7.4 mm
+
+  This is the fact our rice channel rests on, fetched independently rather than
+  taken from a competitor's writeup.
+
+==============================================================================
+CONCLUSION
+==============================================================================
+  Anything on a cell larger than the village is arithmetically incapable of ranking
+  farms within it. That prices out every weather and reanalysis product for the
+  ranking job in one line, and it is measured on our own farms rather than borrowed.
+  What remains worth pursuing is 10 m products - and their value has to be shown,
+  not assumed, because a ceiling is an upper bound and not a promise.

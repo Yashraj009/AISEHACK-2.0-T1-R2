@@ -1,0 +1,69 @@
+==============================================================================
+POPULATION
+==============================================================================
+  956 farms after dropping degenerate geometry
+  crop mix: Rice 86, Cotton 449, Maize 54, Bajra 147, Groundnut 220
+  embedding disagrees with us on 51.5% of farms
+  budget under test: 100 manual lookups, 400 synthetic replicates
+
+==============================================================================
+T1  DOES THE SELECTION SCHEME BIAS THE ACCURACY ESTIMATE?
+==============================================================================
+  strength = how strongly our correctness depends on our own confidence.
+  At strength 0 every scheme MUST be unbiased -- that is the control.
+
+  --- dependence strength 0.0   true village accuracy 65.1%
+  scheme                mean est     bias     RMSE
+  random                   65.4%    +0.3pp     4.7pp
+  stratified               65.2%    +0.2pp     5.9pp
+  uncertain                64.9%    -0.2pp     4.7pp
+  uncertain_ipw            64.4%    -0.7pp     9.3pp
+  hybrid                   65.3%    +0.2pp     6.9pp
+
+  --- dependence strength 0.5   true village accuracy 65.0%
+  scheme                mean est     bias     RMSE
+  random                   64.8%    -0.2pp     4.5pp
+  stratified               65.2%    +0.2pp     5.7pp
+  uncertain                61.3%    -3.7pp     6.1pp
+  uncertain_ipw            61.6%    -3.4pp     9.8pp
+  hybrid                   65.5%    +0.5pp     7.1pp
+
+  --- dependence strength 1.0   true village accuracy 65.1%
+  scheme                mean est     bias     RMSE
+  random                   64.9%    -0.2pp     4.1pp
+  stratified               64.8%    -0.2pp     5.6pp
+  uncertain                52.7%   -12.4pp    13.4pp
+  uncertain_ipw            53.5%   -11.6pp    15.4pp
+  hybrid                   65.2%    +0.1pp     6.7pp
+
+  --- dependence strength 1.5   true village accuracy 63.6%
+  scheme                mean est     bias     RMSE
+  random                   63.3%    -0.3pp     4.5pp
+  stratified               63.2%    -0.4pp     5.9pp
+  uncertain                40.0%   -23.6pp    24.0pp
+  uncertain_ipw            41.0%   -22.6pp    24.5pp
+  hybrid                   63.2%    -0.4pp     6.8pp
+
+==============================================================================
+T2  THE COMPETING OBJECTIVE -- errors FOUND per 100 lookups
+==============================================================================
+  scheme                errors found / 100
+  random                              35.1
+  stratified                          36.2
+  uncertain                           47.3
+  hybrid                              36.6
+
+  If uncertainty-first wins here and loses T1, the two goals are formally in
+  conflict and one sample cannot serve both without being split.
+
+==============================================================================
+T5  DEFECTS IN THE SAMPLE THAT IS STAGED RIGHT NOW
+==============================================================================
+  staged rows: 100, filled: 0
+  stratification: {'Rice': np.int64(20), 'Bajra': np.int64(20), 'Cotton': np.int64(20), 'Maize': np.int64(20), 'Groundnut': np.int64(20)}
+  degenerate-geometry rows (area < 1e-4 ha): 1 -> farm_id [19]
+    e12 found nine such parcels village-wide; one reached the field sheet. A parcel
+    enclosing ~0 ha cannot be found on the ground, so that lookup is wasted.
+  rows whose centroid is >5 km from the village: 1 -> farm_id [19]
+  rows with an ambiguous registry match (<0.5): 0
+  agreement with the independent map: 24%

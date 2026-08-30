@@ -1,0 +1,129 @@
+import json, os, shutil, subprocess, sys, time
+from pathlib import Path
+
+KAGGLE_INPUT = Path("/kaggle/input")
+ON_KAGGLE = KAGGLE_INPUT.exists()
+
+if ON_KAGGLE:
+    payloads = [p.parent for p in KAGGLE_INPUT.rglob("run_pipeline.py")
+                if (p.parent / "src" / "aise_sar").exists()]
+    if len(payloads) != 1:
+        raise RuntimeError(f"Expected one Megalodon release payload, found {payloads}")
+    ROOT = Path("/kaggle/working/Phase2_Sub")
+    shutil.copytree(payloads[0], ROOT, dirs_exist_ok=True)
+
+    farm_shp = next(KAGGLE_INPUT.rglob("Sokhda_Farms.shp"))
+    village_shp = next(KAGGLE_INPUT.rglob("Sokhda_Village.shp"))
+    scene_dirs = sorted({p.parent for p in KAGGLE_INPUT.rglob("CAPELLA*_SLC_HH_*.tif")
+                         if p.parent.name.startswith("CAPELLA")})
+    canonical = [p for p in scene_dirs if (p / f"{p.name}.tif").exists()]
+    if len(canonical) != 4:
+        raise RuntimeError(f"Expected four canonical Capella scene folders, found {canonical}")
+
+    competition = ROOT / "data" / "competition"
+    competition.mkdir(parents=True, exist_ok=True)
+    targets = {
+        competition / "farm_boundaries": farm_shp.parent,
+        competition / "village_boundary": village_shp.parent,
+    }
+    for target, source in targets.items():
+        if target.exists() or target.is_symlink():
+            shutil.rmtree(target, ignore_errors=True)
+        os.symlink(source, target, target_is_directory=True)
+    capella = competition / "capella_slc"
+    shutil.rmtree(capella, ignore_errors=True)
+    capella.mkdir(parents=True)
+    for source in canonical:
+        os.symlink(source, capella / source.name, target_is_directory=True)
+else:
+    here = Path.cwd().resolve()
+    ROOT = next((p for p in (here, here.parent) if (p / "run_pipeline.py").exists()), None)
+    if ROOT is None:
+        raise RuntimeError("Open this notebook from the Phase2_Sub folder or its notebooks folder")
+
+print("release root:", ROOT)
+print("execution:", "Kaggle" if ON_KAGGLE else "local")
+print("Capella scenes:", len(list((ROOT / "data/competition/capella_slc").glob("CAPELLA*"))))
+
+PIPELINE_PYTHON = None
+for candidate in dict.fromkeys([os.environ.get("AISE_PIPELINE_PYTHON"),
+                                sys.executable, shutil.which("python")]):
+    if candidate and subprocess.run([candidate, "-c", "import geopandas, rasterio"],
+                                    capture_output=True).returncode == 0:
+        PIPELINE_PYTHON = candidate
+        break
+if PIPELINE_PYTHON is None:
+    raise RuntimeError("The kernel needs geopandas and rasterio; see requirements.txt")
+print("pipeline Python:", PIPELINE_PYTHON)
+sys.path.insert(0, str(ROOT / "src"))
+from aise_sar import config
+
+rows = []
+for acquisition in config.discover_acquisitions():
+    metadata = json.loads(acquisition.extended.read_text())
+    image = metadata["collect"]["image"]
+    rows.append({
+        "date": acquisition.date,
+        "scale factor": image["scale_factor"],
+        "incidence (deg)": round(image["center_pixel"]["incidence_angle"], 2),
+        "ground-range resolution (m)": round(image["ground_range_resolution"], 2),
+        "NESZ peak (dB)": round(image["nesz_peak"], 2),
+    })
+import pandas as pd
+pd.DataFrame(rows)
+started = time.time()
+completed = subprocess.run([PIPELINE_PYTHON, str(ROOT / "run_pipeline.py")], cwd=ROOT,
+                           text=True, capture_output=True)
+print(completed.stdout[-12000:])
+if completed.returncode:
+    print(completed.stderr)
+    raise RuntimeError(f"pipeline failed with exit code {completed.returncode}")
+print(f"\nElapsed: {(time.time() - started) / 60:.1f} minutes")
+submission = pd.read_csv(ROOT / "outputs/submission.csv")
+detailed = pd.read_csv(ROOT / "outputs/detailed_farm_results.csv")
+assert list(submission.columns) == ["village_id", "farm_id", "crop_type", "health_index",
+                                    "yield_estimate_to_date"]
+assert len(submission) == 966 and submission.farm_id.tolist() == list(range(1, 967))
+assert not submission.isna().any().any()
+assert submission.health_index.between(0, 100).all()
+
+summary = detailed.groupby("crop_type").agg(
+    farms=("farm_id", "size"), area_ha=("area_ha", "sum"),
+    mean_health=("health_index", lambda x: float(x.mean())),
+)
+summary["production_t"] = detailed.assign(
+    tonnes=detailed.area_ha * detailed.yield_estimate_to_date
+).groupby("crop_type").tonnes.sum()
+print(summary.round(2))
+print("\nRows:", len(submission), " | missing:", int(submission.isna().sum().sum()))
+print("Production to date (t):",
+      round(float((detailed.area_ha * detailed.yield_estimate_to_date).sum()), 1))
+validation = json.loads((ROOT / "experiments/06_cross_sensor_validation/validation_report.json").read_text())
+pd.DataFrame({
+    "check": ["permutation p", "Moran's I", "health vs easting", "health vs northing",
+              "measured farms", "imputed farms"],
+    "value": [validation["permutation"]["p"], validation["morans_i"]["observed"],
+              validation["position"]["easting"], validation["position"]["northing"],
+              904, 62],
+})
+subprocess.run([PIPELINE_PYTHON, str(ROOT / "experiments/09_index_benchmarks/run.py")],
+               cwd=ROOT, check=True)
+subprocess.run([PIPELINE_PYTHON, str(ROOT / "src/aise_sar/figures.py")], cwd=ROOT, check=True)
+from IPython.display import Image, display
+for name in ("crop_map.png", "health_map.png", "yield_map.png", "validation_benchmark.png"):
+    display(Image(filename=str(ROOT / "outputs/figures" / name), width=760))
+
+if ON_KAGGLE:
+    final_csv = Path("/kaggle/working/submission.csv")
+    shutil.copy2(ROOT / "outputs/submission.csv", final_csv)
+    public_figures = Path("/kaggle/working/figures")
+    public_figures.mkdir(exist_ok=True)
+    for name in ("crop_map.png", "health_map.png", "yield_map.png", "validation_benchmark.png"):
+        shutil.copy2(ROOT / "outputs/figures" / name, public_figures / name)
+    # Kaggle saves /kaggle/working as kernel output. The raw inputs are already attached, and the
+    # derived rasters are reproducible, so do not publish a multi-gigabyte duplicate with the CSV.
+    shutil.rmtree(ROOT / "outputs/derived", ignore_errors=True)
+    shutil.rmtree(ROOT / "data", ignore_errors=True)
+else:
+    final_csv = ROOT / "outputs/submission.csv"
+print("Final CSV:", final_csv)

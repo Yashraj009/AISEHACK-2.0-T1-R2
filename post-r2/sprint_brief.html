@@ -1,0 +1,498 @@
+<title>Goa Sprint Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root{
+    --ground:#f4f6f6;
+    --surface:#ffffff;
+    --sunken:#eaeeee;
+    --ink:#12181d;
+    --slate:#5c6a72;
+    --faint:#8b979d;
+    --rule:#d6dcdc;
+    --ok:#0f6e63;
+    --ok-bg:#e2efed;
+    --warn:#a8571b;
+    --warn-bg:#f6ebe1;
+    --shadow:0 1px 2px rgba(18,24,29,.05);
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0e1316;
+      --surface:#161d21;
+      --sunken:#1b2429;
+      --ink:#e6ecec;
+      --slate:#a2b0b6;
+      --faint:#71818a;
+      --rule:#2a353b;
+      --ok:#4bbfae;
+      --ok-bg:#12312e;
+      --warn:#dc9553;
+      --warn-bg:#33220f;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0e1316;
+    --surface:#161d21;
+    --sunken:#1b2429;
+    --ink:#e6ecec;
+    --slate:#a2b0b6;
+    --faint:#71818a;
+    --rule:#2a353b;
+    --ok:#4bbfae;
+    --ok-bg:#12312e;
+    --warn:#dc9553;
+    --warn-bg:#33220f;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:53rem;margin:0 auto;padding:0 1.5rem 6rem}
+
+  /* ---- masthead ---- */
+  header.mast{
+    padding:3.5rem 0 2rem;
+    border-bottom:2px solid var(--ink);
+    margin-bottom:2.5rem;
+  }
+  .kicker{
+    font-family:var(--mono);
+    font-size:.7rem;
+    font-weight:500;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ok);
+    margin:0 0 .9rem;
+  }
+  h1{
+    font-family:var(--disp);
+    font-weight:800;
+    font-size:clamp(2.1rem,6vw,3.1rem);
+    line-height:1.02;
+    letter-spacing:-.022em;
+    margin:0 0 .7rem;
+    text-wrap:balance;
+  }
+  .standfirst{
+    font-size:1.06rem;
+    color:var(--slate);
+    margin:0;
+    max-width:44rem;
+  }
+  .meta{
+    display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;
+    margin-top:1.5rem;
+    font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.05em;color:var(--faint);
+    text-transform:uppercase;
+  }
+  .meta b{color:var(--ink);font-weight:600}
+
+  /* ---- stat strip ---- */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));
+    gap:1px;
+    background:var(--rule);
+    border:1px solid var(--rule);
+    margin:0 0 3rem;
+  }
+  .stat{background:var(--surface);padding:1.05rem 1.1rem}
+  .stat .n{
+    font-family:var(--mono);
+    font-size:1.55rem;font-weight:600;
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+    display:block;line-height:1.15;
+  }
+  .stat .l{
+    font-size:.78rem;color:var(--slate);
+    display:block;margin-top:.3rem;line-height:1.35;
+  }
+  .stat.is-ok .n{color:var(--ok)}
+  .stat.is-warn .n{color:var(--warn)}
+
+  /* ---- sections ---- */
+  section{margin:0 0 3.4rem;scroll-margin-top:1rem}
+  .shead{
+    display:flex;align-items:baseline;gap:.85rem;
+    border-bottom:1px solid var(--rule);
+    padding-bottom:.55rem;margin-bottom:1.4rem;
+  }
+  .snum{
+    font-family:var(--mono);font-size:.75rem;font-weight:600;
+    color:var(--ok);letter-spacing:.06em;
+    flex:none;padding-top:.18rem;
+  }
+  h2{
+    font-family:var(--disp);font-weight:700;
+    font-size:1.42rem;letter-spacing:-.014em;
+    margin:0;text-wrap:balance;
+  }
+  h3{
+    font-family:var(--disp);font-weight:600;
+    font-size:1rem;margin:2rem 0 .5rem;
+    letter-spacing:-.005em;
+  }
+  p{margin:0 0 1rem;max-width:42rem}
+  ul{margin:0 0 1rem;padding-left:1.15rem;max-width:42rem}
+  li{margin-bottom:.5rem}
+  a{color:var(--ok)}
+  strong{font-weight:600}
+  code,.m{
+    font-family:var(--mono);font-size:.88em;
+    font-variant-numeric:tabular-nums;
+  }
+  code{
+    background:var(--sunken);padding:.1em .38em;
+    border-radius:2px;
+  }
+
+  .lede{font-size:1.05rem;color:var(--slate)}
+  .lede strong{color:var(--ink)}
+
+  /* ---- headline callout ---- */
+  .headline{
+    background:var(--ok-bg);
+    border-left:3px solid var(--ok);
+    padding:1.1rem 1.3rem;
+    margin:1.6rem 0 0;
+  }
+  .headline p{margin:0;max-width:none}
+  .headline .tag{
+    font-family:var(--mono);font-size:.68rem;
+    text-transform:uppercase;letter-spacing:.12em;
+    color:var(--ok);display:block;margin-bottom:.45rem;font-weight:600;
+  }
+
+  /* ---- Q&A ---- */
+  .qa{border-top:1px solid var(--rule)}
+  .qa details{border-bottom:1px solid var(--rule)}
+  .qa summary{
+    cursor:pointer;list-style:none;
+    padding:.95rem 0 .95rem 1.7rem;
+    position:relative;
+    font-weight:600;font-size:1rem;
+    display:block;
+  }
+  .qa summary::-webkit-details-marker{display:none}
+  .qa summary::before{
+    content:"";position:absolute;left:.15rem;top:1.42rem;
+    width:.5rem;height:.5rem;
+    border-right:1.5px solid var(--ok);
+    border-bottom:1.5px solid var(--ok);
+    transform:rotate(-45deg);
+    transition:transform .18s ease;
+  }
+  .qa details[open] summary::before{transform:rotate(45deg)}
+  .qa summary:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+  .qa .ans{padding:0 0 1.15rem 1.7rem}
+  .qa .ans p:last-child{margin-bottom:0}
+
+  /* ---- tables ---- */
+  .scroll{overflow-x:auto;margin:0 0 1.2rem;border:1px solid var(--rule);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem}
+  th,td{text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--rule);vertical-align:top}
+  thead th{
+    font-family:var(--mono);font-size:.68rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:.09em;
+    color:var(--faint);background:var(--sunken);
+    white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .t-closed td:first-child{
+    border-left:3px solid var(--warn);
+    font-weight:500;
+  }
+
+  /* ---- defect list ---- */
+  ol.defects{list-style:none;padding:0;margin:0;counter-reset:d}
+  ol.defects li{
+    counter-increment:d;
+    position:relative;padding-left:2.4rem;
+    margin-bottom:1.05rem;max-width:42rem;
+  }
+  ol.defects li::before{
+    content:counter(d);
+    position:absolute;left:0;top:.05rem;
+    font-family:var(--mono);font-size:.72rem;font-weight:600;
+    color:var(--warn);background:var(--warn-bg);
+    width:1.6rem;height:1.6rem;
+    display:grid;place-items:center;
+  }
+
+  /* ---- scenario cards ---- */
+  .scen{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);margin-bottom:1.3rem}
+  .scen>div{background:var(--surface);padding:.95rem 1.1rem;display:grid;gap:.3rem}
+  .scen .if{font-family:var(--disp);font-weight:600;font-size:.98rem}
+  .scen .then{font-size:.9rem;color:var(--slate)}
+  .scen .rdy{
+    font-family:var(--mono);font-size:.68rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:.09em;
+    justify-self:start;padding:.15rem .45rem;
+  }
+  .rdy.y{color:var(--ok);background:var(--ok-bg)}
+  .rdy.n{color:var(--warn);background:var(--warn-bg)}
+  .rdy.p{color:var(--slate);background:var(--sunken)}
+
+  pre{
+    background:var(--sunken);border:1px solid var(--rule);
+    padding:.85rem 1rem;overflow-x:auto;
+    font-family:var(--mono);font-size:.82rem;
+    margin:0 0 1.2rem;line-height:1.5;
+  }
+
+  /* ---- outstanding ---- */
+  .todo{
+    border:1px solid var(--warn);
+    background:var(--warn-bg);
+    padding:1.15rem 1.3rem;margin-bottom:1.2rem;
+  }
+  .todo h3{margin-top:0;color:var(--warn)}
+  .todo p:last-child{margin-bottom:0}
+
+  /* ---- closing ---- */
+  .closer{
+    border-top:2px solid var(--ink);
+    margin-top:4rem;padding-top:2rem;
+  }
+  .closer p{
+    font-family:var(--disp);font-weight:500;
+    font-size:clamp(1.15rem,2.6vw,1.5rem);
+    line-height:1.4;letter-spacing:-.012em;
+    max-width:40rem;text-wrap:balance;margin:0;
+  }
+  .closer em{font-style:normal;color:var(--ok)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+  @media (max-width:560px){
+    body{font-size:15.5px}
+    .wrap{padding:0 1.1rem 4rem}
+    .qa summary,.qa .ans{padding-left:1.5rem}
+  }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="kicker">ANRF AISEHack 2.0 · Round 3 · Team GDHTM</p>
+  <h1>Goa Sprint Brief</h1>
+  <p class="standfirst">Everything from the post-Round-2 pass, in the form it is needed on-site. Ten documents and eighteen experiments compress to this page.</p>
+  <div class="meta">
+    <span>2–3 September · Goa</span>
+    <span>Sokhda · <b>966 farms</b></span>
+    <span>Submission md5 <b class="m">89b0e4e2</b></span>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat"><span class="n">18</span><span class="l">experiments run since R2</span></div>
+  <div class="stat is-warn"><span class="n">7</span><span class="l">of 10 ideas tested &amp; rejected</span></div>
+  <div class="stat is-ok"><span class="n">78.8<span style="font-size:.7em">%</span></span><span class="l">of cotton backed by two sensors</span></div>
+  <div class="stat is-warn"><span class="n">42.5<span style="font-size:.7em">%</span></span><span class="l">of village backed by neither</span></div>
+  <div class="stat is-ok"><span class="n">5/5</span><span class="l">regression checks passing</span></div>
+</div>
+
+<section id="s1">
+  <div class="shead"><span class="snum">01</span><h2>State of play in sixty seconds</h2></div>
+  <ul class="lede">
+    <li><strong>The R2 submission is frozen and untouched.</strong> md5 <code>89b0e4e2aef63ace4989fc0a44590ee5</code>, <code>d11_ship.py</code> READY. Nothing since R2 has changed a shipped number.</li>
+    <li><strong>Eighteen experiments run.</strong> Ten borrowed or self-proposed ideas tested, <strong>seven rejected</strong> — including three of my own four Round-3 directions.</li>
+    <li><strong>One real defect in our own work</strong> (calibration) and one in our data source (cotton units). Both measured, neither applied.</li>
+    <li><strong>Ground truth is dead for now.</strong> Krishi-DSS API unavailable, AnyROR needs a person. No team here has ground truth either.</li>
+    <li>Run <code>py -3.12 post-r2/tests_regression.py</code> after any change on-site.</li>
+  </ul>
+
+  <div class="headline">
+    <span class="tag">If you say one thing</span>
+    <p>We are the only team that has measured <strong>where its own crop map is unsupported</strong>. Two independent sensor stacks back our cotton on <strong>78.8%</strong> of farms. <strong>42.5% of the village is backed by neither</strong> — and that 42.5% is almost entirely rice, maize and bajra.</p>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="shead"><span class="snum">02</span><h2>The questions a judge can actually land</h2></div>
+  <p>Tap to open. Every answer is a measured number, not a position.</p>
+
+  <div class="qa">
+    <details>
+      <summary>“Your calibration is wrong. Two teams use scale_factor², you use scale_factor.”</summary>
+      <div class="ans">
+        <p>Correct, and we found it ourselves before reading their code. Verified against the vendor’s own declared noise floor (<code>nesz_peak</code>): under our convention the darkest 0.1% of pixels sit <strong>+26 to +28 dB above</strong> the declared floor, which is physically impossible. Under SF² they land within <strong>0.35 dB mean absolute error across all four scenes</strong>.</p>
+        <p>Effect on the product, measured: <strong>958 of 966 crop labels unchanged</strong>, health ρ = 0.9908, production +0.5%. It is a defect in the <em>level</em>, not the ranking — and the ranking is what the deliverable is.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Groundnut at 30.8%? Project Orion says 16%.”</summary>
+      <div class="ans">
+        <p>Round 1’s official truth file gives Sokhda <strong>31.0%</strong>. Our figure was right to the decimal. We had earlier let the <em>district</em> APY table overrule a village measurement, wrote that down as a mistake, and retracted it in <code>data_aux/SOURCES.md</code>.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Cotton at 0.34 t/ha is impossibly low.”</summary>
+      <div class="ans">
+        <p>It is <strong>lint</strong>, not seed cotton. Every official source reports cotton this way — APY, USDA FAS, CEIC; Gujarat’s own figure is 647 kg/ha. Multiply by <strong>2.94</strong> for kapas.</p>
+        <p>We tested converting it and <strong>rejected</strong> the change: the host-dummy range test failed its own control (it condemns maize and rice too, which are not in dispute), the shortlisted field splits 4:1 toward lint, and the cross-crop ordering test mildly opposes conversion. Restating would move the village total <strong>+25%</strong> on evidence that does not decide.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Six teams produce six different crop maps. Why is yours right?”</summary>
+      <div class="ans">
+        <p>We do not claim it is, and we are the only team that measured the question. Six-team Cohen’s κ = <strong>0.060</strong> — chance. Only <strong>4 of 966</strong> farms are unanimous.</p>
+        <p>We then tested our labels against two sensor stacks that never saw Capella. Cotton is corroborated on <strong>78.8%</strong> of farms — but <strong>not one rice, maize or bajra farm</strong> is backed by both. We can name exactly which 42.5% of our map rests on nothing. Nobody else can.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Why no optical? NDVI would settle this.”</summary>
+      <div class="ans">
+        <p>Sokhda had <strong>zero</strong> Sentinel-2 scenes under 20% cloud in June, July, August <em>or</em> September. The best July scene is 92.6% cloud. Optical does not exist for the accumulation period — which is why the season witness had to be built from Sentinel-1.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Your health index weighting looks arbitrary.”</summary>
+      <div class="ans">
+        <p>It is insensitive, and we proved it against ourselves. A spatial hold-out put three weighting schemes within <strong>0.007</strong> of each other, while the spread between spatial halves was 0.007–0.068. We had previously claimed the shipped weighting was “best of four” — that claim was <strong>overturned by our own test</strong> and withdrawn.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Isn’t the rice signal just rain?”</summary>
+      <div class="ans">
+        <p>It is a rain-<em>driven mechanism</em>, and we verified the rain independently rather than taking it from a competitor’s writeup. Open-Meteo hourly at the actual overpass hours: <strong>0.0 mm</strong> in the six hours before 6 June, <strong>17.3 mm</strong> before 19 June. Two other teams independently report the same event.</p>
+        <p>Sentinel-1 straddles it — flying the 12th and 24th, never sampling the 19th — and <em>still</em> shows rice brightening most, +2.18 dB against +1.88 for everything else.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“You have no ground truth.”</summary>
+      <div class="ans">
+        <p>Correct — and neither does any team here. What we did instead was build the sampling design and <strong>test it</strong>. Stratified 20-per-crop is unbiased at every error structure we simulated; the uncertainty-first scheme we were about to adopt would have biased the accuracy estimate by <strong>−12.4 to −23.6pp</strong>.</p>
+        <p>We also found and removed a parcel of 4.8×10⁻⁹ ha that had been staged for a human to go and physically identify.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“Why not classify from Sentinel-1? It’s free and dense.”</summary>
+      <div class="ans">
+        <p>Two reasons, and the second is measured. First, the guidelines require Capella primacy, so C-band cannot be the source of the headline output. Second, we tested it anyway as a witness: ten S1 dates across our season give <strong>κ +0.135 — below</strong> the annual embedding’s +0.155, with rice at 3.5% and bajra at 1.4%. It does not help.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>“What is your single biggest weakness?”</summary>
+      <div class="ans">
+        <p>Rice, maize and bajra: <strong>287 farms, 30% of the village, corroborated by no independent sensor.</strong> Say it before they find it.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="shead"><span class="snum">03</span><h2>Do not re-propose these on-site</h2></div>
+  <p>Each was tested and priced. Re-opening one costs sprint hours and the answer will not change.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Idea</th><th>Why it is closed</th></tr></thead>
+      <tbody>
+        <tr class="t-closed"><td>Dense Sentinel-1 for classification</td><td>κ <span class="m">+0.135</span>, <strong>below</strong> the annual embedding — and the series was already in the repo</td></tr>
+        <tr class="t-closed"><td>Dynamic World non-crop filter</td><td>Half a farm-size detector; effect flips sign across area deciles</td></tr>
+        <tr class="t-closed"><td>WorldCereal crop type</td><td>2021 product, κ <span class="m">−0.010</span>; v2 not due until 2026</td></tr>
+        <tr class="t-closed"><td>Quegan-Yu speckle filter</td><td>Buys <span class="m">5.6–6.4%</span> of between-farm signal</td></tr>
+        <tr class="t-closed"><td>Any covariate coarser than ~1 km</td><td>Ceiling <span class="m">0.041</span> at 1 km, <strong class="m">0.000</strong> past 11 km</td></tr>
+        <tr class="t-closed"><td>ERA5 / NASA POWER / OpenWeatherMap</td><td>One value for all 966 farms</td></tr>
+        <tr class="t-closed"><td>USDA ERS</td><td>US farm <em>finances</em>, 16 US states</td></tr>
+        <tr class="t-closed"><td>AlphaEarth embeddings as a label source</td><td><span class="m">0.0%</span> recall on maize, <span class="m">4.7%</span> on rice</td></tr>
+        <tr class="t-closed"><td>Propagating the label posterior into yield</td><td>Ill-defined: cotton is lint, the rest grain</td></tr>
+        <tr class="t-closed"><td>Restating cotton as seed cotton</td><td>Evidence does not decide; <span class="m">+25%</span> on the village total</td></tr>
+        <tr class="t-closed"><td>Forcing GDAL polynomial order 2</td><td><span class="m">0.07 m</span>; recommendation withdrawn</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="shead"><span class="snum">04</span><h2>Defects we ship, and the reason</h2></div>
+  <p>Be first to name these. Each is documented and each has a reason.</p>
+  <ol class="defects">
+    <li><strong>Calibration uses SF, not SF².</strong> The level is wrong by a constant; the ranking is not. Correcting it changes 8 of 966 labels. Not applied because the R2 submission is frozen.</li>
+    <li><strong>The yield column mixes units.</strong> Cotton is lint, the other four grain or pod. Defensible — every official source does this — but it must be <em>stated</em>, because 0.34 next to bajra’s 2.57 reads as an error otherwise. Now guarded by an assertion.</li>
+    <li><strong>Nine degenerate parcels</strong> carry submission rows while enclosing ~0 ha. They are excluded from anything spatial. Orion independently documented ten.</li>
+    <li><strong>The label posterior is not calibrated in level</strong> — under-confident by +28.7pp in its lowest quintile, and it barely ranks within crop.</li>
+  </ol>
+</section>
+
+<section id="s5">
+  <div class="shead"><span class="snum">05</span><h2>If Round 3 turns out to be…</h2></div>
+  <p>The format is still unknown. This is what to open in each case.</p>
+  <div class="scen">
+    <div>
+      <span class="if">Presentation or viva of R2</span>
+      <span class="then">Section 02 above, plus <code>sokhda_six.html</code> and the figure pack.</span>
+      <span class="rdy y">Ready</span>
+    </div>
+    <div>
+      <span class="if">A new village, or several</span>
+      <span class="then">Portability facts in section 06. One override is in place; four things still hardcoded.</span>
+      <span class="rdy p">Partly</span>
+    </div>
+    <div>
+      <span class="if">More scenes over Sokhda</span>
+      <span class="then">Phenology curve-fitting. Four dates cannot support it; more can. <strong>This is our best case.</strong></span>
+      <span class="rdy y">Best case</span>
+    </div>
+    <div>
+      <span class="if">An open extension</span>
+      <span class="then">Ground truth was the differentiator, and it is blocked on a government portal login.</span>
+      <span class="rdy n">Blocked</span>
+    </div>
+  </div>
+  <p>Everything measured since R2 says our limit is <strong>information, not processing</strong> — and more acquisition dates is the one input that adds information we cannot otherwise get. Preserving season <em>timing</em> is worth <span class="m">+0.089 κ</span> over a flattened series. Four Capella dates is the binding constraint.</p>
+</section>
+
+<section id="s6">
+  <div class="shead"><span class="snum">06</span><h2>Portability, measured</h2></div>
+  <p>If a new AOI appears, this is what you face — counted, not guessed.</p>
+  <ul>
+    <li><strong>12 of 33</strong> files in <code>src/</code> hardcode <code>Sokhda</code> or <code>Vadodara</code>.</li>
+    <li><strong>20 of 33</strong> hardcode the 2025 acquisition dates.</li>
+  </ul>
+  <p>One change reduces the sharpest edge: <code>src/common.py</code> now takes the village and data paths from the environment, defaulting to Sokhda so nothing changes when unset.</p>
+  <pre>AISE_VILLAGE=Newname AISE_DATA=/path/to/data py -3.12 src/prep_r2.py</pre>
+  <p>Verified: with nothing set, <code>submission.csv</code> md5 is unchanged and all five regression checks pass.</p>
+  <p><strong>Still hardcoded and deliberately not fixed:</strong> <code>DATES</code> and <code>INCIDENCE_DEG</code>, the Vadodara APY yield anchor, and <code>sokhda_r1_truth.csv</code> as the crop-mix prior. A new village needs all four replaced. A refactor four days before a sprint is how frozen pipelines break — but this is a known 1–2 hour job, not a surprise.</p>
+</section>
+
+<section id="s7">
+  <div class="shead"><span class="snum">07</span><h2>Outstanding</h2></div>
+  <div class="todo">
+    <h3>Rotate three credentials</h3>
+    <p>The data.gov.in key, the USDA ERS key and the GEE client secret were all pasted into a chat transcript. They live outside the repo in <code>~/.config/aisehack/</code>, and the repo tree was checked and contains nothing credential-shaped. <strong>This is the only item with a real deadline.</strong></p>
+  </div>
+  <p><strong>Nothing is committed.</strong> Nineteen pending changes, four days of work, no history. Awaiting the go.</p>
+</section>
+
+<div class="closer">
+  <p>We took every idea the five other shortlisted teams published, tested ten of them, and threw seven away — including three of our own. What we can say that nobody else can is <em>exactly which 42.5% of our crop map no independent sensor will corroborate.</em></p>
+</div>
+
+</div>

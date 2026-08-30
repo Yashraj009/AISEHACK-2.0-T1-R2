@@ -1,0 +1,84 @@
+==============================================================================
+SOURCE  GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL, 2025, 64 bands, 10 m
+==============================================================================
+  961/966 farms returned a complete 64-vector
+  embedding component SD across farms: median 0.0309
+  (a constant embedding would mean the village is one texture and nothing can be
+   ranked inside it -- that is the first way this test can fail)
+
+  excluded 5 degenerate-geometry parcels (e12)
+  spatial folds: [262 143 250  98 203] farms per geographic block
+
+==============================================================================
+T1  DOES THE EMBEDDING CARRY OUR CROP LABEL? (spatially blocked)
+==============================================================================
+  64-band embedding                           kappa +0.155   acc  48.5%   majority  47.0%
+  area_ha alone (size floor)                  kappa +0.017   acc  38.2%   majority  47.0%
+  our own Capella features (self-check)       kappa +0.753   acc  83.2%   majority  47.0%
+
+  crop mix: Cotton 449, Groundnut 220, Bajra 147, Rice 86, Maize 54
+
+  Reading: our own features MUST score high -- the labels were made from them, so a
+  low self-check would mean the CV is broken. The embedding's kappa is the result:
+  it is predicting Capella-derived labels from a sensor stack that never saw Capella,
+  across held-out geographic blocks.
+
+------------------------------------------------------------------------------
+T1b  WHERE the agreement lives -- per-crop, because a pooled kappa hides this
+------------------------------------------------------------------------------
+  embedding  Bajra  Cotton  Groundnut  Rice
+  ours                                     
+  Bajra         16     108         21     2
+  Cotton        17     381         41    10
+  Groundnut     10     126         63    21
+  Maize          1      32         17     4
+  Rice           5      34         43     4
+
+  crop             n   recall
+  Bajra          147    10.9%
+  Cotton         449    84.9%
+  Groundnut      220    28.6%
+  Maize           54     0.0%
+  Rice            86     4.7%
+
+  The literature prediction, set before this was run: Sentinel-1 monsoon phenology
+  separates cotton best, while the cereal/legume group overlaps heavily. If the
+  agreement is concentrated in one crop, the pooled kappa is not a licence to treat
+  the embedding as a label source for the others.
+
+==============================================================================
+T2  IS IT REALLY FARM SIZE? (the control that killed Dynamic World in e13)
+==============================================================================
+  rho(area_ha, correctly predicted) = +0.016  p = 0.627
+  area decile       n    kappa   median ha
+  1                96    0.074       0.080
+  2                96    0.009       0.117
+  3                95   -0.006       0.154
+  4                96    0.104       0.191
+  5                95    0.144       0.250
+  6                96    0.172       0.332
+  7                95    0.024       0.461
+  8                96    0.191       0.647
+  9                95    0.168       0.900
+  10               96    0.323       1.405
+
+  kappa spread across deciles: -0.006 to +0.323
+  In e13 the Dynamic World effect COLLAPSED and changed SIGN across these deciles.
+  If kappa holds up in the smallest deciles, this is not a size artefact.
+
+==============================================================================
+T3  PERMUTATION CONTROL -- can the pipeline 'learn' shuffled labels?
+==============================================================================
+  kappa on 5 label permutations: -0.001, +0.008, +0.007, -0.009, -0.045
+  mean -0.008  (must sit at 0; anything above is CV leakage)
+  observed +0.155 is 8.3 permutation SDs above the null
+
+==============================================================================
+T4  WITHIN-CROP HEALTH RESIDUAL -- how much of the 0.685 ceiling is real?
+==============================================================================
+  out-of-block R^2 = +0.126   rho = +0.267  p = 4.56e-17
+  e12 ceiling for a 10 m covariate: 0.685 (an upper bound, and a generous one)
+
+  NOT tested here: anything scored against s2_ndvi_20251013. The 2025 embedding
+  ingests Sentinel-2 2025, so the withheld witness sits inside its inputs. Using it
+  would be circular, and the number would look good for the wrong reason.

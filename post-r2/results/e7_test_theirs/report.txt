@@ -1,0 +1,64 @@
+==============================================================================
+T1  PLOT-SIZE DE-BIASING  [Coding Bits]
+==============================================================================
+  Correlation of each family with log(plot area), before and after removing
+  the fitted trend. Coding Bits report residual area correlation < 0.001.
+  family     rho vs log(area)   after de-bias
+  level                +0.129          +0.067
+  growth               -0.175          -0.171
+  uniform              -0.234          -0.168
+  persist              +0.247          +0.376
+
+  Does removing it improve the index against the two withheld witnesses?
+  index                   rho vs NDVI  rho vs S1 VH
+  shipped                      +0.127        +0.156
+  plot-size de-biased          +0.115        +0.147
+
+  VERDICT: de-biasing does NOT improve the index on both witnesses (-0.012 NDVI, -0.009 S1).
+  The area artefact is real in our data (e2: rho(CV, npix) = +0.229), but the
+  correction is a separate claim and this is the test of it.
+
+==============================================================================
+T2  SPATIAL HOLD-OUT FOR WEIGHTS  [Coding Bits]
+==============================================================================
+  Village split on the easting median: west n=483, east n=483.
+  Weights are derived on ONE half and scored on the OTHER, so the reported
+  number never saw the data that produced the weights.
+
+  weights derived on the west half: level 0.133, growth 0.268, uniform 0.418, persist 0.181
+    scored on the held-out east half:
+      weighting                   rho NDVI  rho S1 VH
+      derived on the other half     +0.203     +0.220
+      shipped (full-sample blind)    +0.185     +0.220
+      equal                         +0.164     +0.212
+
+  weights derived on the east half: level 0.130, growth 0.250, uniform 0.441, persist 0.179
+    scored on the held-out west half:
+      weighting                   rho NDVI  rho S1 VH
+      derived on the other half     +0.135     +0.146
+      shipped (full-sample blind)    +0.160     +0.142
+      equal                         +0.168     +0.137
+
+  Coding Bits used this to REJECT their own data-driven optimum: it improved the
+  held-out half by 0.0006, within noise, while their physical prior improved both
+  halves independently. The question here is whether our blind rule is stable
+  when it can only see half the village.
+
+==============================================================================
+T3  GEOCODING RESIDUAL  [Coding Bits]
+==============================================================================
+  Their claim: a polynomial GCP fit leaves ~8 m residual against a 24.7 m median
+  plot dimension, which is why they moved to a thin-plate spline.
+
+  Our median plot is 0.274 ha, i.e. a 52.4 m square -
+  close to their 24.7 m, so the geometry of the problem is the same.
+
+  What we can say without reprocessing: our chain resamples by AVERAGE onto a
+  5 m base grid, so a residual of their size would be 1.6 base pixels and would
+  mix neighbouring fields at the boundary. We erode before sampling, which is
+  the mitigation, but the residual itself has never been measured on our fit.
+
+  STATUS: still THEIRS. Measuring it needs the GCP fit residuals out of
+  prep_r2.py's geocoding step, which is a code change, not an analysis. Flagged
+  as the one borrowed claim whose PREMISE remains untested for our pipeline.
+
